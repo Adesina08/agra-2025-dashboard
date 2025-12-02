@@ -7,38 +7,40 @@ interface BarChartProps {
   variant?: 'farmer' | 'enterprise' | 'youth';
 }
 
-export function BarChartComponent({ data, title, color, variant = 'farmer' }: BarChartProps) {
+export function BarChartComponent({ data, title, color }: BarChartProps) {
   return (
-    <div className="glass-card p-6 h-full">
-      <h3 className="text-sm font-medium text-muted-foreground mb-4">{title}</h3>
-      <div className="h-64">
+    <div className="minimal-card h-full">
+      <h3 className="text-sm text-muted-foreground mb-4">{title}</h3>
+      <div className="h-48">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} layout="vertical" margin={{ left: 20, right: 20 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(222 30% 16%)" horizontal={false} />
+          <BarChart data={data} layout="vertical" margin={{ left: 0, right: 10 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 15% 12%)" horizontal={false} />
             <XAxis 
               type="number" 
-              tick={{ fill: 'hsl(215 20% 55%)', fontSize: 12 }}
-              axisLine={{ stroke: 'hsl(222 30% 16%)' }}
+              tick={{ fill: 'hsl(220 10% 50%)', fontSize: 11 }}
+              axisLine={false}
+              tickLine={false}
             />
             <YAxis 
               type="category" 
               dataKey="name" 
-              tick={{ fill: 'hsl(215 20% 55%)', fontSize: 12 }}
-              axisLine={{ stroke: 'hsl(222 30% 16%)' }}
-              width={80}
+              tick={{ fill: 'hsl(220 10% 50%)', fontSize: 11 }}
+              axisLine={false}
+              tickLine={false}
+              width={70}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: 'hsl(222 47% 10%)',
-                border: '1px solid hsl(222 30% 20%)',
-                borderRadius: '8px',
-                color: 'hsl(210 40% 98%)',
+                backgroundColor: 'hsl(220 18% 7%)',
+                border: '1px solid hsl(220 15% 12%)',
+                borderRadius: '6px',
+                fontSize: '12px',
               }}
               formatter={(value: number) => [value.toLocaleString(), 'Count']}
             />
-            <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+            <Bar dataKey="value" radius={[0, 3, 3, 0]}>
               {data.map((_, index) => (
-                <Cell key={`cell-${index}`} fill={color} fillOpacity={0.8 - index * 0.1} />
+                <Cell key={`cell-${index}`} fill={color} fillOpacity={0.9 - index * 0.08} />
               ))}
             </Bar>
           </BarChart>

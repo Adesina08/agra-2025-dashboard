@@ -25,36 +25,31 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Background grid pattern */}
-      <div className="fixed inset-0 bg-grid-pattern bg-[size:40px_40px] opacity-[0.02] pointer-events-none" />
-      
-      <div className="relative max-w-[1600px] mx-auto px-4 py-6">
+      <div className="max-w-[1400px] mx-auto px-6 py-8">
         <Header />
 
         {/* Tab Navigation */}
-        <div className="glass-card p-2 mb-6">
-          <div className="flex gap-2">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={cn(
-                    'flex-1 flex items-center justify-center gap-3 px-6 py-3 rounded-lg font-medium transition-all duration-300',
-                    isActive
-                      ? cn('bg-secondary border-b-2', activeTabConfig[tab.id])
-                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
-                  )}
-                >
-                  <Icon className={cn('w-5 h-5', isActive && activeTabConfig[tab.id])} />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
+        <div className="flex gap-1 mb-8 border-b border-border">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px',
+                  isActive
+                    ? cn('border-current', activeTabConfig[tab.id])
+                    : 'text-muted-foreground hover:text-foreground border-transparent'
+                )}
+              >
+                <Icon className="w-4 h-4" />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Tab Content */}
