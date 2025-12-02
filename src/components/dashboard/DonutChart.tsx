@@ -31,10 +31,11 @@ export function DonutChart({ data, title }: DonutChartProps) {
             </Pie>
             <Tooltip
               contentStyle={{
-                backgroundColor: 'hsl(220 18% 7%)',
-                border: '1px solid hsl(220 15% 12%)',
-                borderRadius: '6px',
+                backgroundColor: 'hsl(var(--card))',
+                border: '1px solid hsl(var(--border))',
+                borderRadius: '10px',
                 fontSize: '12px',
+                color: 'hsl(var(--foreground))',
               }}
               formatter={(value: number) => [
                 `${value.toLocaleString()} (${((value / total) * 100).toFixed(1)}%)`,

@@ -1,40 +1,40 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
-
 @layer base {
   :root {
-    --background: 220 20% 4%;
-    --foreground: 0 0% 95%;
+    --background: 210 24% 98%;
+    --foreground: 220 24% 12%;
 
-    --card: 220 18% 7%;
-    --card-foreground: 0 0% 95%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 24% 14%;
 
-    --popover: 220 18% 8%;
-    --popover-foreground: 0 0% 95%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 24% 14%;
 
-    --primary: 142 70% 45%;
-    --primary-foreground: 220 20% 4%;
+    --primary: 142 64% 38%;
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 220 15% 12%;
-    --secondary-foreground: 0 0% 90%;
+    --secondary: 210 20% 94%;
+    --secondary-foreground: 220 24% 20%;
 
-    --muted: 220 15% 10%;
-    --muted-foreground: 220 10% 50%;
+    --muted: 210 20% 92%;
+    --muted-foreground: 220 10% 40%;
 
-    --accent: 142 70% 45%;
-    --accent-foreground: 220 20% 4%;
+    --accent: 142 64% 38%;
+    --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 70% 50%;
-    --destructive-foreground: 0 0% 95%;
+    --destructive: 0 72% 45%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 220 15% 12%;
-    --input: 220 15% 12%;
-    --ring: 142 70% 45%;
+    --border: 210 18% 88%;
+    --input: 210 18% 88%;
+    --ring: 142 64% 38%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     /* Dashboard tokens */
     --farmer-primary: 142 70% 45%;
@@ -44,6 +44,38 @@
     --youth-primary: 190 80% 50%;
     --youth-secondary: 190 60% 35%;
   }
+
+  .dark {
+    --background: 220 20% 5%;
+    --foreground: 0 0% 96%;
+
+    --card: 220 18% 8%;
+    --card-foreground: 0 0% 96%;
+
+    --popover: 220 18% 8%;
+    --popover-foreground: 0 0% 96%;
+
+    --primary: 142 70% 45%;
+    --primary-foreground: 220 20% 4%;
+
+    --secondary: 220 15% 12%;
+    --secondary-foreground: 0 0% 92%;
+
+    --muted: 220 15% 10%;
+    --muted-foreground: 220 10% 60%;
+
+    --accent: 142 70% 45%;
+    --accent-foreground: 220 20% 4%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 96%;
+
+    --border: 220 15% 16%;
+    --input: 220 15% 16%;
+    --ring: 142 70% 45%;
+
+    --radius: 0.75rem;
+  }
 }
 
 @layer base {
@@ -52,17 +84,18 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground font-sans antialiased transition-colors duration-300;
   }
 }
 
 @layer components {
   .minimal-card {
-    @apply bg-card border border-border rounded-lg p-5;
+    @apply bg-card/90 border border-border/70 rounded-xl p-5 backdrop-blur-sm;
+    @apply transition-all duration-200 hover:-translate-y-0.5 hover:border-border hover:shadow-[0_20px_60px_-45px_rgba(0,0,0,0.55)];
   }
 
   .kpi-card {
-    @apply minimal-card transition-colors hover:border-border/80;
+    @apply minimal-card transition-transform;
   }
 
   .kpi-card.farmer {
