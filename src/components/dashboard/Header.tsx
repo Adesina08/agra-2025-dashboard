@@ -1,6 +1,7 @@
 import { Clock, RefreshCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { lastUpdated } from '@/data/mockData';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export function Header() {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -18,7 +19,7 @@ export function Header() {
 
   return (
     <header className="mb-8">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="text-xl font-semibold text-foreground">
             AGRA 2025 Dashboard
@@ -28,7 +29,7 @@ export function Header() {
           </p>
         </div>
 
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+        <div className="flex flex-col gap-3 text-sm text-muted-foreground lg:flex-row lg:items-center">
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4" />
             <span className="font-mono">{currentTime.toLocaleTimeString()}</span>
@@ -42,11 +43,13 @@ export function Header() {
 
           <button
             onClick={handleRefresh}
-            className="p-1.5 rounded hover:bg-secondary transition-colors"
+            className="rounded p-1.5 transition-all hover:-translate-y-0.5 hover:bg-secondary"
             title="Refresh"
           >
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           </button>
+
+          <ThemeToggle />
         </div>
       </div>
     </header>

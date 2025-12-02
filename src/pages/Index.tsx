@@ -39,10 +39,10 @@ const Index = () => {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  'flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px',
+                  'flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all border-b-2 -mb-px hover:-translate-y-0.5',
                   isActive
                     ? cn('border-current', activeTabConfig[tab.id])
-                    : 'text-muted-foreground hover:text-foreground border-transparent'
+                    : 'text-muted-foreground hover:text-foreground border-transparent hover:border-border'
                 )}
               >
                 <Icon className="w-4 h-4" />
