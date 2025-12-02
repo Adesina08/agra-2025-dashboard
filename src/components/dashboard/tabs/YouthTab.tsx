@@ -8,6 +8,7 @@ import { LineChartComponent } from '../LineChartComponent';
 import { MapPlaceholder } from '../MapPlaceholder';
 import { DataTable } from '../DataTable';
 import { StatusBadge } from '../StatusBadge';
+import { ProgressPanels } from '../ProgressPanels';
 
 export function YouthTab() {
   const stats = useMemo(() => {
@@ -19,9 +20,11 @@ export function YouthTab() {
     const female = youthData.filter(y => y.gender === 'Female').length;
     const trained = youthData.filter(y => y.trainingCompleted).length;
     const employed = youthData.filter(y => y.employmentStatus === 'Employed' || y.employmentStatus === 'Self-employed').length;
-    
+
     return { total, approved, pending, rejected, male, female, trained, employed };
   }, []);
+
+  const targetInterviews = 3000;
 
   const genderData = [
     { name: 'Male', value: stats.male, color: '#06b6d4' },
@@ -124,6 +127,18 @@ export function YouthTab() {
           trend={{ value: 5.2, isPositive: true }}
         />
       </div>
+
+      <ProgressPanels
+        achieved={stats.total}
+        target={targetInterviews}
+        approvals={[
+          { label: 'Approved', value: stats.approved, color: '#22c55e' },
+          { label: 'Pending', value: stats.pending, color: '#fde047' },
+          { label: 'Rejected', value: stats.rejected, color: '#ef4444' },
+        ]}
+        accentColor="#0ea5e9"
+        remainderColor="#38bdf8"
+      />
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -8,6 +8,7 @@ import { LineChartComponent } from '../LineChartComponent';
 import { MapPlaceholder } from '../MapPlaceholder';
 import { DataTable } from '../DataTable';
 import { StatusBadge } from '../StatusBadge';
+import { ProgressPanels } from '../ProgressPanels';
 
 export function FarmerTab() {
   const stats = useMemo(() => {
@@ -21,6 +22,8 @@ export function FarmerTab() {
     
     return { total, approved, pending, rejected, male, female, avgFarmSize };
   }, []);
+
+  const targetInterviews = 5000;
 
   const genderData = [
     { name: 'Male', value: stats.male, color: '#22c55e' },
@@ -107,6 +110,18 @@ export function FarmerTab() {
           trend={{ value: 3.2, isPositive: true }}
         />
       </div>
+
+      <ProgressPanels
+        achieved={stats.total}
+        target={targetInterviews}
+        approvals={[
+          { label: 'Approved', value: stats.approved, color: '#22c55e' },
+          { label: 'Pending', value: stats.pending, color: '#f97316' },
+          { label: 'Rejected', value: stats.rejected, color: '#ef4444' },
+        ]}
+        accentColor="#3b82f6"
+        remainderColor="#0ea5e9"
+      />
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
