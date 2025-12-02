@@ -89,11 +89,11 @@ export function DataTable<T extends { id: string }>({
   };
 
   return (
-    <div className="glass-card p-6">
+    <div className="minimal-card">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-        <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
+        <h3 className="text-sm text-muted-foreground">{title}</h3>
         
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
@@ -101,24 +101,21 @@ export function DataTable<T extends { id: string }>({
               placeholder="Search..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-              className={cn(
-                'w-64 pl-9 pr-4 py-2 bg-secondary/50 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2',
-                accentColor[variant]
-              )}
+              className="w-48 pl-9 pr-3 py-1.5 bg-secondary border border-border rounded text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-muted-foreground"
             />
           </div>
           
           <button
             onClick={exportCSV}
-            className="flex items-center gap-2 px-4 py-2 bg-secondary hover:bg-secondary/80 rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <Download className="w-4 h-4" />
-            Export CSV
+            Export
           </button>
         </div>
       </div>
 
-      <div className="overflow-x-auto scrollbar-thin">
+      <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr className="border-b border-border">
@@ -126,7 +123,7 @@ export function DataTable<T extends { id: string }>({
                 <th
                   key={String(col.key)}
                   className={cn(
-                    'px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider',
+                    'px-3 py-2 text-left text-xs text-muted-foreground',
                     col.sortable && 'cursor-pointer hover:text-foreground transition-colors'
                   )}
                   onClick={() => col.sortable && handleSort(col.key)}
@@ -145,9 +142,9 @@ export function DataTable<T extends { id: string }>({
           </thead>
           <tbody className="divide-y divide-border/50">
             {paginatedData.map((row) => (
-              <tr key={row.id} className="hover:bg-secondary/30 transition-colors">
+              <tr key={row.id} className="hover:bg-secondary/50 transition-colors">
                 {columns.map(col => (
-                  <td key={String(col.key)} className="px-4 py-3 text-sm text-foreground">
+                  <td key={String(col.key)} className="px-3 py-2.5 text-sm text-foreground">
                     {col.render ? col.render(row[col.key], row) : String(row[col.key])}
                   </td>
                 ))}
@@ -157,29 +154,24 @@ export function DataTable<T extends { id: string }>({
         </table>
       </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
-        <p className="text-sm text-muted-foreground">
-          Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} results
-        </p>
+      <div className="flex items-center justify-between mt-4 pt-3 border-t border-border text-xs text-muted-foreground">
+        <span>
+          {((currentPage - 1) * pageSize) + 1}–{Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length}
+        </span>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <button
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
             disabled={currentPage === 1}
-            className="p-2 rounded-lg bg-secondary hover:bg-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="p-1 rounded hover:bg-secondary disabled:opacity-30 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           
-          <span className="px-3 py-1 text-sm font-medium">
-            {currentPage} / {totalPages}
-          </span>
-          
           <button
             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
-            className="p-2 rounded-lg bg-secondary hover:bg-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="p-1 rounded hover:bg-secondary disabled:opacity-30 transition-colors"
           >
             <ChevronRight className="w-4 h-4" />
           </button>

@@ -20,42 +20,33 @@ export function KPICard({
   variant = 'farmer',
   className 
 }: KPICardProps) {
-  const colorClasses = {
-    farmer: 'text-farmer border-farmer/20 [&_.icon-bg]:bg-farmer/20 [&_.icon]:text-farmer',
-    enterprise: 'text-enterprise border-enterprise/20 [&_.icon-bg]:bg-enterprise/20 [&_.icon]:text-enterprise',
-    youth: 'text-youth border-youth/20 [&_.icon-bg]:bg-youth/20 [&_.icon]:text-youth',
+  const iconColors = {
+    farmer: 'text-farmer',
+    enterprise: 'text-enterprise',
+    youth: 'text-youth',
   };
 
   return (
-    <div className={cn(
-      'kpi-card group cursor-default',
-      variant,
-      colorClasses[variant],
-      className
-    )}>
-      <div className="relative z-10">
-        <div className="flex items-start justify-between mb-4">
-          <div className="icon-bg w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110">
-            <Icon className="icon w-6 h-6" />
-          </div>
-          {trend && (
-            <span className={cn(
-              'text-sm font-medium px-2 py-1 rounded-full',
-              trend.isPositive ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-            )}>
-              {trend.isPositive ? '+' : ''}{trend.value}%
-            </span>
-          )}
-        </div>
-        
-        <h3 className="text-sm font-medium text-muted-foreground mb-1">{title}</h3>
-        <p className="text-3xl font-bold text-foreground animate-count">
-          {typeof value === 'number' ? value.toLocaleString() : value}
-        </p>
-        {subtitle && (
-          <p className="text-xs text-muted-foreground mt-2">{subtitle}</p>
+    <div className={cn('kpi-card', variant, className)}>
+      <div className="flex items-center justify-between mb-3">
+        <Icon className={cn('w-5 h-5', iconColors[variant])} />
+        {trend && (
+          <span className={cn(
+            'text-xs font-medium',
+            trend.isPositive ? 'text-green-500' : 'text-red-500'
+          )}>
+            {trend.isPositive ? '+' : ''}{trend.value}%
+          </span>
         )}
       </div>
+      
+      <p className="text-2xl font-semibold text-foreground mb-1">
+        {typeof value === 'number' ? value.toLocaleString() : value}
+      </p>
+      <h3 className="text-sm text-muted-foreground">{title}</h3>
+      {subtitle && (
+        <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
+      )}
     </div>
   );
 }

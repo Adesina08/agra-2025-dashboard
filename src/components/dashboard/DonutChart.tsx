@@ -1,4 +1,4 @@
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 interface DonutChartProps {
   data: { name: string; value: number; color: string }[];
@@ -6,22 +6,22 @@ interface DonutChartProps {
   variant?: 'farmer' | 'enterprise' | 'youth';
 }
 
-export function DonutChart({ data, title, variant = 'farmer' }: DonutChartProps) {
+export function DonutChart({ data, title }: DonutChartProps) {
   const total = data.reduce((sum, item) => sum + item.value, 0);
 
   return (
-    <div className="glass-card p-6 h-full">
-      <h3 className="text-sm font-medium text-muted-foreground mb-4">{title}</h3>
-      <div className="h-64">
+    <div className="minimal-card h-full">
+      <h3 className="text-sm text-muted-foreground mb-4">{title}</h3>
+      <div className="h-48">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
               data={data}
               cx="50%"
               cy="50%"
-              innerRadius={60}
-              outerRadius={90}
-              paddingAngle={4}
+              innerRadius={50}
+              outerRadius={70}
+              paddingAngle={2}
               dataKey="value"
               strokeWidth={0}
             >
@@ -31,29 +31,30 @@ export function DonutChart({ data, title, variant = 'farmer' }: DonutChartProps)
             </Pie>
             <Tooltip
               contentStyle={{
-                backgroundColor: 'hsl(222 47% 10%)',
-                border: '1px solid hsl(222 30% 20%)',
-                borderRadius: '8px',
-                color: 'hsl(210 40% 98%)',
+                backgroundColor: 'hsl(220 18% 7%)',
+                border: '1px solid hsl(220 15% 12%)',
+                borderRadius: '6px',
+                fontSize: '12px',
               }}
               formatter={(value: number) => [
                 `${value.toLocaleString()} (${((value / total) * 100).toFixed(1)}%)`,
                 ''
               ]}
             />
-            <Legend
-              verticalAlign="bottom"
-              height={36}
-              formatter={(value) => (
-                <span className="text-sm text-muted-foreground">{value}</span>
-              )}
-            />
           </PieChart>
         </ResponsiveContainer>
       </div>
-      <div className="text-center mt-2">
-        <span className="text-2xl font-bold text-foreground">{total.toLocaleString()}</span>
-        <span className="text-sm text-muted-foreground ml-2">Total</span>
+      <div className="flex flex-wrap gap-3 mt-3">
+        {data.map((item) => (
+          <div key={item.name} className="flex items-center gap-2 text-xs">
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
+            <span className="text-muted-foreground">{item.name}</span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-3 pt-3 border-t border-border">
+        <span className="text-lg font-semibold text-foreground">{total.toLocaleString()}</span>
+        <span className="text-xs text-muted-foreground ml-2">total</span>
       </div>
     </div>
   );

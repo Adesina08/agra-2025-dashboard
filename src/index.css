@@ -6,59 +6,43 @@
 
 @layer base {
   :root {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
+    --background: 220 20% 4%;
+    --foreground: 0 0% 95%;
 
-    --card: 222 47% 8%;
-    --card-foreground: 210 40% 98%;
+    --card: 220 18% 7%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 222 47% 10%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 220 18% 8%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 160 84% 39%;
-    --primary-foreground: 222 47% 6%;
+    --primary: 142 70% 45%;
+    --primary-foreground: 220 20% 4%;
 
-    --secondary: 222 30% 14%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 220 15% 12%;
+    --secondary-foreground: 0 0% 90%;
 
-    --muted: 222 30% 12%;
-    --muted-foreground: 215 20% 55%;
+    --muted: 220 15% 10%;
+    --muted-foreground: 220 10% 50%;
 
-    --accent: 160 84% 39%;
-    --accent-foreground: 222 47% 6%;
+    --accent: 142 70% 45%;
+    --accent-foreground: 220 20% 4%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 95%;
 
-    --border: 222 30% 16%;
-    --input: 222 30% 16%;
-    --ring: 160 84% 39%;
+    --border: 220 15% 12%;
+    --input: 220 15% 12%;
+    --ring: 142 70% 45%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
-    /* Dashboard specific tokens */
-    --farmer-primary: 160 84% 39%;
-    --farmer-secondary: 160 60% 25%;
-    --enterprise-primary: 38 92% 50%;
-    --enterprise-secondary: 38 70% 35%;
-    --youth-primary: 187 85% 53%;
-    --youth-secondary: 187 60% 35%;
-
-    /* Glass effect */
-    --glass-bg: 222 47% 8% / 0.8;
-    --glass-border: 222 30% 20%;
-
-    /* Gradients */
-    --gradient-farmer: linear-gradient(135deg, hsl(160 84% 39% / 0.2), hsl(160 84% 39% / 0.05));
-    --gradient-enterprise: linear-gradient(135deg, hsl(38 92% 50% / 0.2), hsl(38 92% 50% / 0.05));
-    --gradient-youth: linear-gradient(135deg, hsl(187 85% 53% / 0.2), hsl(187 85% 53% / 0.05));
-    --gradient-hero: linear-gradient(135deg, hsl(222 47% 10%), hsl(222 47% 6%));
-
-    /* Shadows */
-    --shadow-glow-farmer: 0 0 40px hsl(160 84% 39% / 0.15);
-    --shadow-glow-enterprise: 0 0 40px hsl(38 92% 50% / 0.15);
-    --shadow-glow-youth: 0 0 40px hsl(187 85% 53% / 0.15);
-    --shadow-card: 0 4px 24px hsl(222 47% 4% / 0.5);
+    /* Dashboard tokens */
+    --farmer-primary: 142 70% 45%;
+    --farmer-secondary: 142 50% 30%;
+    --enterprise-primary: 35 90% 55%;
+    --enterprise-secondary: 35 70% 40%;
+    --youth-primary: 190 80% 50%;
+    --youth-secondary: 190 60% 35%;
   }
 }
 
@@ -69,91 +53,27 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', sans-serif;
-  }
-
-  .font-mono {
-    font-family: 'JetBrains Mono', monospace;
   }
 }
 
 @layer components {
-  .glass-card {
-    @apply bg-card/80 backdrop-blur-xl border border-border/50 rounded-xl;
-    box-shadow: var(--shadow-card);
+  .minimal-card {
+    @apply bg-card border border-border rounded-lg p-5;
   }
 
   .kpi-card {
-    @apply glass-card p-6 relative overflow-hidden transition-all duration-300 hover:scale-[1.02];
+    @apply minimal-card transition-colors hover:border-border/80;
   }
 
-  .kpi-card::before {
-    content: '';
-    @apply absolute inset-0 opacity-50;
-    background: var(--gradient-farmer);
+  .kpi-card.farmer {
+    @apply border-l-2 border-l-farmer;
   }
 
-  .kpi-card.enterprise::before {
-    background: var(--gradient-enterprise);
+  .kpi-card.enterprise {
+    @apply border-l-2 border-l-enterprise;
   }
 
-  .kpi-card.youth::before {
-    background: var(--gradient-youth);
-  }
-
-  .tab-farmer {
-    --tab-color: hsl(var(--farmer-primary));
-  }
-
-  .tab-enterprise {
-    --tab-color: hsl(var(--enterprise-primary));
-  }
-
-  .tab-youth {
-    --tab-color: hsl(var(--youth-primary));
-  }
-
-  .animate-pulse-slow {
-    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-
-  .animate-fade-in {
-    animation: fadeIn 0.5s ease-out forwards;
-  }
-
-  .animate-slide-up {
-    animation: slideUp 0.5s ease-out forwards;
-  }
-
-  .animate-count {
-    animation: countUp 1s ease-out forwards;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  @keyframes slideUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes countUp {
-    from { opacity: 0; transform: scale(0.8); }
-    to { opacity: 1; transform: scale(1); }
-  }
-
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-track {
-    @apply bg-muted/30 rounded-full;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50;
+  .kpi-card.youth {
+    @apply border-l-2 border-l-youth;
   }
 }
