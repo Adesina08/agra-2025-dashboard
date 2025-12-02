@@ -8,6 +8,7 @@ import { LineChartComponent } from '../LineChartComponent';
 import { MapPlaceholder } from '../MapPlaceholder';
 import { DataTable } from '../DataTable';
 import { StatusBadge } from '../StatusBadge';
+import { ProgressPanels } from '../ProgressPanels';
 
 export function EnterpriseTab() {
   const stats = useMemo(() => {
@@ -22,6 +23,8 @@ export function EnterpriseTab() {
     
     return { total, approved, pending, rejected, male, female, totalRevenue, avgEmployees };
   }, []);
+
+  const targetInterviews = 2200;
 
   const genderData = [
     { name: 'Male Owners', value: stats.male, color: '#f59e0b' },
@@ -111,6 +114,18 @@ export function EnterpriseTab() {
           variant="enterprise"
         />
       </div>
+
+      <ProgressPanels
+        achieved={stats.total}
+        target={targetInterviews}
+        approvals={[
+          { label: 'Approved', value: stats.approved, color: '#22c55e' },
+          { label: 'Pending', value: stats.pending, color: '#facc15' },
+          { label: 'Rejected', value: stats.rejected, color: '#ef4444' },
+        ]}
+        accentColor="#f59e0b"
+        remainderColor="#fb923c"
+      />
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
