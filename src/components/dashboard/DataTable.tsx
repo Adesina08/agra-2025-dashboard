@@ -13,7 +13,6 @@ interface DataTableProps<T> {
   data: T[];
   columns: Column<T>[];
   title: string;
-  variant?: 'farmer' | 'enterprise' | 'youth';
   pageSize?: number;
 }
 
@@ -21,7 +20,6 @@ export function DataTable<T extends { id: string }>({
   data, 
   columns, 
   title, 
-  variant = 'farmer',
   pageSize = 10 
 }: DataTableProps<T>) {
   const [search, setSearch] = useState('');
@@ -82,35 +80,29 @@ export function DataTable<T extends { id: string }>({
     URL.revokeObjectURL(url);
   };
 
-  const accentColor = {
-    farmer: 'focus:ring-farmer',
-    enterprise: 'focus:ring-enterprise',
-    youth: 'focus:ring-youth',
-  };
-
   return (
     <div className="minimal-card">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-        <h3 className="text-sm text-muted-foreground">{title}</h3>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+        <h3 className="text-xs text-muted-foreground">{title}</h3>
         
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <input
               type="text"
               placeholder="Search..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-              className="w-48 pl-9 pr-3 py-1.5 bg-secondary border border-border rounded text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-muted-foreground"
+              className="w-40 pl-8 pr-3 py-1.5 bg-secondary border border-border rounded text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-muted-foreground"
             />
           </div>
           
           <button
             onClick={exportCSV}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center gap-1 px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
-            <Download className="w-4 h-4" />
-            Export
+            <Download className="w-3.5 h-3.5" />
+            CSV
           </button>
         </div>
       </div>
@@ -123,7 +115,7 @@ export function DataTable<T extends { id: string }>({
                 <th
                   key={String(col.key)}
                   className={cn(
-                    'px-3 py-2 text-left text-xs text-muted-foreground',
+                    'px-2 py-2 text-left text-xs text-muted-foreground font-normal',
                     col.sortable && 'cursor-pointer hover:text-foreground transition-colors'
                   )}
                   onClick={() => col.sortable && handleSort(col.key)}
@@ -144,7 +136,7 @@ export function DataTable<T extends { id: string }>({
             {paginatedData.map((row) => (
               <tr key={row.id} className="hover:bg-secondary/50 transition-colors">
                 {columns.map(col => (
-                  <td key={String(col.key)} className="px-3 py-2.5 text-sm text-foreground">
+                  <td key={String(col.key)} className="px-2 py-2 text-xs text-foreground">
                     {col.render ? col.render(row[col.key], row) : String(row[col.key])}
                   </td>
                 ))}
@@ -154,7 +146,7 @@ export function DataTable<T extends { id: string }>({
         </table>
       </div>
 
-      <div className="flex items-center justify-between mt-4 pt-3 border-t border-border text-xs text-muted-foreground">
+      <div className="flex items-center justify-between mt-3 pt-2 border-t border-border text-xs text-muted-foreground">
         <span>
           {((currentPage - 1) * pageSize) + 1}–{Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length}
         </span>
@@ -165,7 +157,7 @@ export function DataTable<T extends { id: string }>({
             disabled={currentPage === 1}
             className="p-1 rounded hover:bg-secondary disabled:opacity-30 transition-colors"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-3.5 h-3.5" />
           </button>
           
           <button
@@ -173,7 +165,7 @@ export function DataTable<T extends { id: string }>({
             disabled={currentPage === totalPages}
             className="p-1 rounded hover:bg-secondary disabled:opacity-30 transition-colors"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
