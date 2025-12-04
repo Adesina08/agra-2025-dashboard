@@ -3,9 +3,6 @@ import { Users, TrendingUp, CheckCircle, Clock, XCircle, Wheat } from 'lucide-re
 import { farmerData, fieldLabels, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
 import { KPICard } from '../KPICard';
 import { DonutChart } from '../DonutChart';
-import { BarChartComponent } from '../BarChartComponent';
-import { LineChartComponent } from '../LineChartComponent';
-import { MapPlaceholder } from '../MapPlaceholder';
 import { DataTable } from '../DataTable';
 import { StatusBadge } from '../StatusBadge';
 import { ProgressPanels } from '../ProgressPanels';
@@ -32,23 +29,6 @@ export function FarmerTab() {
     { name: 'Male', value: stats.male, color: '#22c55e' },
     { name: 'Female', value: stats.female, color: '#a855f7' },
   ];
-
-  const regionData = useMemo(() => {
-    const counts: Record<string, number> = {};
-    farmerData.forEach(f => { counts[f.region] = (counts[f.region] || 0) + 1; });
-    return Object.entries(counts)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 8);
-  }, []);
-
-  const submissionTrend = useMemo(() => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return months.map(month => ({
-      date: month,
-      value: Math.floor(Math.random() * 150 + 50),
-    }));
-  }, []);
 
   const interviewerStats = useMemo(() => generateInterviewerStats(farmerData), []);
   const submissionQuality = useMemo(() => generateSubmissionQuality(farmerData), []);
@@ -139,35 +119,10 @@ export function FarmerTab() {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <DonutChart
-          data={genderData}
-          title="Gender Distribution"
-          variant="farmer"
-        />
-        <BarChartComponent
-          data={regionData}
-          title="Submissions by Region"
-          color="#22c55e"
-          variant="farmer"
-        />
-        <MapPlaceholder
-          data={farmerData.map(f => ({
-            latitude: f.latitude,
-            longitude: f.longitude,
-            region: f.region,
-            status: f.status,
-          }))}
-          title="Geographic Distribution"
-          variant="farmer"
-        />
-      </div>
-
-      {/* Trend Chart */}
-      <LineChartComponent
-        data={submissionTrend}
-        title="Monthly Submission Trend"
-        color="#22c55e"
+      <DonutChart
+        data={genderData}
+        title="Gender Distribution"
+        variant="farmer"
       />
 
       {/* Data Table */}
