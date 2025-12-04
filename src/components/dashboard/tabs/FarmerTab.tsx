@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Users, TrendingUp, CheckCircle, Clock, XCircle, Wheat } from 'lucide-react';
-import { farmerData, fieldLabels } from '@/data/mockData';
+import { farmerData, fieldLabels, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
 import { KPICard } from '../KPICard';
 import { DonutChart } from '../DonutChart';
 import { BarChartComponent } from '../BarChartComponent';
@@ -9,6 +9,9 @@ import { MapPlaceholder } from '../MapPlaceholder';
 import { DataTable } from '../DataTable';
 import { StatusBadge } from '../StatusBadge';
 import { ProgressPanels } from '../ProgressPanels';
+import { ProductivityRankings } from '../ProductivityRankings';
+import { SubmissionQualityChart } from '../SubmissionQualityChart';
+import { ErrorBreakdown } from '../ErrorBreakdown';
 
 export function FarmerTab() {
   const stats = useMemo(() => {
@@ -46,6 +49,9 @@ export function FarmerTab() {
       value: Math.floor(Math.random() * 150 + 50),
     }));
   }, []);
+
+  const interviewerStats = useMemo(() => generateInterviewerStats(farmerData), []);
+  const submissionQuality = useMemo(() => generateSubmissionQuality(farmerData), []);
 
   const columns = [
     { key: 'id' as const, label: 'ID', sortable: true },
@@ -122,6 +128,15 @@ export function FarmerTab() {
         accentColor="#3b82f6"
         remainderColor="#0ea5e9"
       />
+
+      {/* Productivity Rankings */}
+      <ProductivityRankings data={interviewerStats} variant="farmer" />
+
+      {/* Submission Quality & Error Breakdown */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <SubmissionQualityChart data={submissionQuality} variant="farmer" />
+        <ErrorBreakdown data={errorBreakdownData.farmer} variant="farmer" />
+      </div>
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

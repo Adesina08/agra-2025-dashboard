@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { GraduationCap, TrendingUp, CheckCircle, Clock, XCircle, Briefcase } from 'lucide-react';
-import { youthData, fieldLabels } from '@/data/mockData';
+import { youthData, fieldLabels, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
 import { KPICard } from '../KPICard';
 import { DonutChart } from '../DonutChart';
 import { BarChartComponent } from '../BarChartComponent';
@@ -9,6 +9,9 @@ import { MapPlaceholder } from '../MapPlaceholder';
 import { DataTable } from '../DataTable';
 import { StatusBadge } from '../StatusBadge';
 import { ProgressPanels } from '../ProgressPanels';
+import { ProductivityRankings } from '../ProductivityRankings';
+import { SubmissionQualityChart } from '../SubmissionQualityChart';
+import { ErrorBreakdown } from '../ErrorBreakdown';
 
 export function YouthTab() {
   const stats = useMemo(() => {
@@ -54,6 +57,9 @@ export function YouthTab() {
       value: Math.floor(Math.random() * 100 + 40),
     }));
   }, []);
+
+  const interviewerStats = useMemo(() => generateInterviewerStats(youthData), []);
+  const submissionQuality = useMemo(() => generateSubmissionQuality(youthData), []);
 
   const columns = [
     { key: 'id' as const, label: 'ID', sortable: true },
@@ -139,6 +145,15 @@ export function YouthTab() {
         accentColor="#0ea5e9"
         remainderColor="#38bdf8"
       />
+
+      {/* Productivity Rankings */}
+      <ProductivityRankings data={interviewerStats} variant="youth" />
+
+      {/* Submission Quality & Error Breakdown */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <SubmissionQualityChart data={submissionQuality} variant="youth" />
+        <ErrorBreakdown data={errorBreakdownData.youth} variant="youth" />
+      </div>
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
