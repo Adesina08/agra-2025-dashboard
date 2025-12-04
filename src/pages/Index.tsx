@@ -17,12 +17,19 @@ const tabs = [
 const Index = () => {
   const [activeTab, setActiveTab] = useState<TabType>('farmer');
 
+  const activeTabConfig = {
+    farmer: 'border-farmer text-farmer',
+    enterprise: 'border-enterprise text-enterprise',
+    youth: 'border-youth text-youth',
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-[1200px] mx-auto px-4 py-6">
+      <div className="max-w-[1400px] mx-auto px-6 py-8">
         <Header />
 
-        <div className="flex gap-4 mb-6">
+        {/* Tab Navigation */}
+        <div className="flex gap-1 mb-8 border-b border-border">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -32,10 +39,10 @@ const Index = () => {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  'flex items-center gap-2 px-3 py-1.5 text-sm rounded transition-colors',
+                  'flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all border-b-2 -mb-px hover:-translate-y-0.5',
                   isActive
-                    ? 'bg-secondary text-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? cn('border-current', activeTabConfig[tab.id])
+                    : 'text-muted-foreground hover:text-foreground border-transparent hover:border-border'
                 )}
               >
                 <Icon className="w-4 h-4" />
@@ -45,7 +52,8 @@ const Index = () => {
           })}
         </div>
 
-        <div className="pb-8">
+        {/* Tab Content */}
+        <div className="pb-12">
           {activeTab === 'farmer' && <FarmerTab />}
           {activeTab === 'enterprise' && <EnterpriseTab />}
           {activeTab === 'youth' && <YouthTab />}

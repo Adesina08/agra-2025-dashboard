@@ -1,40 +1,137 @@
+import { Pie, PieChart, ResponsiveContainer, Cell } from 'recharts';
+
 interface ProgressPanelsProps {
   achieved: number;
   target: number;
   approvals: { label: string; value: number; color: string }[];
+  accentColor: string;
+  remainderColor: string;
 }
 
-export function ProgressPanels({ achieved, target, approvals }: ProgressPanelsProps) {
-  const percentage = Math.min((achieved / target) * 100, 100);
+export function ProgressPanels({
+  achieved,
+  target,
+  approvals,
+  accentColor,
+  remainderColor,
+}: ProgressPanelsProps) {
+  const remaining = Math.max(target - achieved, 0);
+  const quotaData = [
+    { name: 'Achieved', value: achieved, color: accentColor },
+    { name: 'Remaining', value: remaining, color: remainderColor },
+  ];
+
   const approvalTotal = approvals.reduce((sum, item) => sum + item.value, 0) || 1;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <div className="minimal-card">
-        <div className="flex justify-between items-baseline mb-2">
-          <span className="text-xs text-muted-foreground">Quota Progress</span>
-          <span className="text-sm font-medium text-foreground">{percentage.toFixed(0)}%</span>
+      <div className="minimal-card relative overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-background">
+        <div className="absolute inset-0 pointer-events-none" aria-hidden>
+          <div className="absolute -left-10 -top-10 h-32 w-32 rounded-full bg-primary/10 blur-3xl" />
+          <div className="absolute -right-16 bottom-0 h-40 w-40 rounded-full bg-primary/5 blur-3xl" />
         </div>
-        <div className="h-2 bg-secondary rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-primary rounded-full transition-all"
-            style={{ width: `${percentage}%` }}
-          />
+
+        <div className="relative z-10 flex flex-col gap-4">
+          <div>
+            <h3 className="text-base font-semibold text-foreground">Quota Progress</h3>
+            <p className="text-sm text-muted-foreground">
+              Monitor how fieldwork is tracking against the planned target.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+            <div className="h-44">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={quotaData}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={55}
+                    outerRadius={72}
+                    paddingAngle={1}
+                    stroke="none"
+                  >
+                    {quotaData.map((item) => (
+                      <Cell key={item.name} fill={item.color} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="h-3 w-3 rounded-full" style={{ backgroundColor: accentColor }} />
+                <span>Achieved</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="h-3 w-3 rounded-full" style={{ backgroundColor: remainderColor }} />
+                <span>Remaining</span>
+              </div>
+              <div>
+                <p className="text-xl font-semibold text-foreground">
+                  {achieved.toLocaleString()} / {target.toLocaleString()}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {(Math.min(achieved / target, 1) * 100).toFixed(1)}% of target interviews completed
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Remaining: {remaining.toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">
-          {achieved.toLocaleString()} / {target.toLocaleString()}
-        </p>
       </div>
 
-      <div className="minimal-card">
-        <span className="text-xs text-muted-foreground">Approval Status</span>
-        <div className="flex gap-4 mt-3">
-          {approvals.map((item) => (
-            <div key={item.label} className="flex-1">
-              <p className="text-lg font-semibold text-foreground">{item.value.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">{item.label}</p>
+      <div className="minimal-card relative overflow-hidden bg-gradient-to-br from-emerald-400/10 via-emerald-500/5 to-background">
+        <div className="absolute inset-0 pointer-events-none" aria-hidden>
+          <div className="absolute -left-8 top-6 h-28 w-28 rounded-full bg-emerald-400/10 blur-3xl" />
+          <div className="absolute right-0 bottom-0 h-32 w-32 rounded-full bg-red-500/10 blur-3xl" />
+        </div>
+
+        <div className="relative z-10 flex flex-col gap-4">
+          <div>
+            <h3 className="text-base font-semibold text-foreground">Approval Breakdown</h3>
+            <p className="text-sm text-muted-foreground">
+              See the balance between validated and flagged interviews to prioritise follow-up reviews.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+            <div className="h-44">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={approvals}
+                    dataKey="value"
+                    nameKey="label"
+                    innerRadius={35}
+                    outerRadius={70}
+                    paddingAngle={2}
+                    stroke="none"
+                  >
+                    {approvals.map((item) => (
+                      <Cell key={item.label} fill={item.color} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
             </div>
-          ))}
+            <div className="space-y-2">
+              {approvals.map((item) => (
+                <div key={item.label} className="flex items-center justify-between text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <span className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
+                    <span>{item.label}</span>
+                  </div>
+                  <span className="font-semibold text-foreground">
+                    {item.value.toLocaleString()} ({((item.value / approvalTotal) * 100).toFixed(1)}%)
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>

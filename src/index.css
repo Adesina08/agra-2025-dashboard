@@ -90,10 +90,23 @@
 
 @layer components {
   .minimal-card {
-    @apply bg-card border border-border rounded-lg p-4;
+    @apply bg-card/90 border border-border/70 rounded-xl p-5 backdrop-blur-sm;
+    @apply transition-all duration-200 hover:-translate-y-0.5 hover:border-border hover:shadow-[0_20px_60px_-45px_rgba(0,0,0,0.55)];
   }
 
   .kpi-card {
-    @apply minimal-card;
+    @apply minimal-card transition-transform;
+  }
+
+  .kpi-card.farmer {
+    @apply border-l-2 border-l-farmer;
+  }
+
+  .kpi-card.enterprise {
+    @apply border-l-2 border-l-enterprise;
+  }
+
+  .kpi-card.youth {
+    @apply border-l-2 border-l-youth;
   }
 }
