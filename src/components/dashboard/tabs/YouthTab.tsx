@@ -3,9 +3,6 @@ import { GraduationCap, TrendingUp, CheckCircle, Clock, XCircle, Briefcase } fro
 import { youthData, fieldLabels, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
 import { KPICard } from '../KPICard';
 import { DonutChart } from '../DonutChart';
-import { BarChartComponent } from '../BarChartComponent';
-import { LineChartComponent } from '../LineChartComponent';
-import { MapPlaceholder } from '../MapPlaceholder';
 import { DataTable } from '../DataTable';
 import { StatusBadge } from '../StatusBadge';
 import { ProgressPanels } from '../ProgressPanels';
@@ -34,29 +31,6 @@ export function YouthTab() {
     { name: 'Female', value: stats.female, color: '#f472b6' },
   ];
 
-  const educationData = useMemo(() => {
-    const counts: Record<string, number> = {};
-    youthData.forEach(y => { counts[y.educationLevel] = (counts[y.educationLevel] || 0) + 1; });
-    return Object.entries(counts)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value);
-  }, []);
-
-  const employmentData = useMemo(() => {
-    const counts: Record<string, number> = {};
-    youthData.forEach(y => { counts[y.employmentStatus] = (counts[y.employmentStatus] || 0) + 1; });
-    return Object.entries(counts)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value);
-  }, []);
-
-  const submissionTrend = useMemo(() => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return months.map(month => ({
-      date: month,
-      value: Math.floor(Math.random() * 100 + 40),
-    }));
-  }, []);
 
   const interviewerStats = useMemo(() => generateInterviewerStats(youthData), []);
   const submissionQuality = useMemo(() => generateSubmissionQuality(youthData), []);
@@ -156,44 +130,11 @@ export function YouthTab() {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <DonutChart
-          data={genderData}
-          title="Gender Distribution"
-          variant="youth"
-        />
-        <BarChartComponent
-          data={educationData}
-          title="Education Level Distribution"
-          color="#06b6d4"
-          variant="youth"
-        />
-        <MapPlaceholder
-          data={youthData.map(y => ({
-            latitude: y.latitude,
-            longitude: y.longitude,
-            region: y.region,
-            status: y.status,
-          }))}
-          title="Geographic Distribution"
-          variant="youth"
-        />
-      </div>
-
-      {/* Employment Status Chart */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <BarChartComponent
-          data={employmentData}
-          title="Employment Status Distribution"
-          color="#22d3ee"
-          variant="youth"
-        />
-        <LineChartComponent
-          data={submissionTrend}
-          title="Monthly Submission Trend"
-          color="#06b6d4"
-        />
-      </div>
+      <DonutChart
+        data={genderData}
+        title="Gender Distribution"
+        variant="youth"
+      />
 
       {/* Data Table */}
       <DataTable

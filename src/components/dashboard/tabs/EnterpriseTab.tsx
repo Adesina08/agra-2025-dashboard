@@ -3,9 +3,6 @@ import { Building2, TrendingUp, CheckCircle, Clock, XCircle, DollarSign } from '
 import { enterpriseData, fieldLabels, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
 import { KPICard } from '../KPICard';
 import { DonutChart } from '../DonutChart';
-import { BarChartComponent } from '../BarChartComponent';
-import { LineChartComponent } from '../LineChartComponent';
-import { MapPlaceholder } from '../MapPlaceholder';
 import { DataTable } from '../DataTable';
 import { StatusBadge } from '../StatusBadge';
 import { ProgressPanels } from '../ProgressPanels';
@@ -34,21 +31,6 @@ export function EnterpriseTab() {
     { name: 'Female Owners', value: stats.female, color: '#ec4899' },
   ];
 
-  const businessTypeData = useMemo(() => {
-    const counts: Record<string, number> = {};
-    enterpriseData.forEach(e => { counts[e.businessType] = (counts[e.businessType] || 0) + 1; });
-    return Object.entries(counts)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value);
-  }, []);
-
-  const submissionTrend = useMemo(() => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return months.map(month => ({
-      date: month,
-      value: Math.floor(Math.random() * 60 + 20),
-    }));
-  }, []);
 
   const interviewerStats = useMemo(() => generateInterviewerStats(enterpriseData), []);
   const submissionQuality = useMemo(() => generateSubmissionQuality(enterpriseData), []);
@@ -143,35 +125,10 @@ export function EnterpriseTab() {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <DonutChart
-          data={genderData}
-          title="Owner Gender Distribution"
-          variant="enterprise"
-        />
-        <BarChartComponent
-          data={businessTypeData}
-          title="Enterprises by Business Type"
-          color="#f59e0b"
-          variant="enterprise"
-        />
-        <MapPlaceholder
-          data={enterpriseData.map(e => ({
-            latitude: e.latitude,
-            longitude: e.longitude,
-            region: e.region,
-            status: e.status,
-          }))}
-          title="Geographic Distribution"
-          variant="enterprise"
-        />
-      </div>
-
-      {/* Trend Chart */}
-      <LineChartComponent
-        data={submissionTrend}
-        title="Monthly Submission Trend"
-        color="#f59e0b"
+      <DonutChart
+        data={genderData}
+        title="Owner Gender Distribution"
+        variant="enterprise"
       />
 
       {/* Data Table */}
