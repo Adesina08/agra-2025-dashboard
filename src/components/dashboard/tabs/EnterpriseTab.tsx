@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { Building2, TrendingUp, CheckCircle, Clock, XCircle, DollarSign } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Building2, TrendingUp, CheckCircle, Clock, XCircle, DollarSign, ClipboardCheck, Lightbulb } from 'lucide-react';
 import { enterpriseData, fieldLabels, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
 import { KPICard } from '../KPICard';
 import { DonutChart } from '../DonutChart';
@@ -9,8 +9,13 @@ import { ProgressPanels } from '../ProgressPanels';
 import { ProductivityRankings } from '../ProductivityRankings';
 import { SubmissionQualityChart } from '../SubmissionQualityChart';
 import { ErrorBreakdown } from '../ErrorBreakdown';
+import { EnterpriseInsights } from '../insights/EnterpriseInsights';
+
+type SubTab = 'qc' | 'insights';
 
 export function EnterpriseTab() {
+  const [activeSubTab, setActiveSubTab] = useState<SubTab>('qc');
+
   const stats = useMemo(() => {
     const total = enterpriseData.length;
     const approved = enterpriseData.filter(e => e.status === 'Approved').length;
@@ -30,7 +35,6 @@ export function EnterpriseTab() {
     { name: 'Male Owners', value: stats.male, color: '#f59e0b' },
     { name: 'Female Owners', value: stats.female, color: '#ec4899' },
   ];
-
 
   const interviewerStats = useMemo(() => generateInterviewerStats(enterpriseData), []);
   const submissionQuality = useMemo(() => generateSubmissionQuality(enterpriseData), []);
@@ -57,87 +61,116 @@ export function EnterpriseTab() {
     { key: 'submissionDate' as const, label: fieldLabels.enterprise.submissionDate, sortable: true },
   ];
 
+  const subTabs = [
+    { id: 'qc' as const, label: 'QC', icon: ClipboardCheck },
+    { id: 'insights' as const, label: 'Insights', icon: Lightbulb },
+  ];
+
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <KPICard
-          title="Total Enterprises"
-          value={stats.total}
-          icon={Building2}
-          variant="enterprise"
-          trend={{ value: 8.3, isPositive: true }}
-        />
-        <KPICard
-          title="Approved"
-          value={stats.approved}
-          subtitle={`${((stats.approved / stats.total) * 100).toFixed(1)}%`}
-          icon={CheckCircle}
-          variant="enterprise"
-        />
-        <KPICard
-          title="Pending"
-          value={stats.pending}
-          subtitle={`${((stats.pending / stats.total) * 100).toFixed(1)}%`}
-          icon={Clock}
-          variant="enterprise"
-        />
-        <KPICard
-          title="Rejected"
-          value={stats.rejected}
-          subtitle={`${((stats.rejected / stats.total) * 100).toFixed(1)}%`}
-          icon={XCircle}
-          variant="enterprise"
-        />
-        <KPICard
-          title="Total Revenue"
-          value={`$${(stats.totalRevenue / 1000000).toFixed(1)}M`}
-          icon={DollarSign}
-          variant="enterprise"
-        />
-        <KPICard
-          title="Avg Employees"
-          value={stats.avgEmployees.toFixed(0)}
-          icon={TrendingUp}
-          variant="enterprise"
-        />
+      {/* Sub-tabs */}
+      <div className="flex gap-2 border-b border-border/50 pb-2">
+        {subTabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveSubTab(tab.id)}
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg transition-all ${
+              activeSubTab === tab.id
+                ? 'bg-amber-500/10 text-amber-500 border-b-2 border-amber-500'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+            }`}
+          >
+            <tab.icon className="w-4 h-4" />
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      <ProgressPanels
-        achieved={stats.total}
-        target={targetInterviews}
-        approvals={[
-          { label: 'Approved', value: stats.approved, color: '#22c55e' },
-          { label: 'Pending', value: stats.pending, color: '#facc15' },
-          { label: 'Rejected', value: stats.rejected, color: '#ef4444' },
-        ]}
-        accentColor="#f59e0b"
-        remainderColor="#fb923c"
-      />
+      {activeSubTab === 'qc' ? (
+        <>
+          {/* KPI Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <KPICard
+              title="Total Enterprises"
+              value={stats.total}
+              icon={Building2}
+              variant="enterprise"
+              trend={{ value: 8.3, isPositive: true }}
+            />
+            <KPICard
+              title="Approved"
+              value={stats.approved}
+              subtitle={`${((stats.approved / stats.total) * 100).toFixed(1)}%`}
+              icon={CheckCircle}
+              variant="enterprise"
+            />
+            <KPICard
+              title="Pending"
+              value={stats.pending}
+              subtitle={`${((stats.pending / stats.total) * 100).toFixed(1)}%`}
+              icon={Clock}
+              variant="enterprise"
+            />
+            <KPICard
+              title="Rejected"
+              value={stats.rejected}
+              subtitle={`${((stats.rejected / stats.total) * 100).toFixed(1)}%`}
+              icon={XCircle}
+              variant="enterprise"
+            />
+            <KPICard
+              title="Total Revenue"
+              value={`$${(stats.totalRevenue / 1000000).toFixed(1)}M`}
+              icon={DollarSign}
+              variant="enterprise"
+            />
+            <KPICard
+              title="Avg Employees"
+              value={stats.avgEmployees.toFixed(0)}
+              icon={TrendingUp}
+              variant="enterprise"
+            />
+          </div>
 
-      {/* Productivity Rankings */}
-      <ProductivityRankings data={interviewerStats} variant="enterprise" />
+          <ProgressPanels
+            achieved={stats.total}
+            target={targetInterviews}
+            approvals={[
+              { label: 'Approved', value: stats.approved, color: '#22c55e' },
+              { label: 'Pending', value: stats.pending, color: '#facc15' },
+              { label: 'Rejected', value: stats.rejected, color: '#ef4444' },
+            ]}
+            accentColor="#f59e0b"
+            remainderColor="#fb923c"
+          />
 
-      {/* Submission Quality & Error Breakdown */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <SubmissionQualityChart data={submissionQuality} variant="enterprise" />
-        <ErrorBreakdown data={errorBreakdownData.enterprise} variant="enterprise" />
-      </div>
+          {/* Productivity Rankings */}
+          <ProductivityRankings data={interviewerStats} variant="enterprise" />
 
-      {/* Charts Row */}
-      <DonutChart
-        data={genderData}
-        title="Owner Gender Distribution"
-        variant="enterprise"
-      />
+          {/* Submission Quality & Error Breakdown */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <SubmissionQualityChart data={submissionQuality} variant="enterprise" />
+            <ErrorBreakdown data={errorBreakdownData.enterprise} variant="enterprise" />
+          </div>
 
-      {/* Data Table */}
-      <DataTable
-        data={enterpriseData}
-        columns={columns}
-        title="Enterprise Submissions"
-        variant="enterprise"
-      />
+          {/* Charts Row */}
+          <DonutChart
+            data={genderData}
+            title="Owner Gender Distribution"
+            variant="enterprise"
+          />
+
+          {/* Data Table */}
+          <DataTable
+            data={enterpriseData}
+            columns={columns}
+            title="Enterprise Submissions"
+            variant="enterprise"
+          />
+        </>
+      ) : (
+        <EnterpriseInsights />
+      )}
     </div>
   );
 }
