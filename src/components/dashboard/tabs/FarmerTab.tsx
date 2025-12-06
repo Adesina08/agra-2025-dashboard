@@ -1,6 +1,24 @@
-import { useState, useMemo } from 'react';
-import { Users, TrendingUp, CheckCircle, Clock, XCircle, Wheat, ClipboardCheck, Lightbulb } from 'lucide-react';
-import { farmerData, fieldLabels, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
+// src/components/dashboard/tabs/FarmerTab.tsx
+import { useMemo, useState } from 'react';
+import {
+  Users,
+  TrendingUp,
+  CheckCircle,
+  Clock,
+  XCircle,
+  Wheat,
+  ClipboardCheck,
+  Lightbulb,
+} from 'lucide-react';
+import {
+  fieldLabels,
+  generateInterviewerStats,
+  generateSubmissionQuality,
+  errorBreakdownData,
+  type FarmerData,
+} from '@/data/mockData';
+import { useSheetData } from '@/hooks/useSheetData';
+import { mapFarmerRow } from '@/lib/mappings';
 import { KPICard } from '../KPICard';
 import { DonutChart } from '../DonutChart';
 import { DataTable } from '../DataTable';
@@ -13,20 +31,41 @@ import { FarmerInsights } from '../insights/FarmerInsights';
 
 type SubTab = 'qc' | 'insights';
 
+const farmerSheetId = import.meta.env.VITE_SHEET_ID_FARMERS as string;
+
 export function FarmerTab() {
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('qc');
 
+  const {
+    data: farmerData,
+    loading,
+    error,
+  } = useSheetData<FarmerData>(farmerSheetId, mapFarmerRow);
+
   const stats = useMemo(() => {
     const total = farmerData.length;
-    const approved = farmerData.filter(f => f.status === 'Approved').length;
-    const pending = farmerData.filter(f => f.status === 'Pending').length;
-    const rejected = farmerData.filter(f => f.status === 'Rejected').length;
-    const male = farmerData.filter(f => f.gender === 'Male').length;
-    const female = farmerData.filter(f => f.gender === 'Female').length;
-    const avgFarmSize = farmerData.reduce((sum, f) => sum + f.farmSize, 0) / total;
-    
+    if (!total) {
+      return {
+        total: 0,
+        approved: 0,
+        pending: 0,
+        rejected: 0,
+        male: 0,
+        female: 0,
+        avgFarmSize: 0,
+      };
+    }
+
+    const approved = farmerData.filter((f) => f.status === 'Approved').length;
+    const pending = farmerData.filter((f) => f.status === 'Pending').length;
+    const rejected = farmerData.filter((f) => f.status === 'Rejected').length;
+    const male = farmerData.filter((f) => f.gender === 'Male').length;
+    const female = farmerData.filter((f) => f.gender === 'Female').length;
+    const avgFarmSize =
+      farmerData.reduce((sum, f) => sum + (f.farmSize || 0), 0) / total;
+
     return { total, approved, pending, rejected, male, female, avgFarmSize };
-  }, []);
+  }, [farmerData]);
 
   const targetInterviews = 5000;
 
@@ -35,30 +74,76 @@ export function FarmerTab() {
     { name: 'Female', value: stats.female, color: '#a855f7' },
   ];
 
-  const interviewerStats = useMemo(() => generateInterviewerStats(farmerData), []);
-  const submissionQuality = useMemo(() => generateSubmissionQuality(farmerData), []);
+  const interviewerStats = useMemo(
+    () => generateInterviewerStats(farmerData),
+    [farmerData]
+  );
+  const submissionQuality = useMemo(
+    () => generateSubmissionQuality(farmerData),
+    [farmerData]
+  );
 
   const columns = [
     { key: 'id' as const, label: 'ID', sortable: true },
-    { key: 'farmerName' as const, label: fieldLabels.farmer.farmerName, sortable: true },
-    { key: 'region' as const, label: fieldLabels.farmer.region, sortable: true },
-    { key: 'district' as const, label: fieldLabels.farmer.district, sortable: true },
-    { key: 'gender' as const, label: fieldLabels.farmer.gender, sortable: true },
-    { key: 'cropType' as const, label: fieldLabels.farmer.cropType, sortable: true },
-    { key: 'farmSize' as const, label: fieldLabels.farmer.farmSize, sortable: true },
-    { 
-      key: 'status' as const, 
-      label: fieldLabels.farmer.status, 
+    {
+      key: 'farmerName' as const,
+      label: fieldLabels.farmer.farmerName,
       sortable: true,
-      render: (value: string) => <StatusBadge status={value as any} />
     },
-    { key: 'submissionDate' as const, label: fieldLabels.farmer.submissionDate, sortable: true },
+    {
+      key: 'region' as const,
+      label: fieldLabels.farmer.region,
+      sortable: true,
+    },
+    {
+      key: 'district' as const,
+      label: fieldLabels.farmer.district,
+      sortable: true,
+    },
+    {
+      key: 'gender' as const,
+      label: fieldLabels.farmer.gender,
+      sortable: true,
+    },
+    {
+      key: 'cropType' as const,
+      label: fieldLabels.farmer.cropType,
+      sortable: true,
+    },
+    {
+      key: 'farmSize' as const,
+      label: fieldLabels.farmer.farmSize,
+      sortable: true,
+    },
+    {
+      key: 'status' as const,
+      label: fieldLabels.farmer.status,
+      sortable: true,
+      render: (value: string) => <StatusBadge status={value as any} />,
+    },
+    {
+      key: 'submissionDate' as const,
+      label: fieldLabels.farmer.submissionDate,
+      sortable: true,
+    },
   ];
 
   const subTabs = [
     { id: 'qc' as const, label: 'QC', icon: ClipboardCheck },
     { id: 'insights' as const, label: 'Insights', icon: Lightbulb },
   ];
+
+  if (loading) {
+    return <div className="animate-pulse text-sm text-muted-foreground">Loading farmer data…</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="text-sm text-red-500">
+        Failed to load Farmer sheet: {error}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -94,21 +179,33 @@ export function FarmerTab() {
             <KPICard
               title="Approved"
               value={stats.approved}
-              subtitle={`${((stats.approved / stats.total) * 100).toFixed(1)}%`}
+              subtitle={
+                stats.total
+                  ? `${((stats.approved / stats.total) * 100).toFixed(1)}%`
+                  : '0%'
+              }
               icon={CheckCircle}
               variant="farmer"
             />
             <KPICard
               title="Pending"
               value={stats.pending}
-              subtitle={`${((stats.pending / stats.total) * 100).toFixed(1)}%`}
+              subtitle={
+                stats.total
+                  ? `${((stats.pending / stats.total) * 100).toFixed(1)}%`
+                  : '0%'
+              }
               icon={Clock}
               variant="farmer"
             />
             <KPICard
               title="Rejected"
               value={stats.rejected}
-              subtitle={`${((stats.rejected / stats.total) * 100).toFixed(1)}%`}
+              subtitle={
+                stats.total
+                  ? `${((stats.rejected / stats.total) * 100).toFixed(1)}%`
+                  : '0%'
+              }
               icon={XCircle}
               variant="farmer"
             />
@@ -120,7 +217,11 @@ export function FarmerTab() {
             />
             <KPICard
               title="Approval Rate"
-              value={`${((stats.approved / stats.total) * 100).toFixed(0)}%`}
+              value={
+                stats.total
+                  ? `${((stats.approved / stats.total) * 100).toFixed(0)}%`
+                  : '0%'
+              }
               icon={TrendingUp}
               variant="farmer"
               trend={{ value: 3.2, isPositive: true }}
@@ -144,8 +245,14 @@ export function FarmerTab() {
 
           {/* Submission Quality & Error Breakdown */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SubmissionQualityChart data={submissionQuality} variant="farmer" />
-            <ErrorBreakdown data={errorBreakdownData.farmer} variant="farmer" />
+            <SubmissionQualityChart
+              data={submissionQuality}
+              variant="farmer"
+            />
+            <ErrorBreakdown
+              data={errorBreakdownData.farmer}
+              variant="farmer"
+            />
           </div>
 
           {/* Charts Row */}
