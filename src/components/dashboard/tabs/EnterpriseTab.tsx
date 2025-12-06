@@ -1,6 +1,24 @@
-import { useState, useMemo } from 'react';
-import { Building2, TrendingUp, CheckCircle, Clock, XCircle, DollarSign, ClipboardCheck, Lightbulb } from 'lucide-react';
-import { enterpriseData, fieldLabels, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
+// src/components/dashboard/tabs/EnterpriseTab.tsx
+import { useMemo, useState } from 'react';
+import {
+  Building2,
+  TrendingUp,
+  CheckCircle,
+  Clock,
+  XCircle,
+  DollarSign,
+  ClipboardCheck,
+  Lightbulb,
+} from 'lucide-react';
+import {
+  fieldLabels,
+  generateInterviewerStats,
+  generateSubmissionQuality,
+  errorBreakdownData,
+  type EnterpriseData,
+} from '@/data/mockData';
+import { useSheetData } from '@/hooks/useSheetData';
+import { mapEnterpriseRow } from '@/lib/mappings';
 import { KPICard } from '../KPICard';
 import { DonutChart } from '../DonutChart';
 import { DataTable } from '../DataTable';
@@ -13,21 +31,70 @@ import { EnterpriseInsights } from '../insights/EnterpriseInsights';
 
 type SubTab = 'qc' | 'insights';
 
+const enterpriseSheetId = import.meta.env
+  .VITE_SHEET_ID_ENTERPRISE as string;
+
 export function EnterpriseTab() {
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('qc');
 
+  const {
+    data: enterpriseData,
+    loading,
+    error,
+  } = useSheetData<EnterpriseData>(enterpriseSheetId, mapEnterpriseRow);
+
   const stats = useMemo(() => {
     const total = enterpriseData.length;
-    const approved = enterpriseData.filter(e => e.status === 'Approved').length;
-    const pending = enterpriseData.filter(e => e.status === 'Pending').length;
-    const rejected = enterpriseData.filter(e => e.status === 'Rejected').length;
-    const male = enterpriseData.filter(e => e.gender === 'Male').length;
-    const female = enterpriseData.filter(e => e.gender === 'Female').length;
-    const totalRevenue = enterpriseData.reduce((sum, e) => sum + e.annualRevenue, 0);
-    const avgEmployees = enterpriseData.reduce((sum, e) => sum + e.employees, 0) / total;
-    
-    return { total, approved, pending, rejected, male, female, totalRevenue, avgEmployees };
-  }, []);
+    if (!total) {
+      return {
+        total: 0,
+        approved: 0,
+        pending: 0,
+        rejected: 0,
+        male: 0,
+        female: 0,
+        totalRevenue: 0,
+        avgEmployees: 0,
+      };
+    }
+
+    const approved = enterpriseData.filter(
+      (e) => e.status === 'Approved'
+    ).length;
+    const pending = enterpriseData.filter(
+      (e) => e.status === 'Pending'
+    ).length;
+    const rejected = enterpriseData.filter(
+      (e) => e.status === 'Rejected'
+    ).length;
+    const male = enterpriseData.filter(
+      (e) => e.gender === 'Male'
+    ).length;
+    const female = enterpriseData.filter(
+      (e) => e.gender === 'Female'
+    ).length;
+
+    const totalRevenue = enterpriseData.reduce(
+      (sum, e) => sum + (e.annualRevenue || 0),
+      0
+    );
+    const avgEmployees =
+      enterpriseData.reduce(
+        (sum, e) => sum + (e.employees || 0),
+        0
+      ) / total;
+
+    return {
+      total,
+      approved,
+      pending,
+      rejected,
+      male,
+      female,
+      totalRevenue,
+      avgEmployees,
+    };
+  }, [enterpriseData]);
 
   const targetInterviews = 2200;
 
@@ -36,35 +103,81 @@ export function EnterpriseTab() {
     { name: 'Female Owners', value: stats.female, color: '#ec4899' },
   ];
 
-  const interviewerStats = useMemo(() => generateInterviewerStats(enterpriseData), []);
-  const submissionQuality = useMemo(() => generateSubmissionQuality(enterpriseData), []);
+  const interviewerStats = useMemo(
+    () => generateInterviewerStats(enterpriseData),
+    [enterpriseData]
+  );
+  const submissionQuality = useMemo(
+    () => generateSubmissionQuality(enterpriseData),
+    [enterpriseData]
+  );
 
   const columns = [
     { key: 'id' as const, label: 'ID', sortable: true },
-    { key: 'enterpriseName' as const, label: fieldLabels.enterprise.enterpriseName, sortable: true },
-    { key: 'businessType' as const, label: fieldLabels.enterprise.businessType, sortable: true },
-    { key: 'region' as const, label: fieldLabels.enterprise.region, sortable: true },
-    { key: 'gender' as const, label: fieldLabels.enterprise.gender, sortable: true },
-    { key: 'employees' as const, label: fieldLabels.enterprise.employees, sortable: true },
-    { 
-      key: 'annualRevenue' as const, 
-      label: fieldLabels.enterprise.annualRevenue, 
+    {
+      key: 'enterpriseName' as const,
+      label: fieldLabels.enterprise.enterpriseName,
       sortable: true,
-      render: (value: number) => `$${value.toLocaleString()}`
     },
-    { 
-      key: 'status' as const, 
-      label: fieldLabels.enterprise.status, 
+    {
+      key: 'businessType' as const,
+      label: fieldLabels.enterprise.businessType,
       sortable: true,
-      render: (value: string) => <StatusBadge status={value as any} />
     },
-    { key: 'submissionDate' as const, label: fieldLabels.enterprise.submissionDate, sortable: true },
+    {
+      key: 'region' as const,
+      label: fieldLabels.enterprise.region,
+      sortable: true,
+    },
+    {
+      key: 'gender' as const,
+      label: fieldLabels.enterprise.gender,
+      sortable: true,
+    },
+    {
+      key: 'employees' as const,
+      label: fieldLabels.enterprise.employees,
+      sortable: true,
+    },
+    {
+      key: 'annualRevenue' as const,
+      label: fieldLabels.enterprise.annualRevenue,
+      sortable: true,
+      render: (value: number) => `$${(value || 0).toLocaleString()}`,
+    },
+    {
+      key: 'status' as const,
+      label: fieldLabels.enterprise.status,
+      sortable: true,
+      render: (value: string) => <StatusBadge status={value as any} />,
+    },
+    {
+      key: 'submissionDate' as const,
+      label: fieldLabels.enterprise.submissionDate,
+      sortable: true,
+    },
   ];
 
   const subTabs = [
     { id: 'qc' as const, label: 'QC', icon: ClipboardCheck },
     { id: 'insights' as const, label: 'Insights', icon: Lightbulb },
   ];
+
+  if (loading) {
+    return (
+      <div className="animate-pulse text-sm text-muted-foreground">
+        Loading enterprise data…
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-sm text-red-500">
+        Failed to load Enterprise sheet: {error}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -100,27 +213,39 @@ export function EnterpriseTab() {
             <KPICard
               title="Approved"
               value={stats.approved}
-              subtitle={`${((stats.approved / stats.total) * 100).toFixed(1)}%`}
+              subtitle={
+                stats.total
+                  ? `${((stats.approved / stats.total) * 100).toFixed(1)}%`
+                  : '0%'
+              }
               icon={CheckCircle}
               variant="enterprise"
             />
             <KPICard
               title="Pending"
               value={stats.pending}
-              subtitle={`${((stats.pending / stats.total) * 100).toFixed(1)}%`}
+              subtitle={
+                stats.total
+                  ? `${((stats.pending / stats.total) * 100).toFixed(1)}%`
+                  : '0%'
+              }
               icon={Clock}
               variant="enterprise"
             />
             <KPICard
               title="Rejected"
               value={stats.rejected}
-              subtitle={`${((stats.rejected / stats.total) * 100).toFixed(1)}%`}
+              subtitle={
+                stats.total
+                  ? `${((stats.rejected / stats.total) * 100).toFixed(1)}%`
+                  : '0%'
+              }
               icon={XCircle}
               variant="enterprise"
             />
             <KPICard
               title="Total Revenue"
-              value={`$${(stats.totalRevenue / 1000000).toFixed(1)}M`}
+              value={`$${(stats.totalRevenue / 1_000_000).toFixed(1)}M`}
               icon={DollarSign}
               variant="enterprise"
             />
@@ -145,12 +270,21 @@ export function EnterpriseTab() {
           />
 
           {/* Productivity Rankings */}
-          <ProductivityRankings data={interviewerStats} variant="enterprise" />
+          <ProductivityRankings
+            data={interviewerStats}
+            variant="enterprise"
+          />
 
           {/* Submission Quality & Error Breakdown */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SubmissionQualityChart data={submissionQuality} variant="enterprise" />
-            <ErrorBreakdown data={errorBreakdownData.enterprise} variant="enterprise" />
+            <SubmissionQualityChart
+              data={submissionQuality}
+              variant="enterprise"
+            />
+            <ErrorBreakdown
+              data={errorBreakdownData.enterprise}
+              variant="enterprise"
+            />
           </div>
 
           {/* Charts Row */}

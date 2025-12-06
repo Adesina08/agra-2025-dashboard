@@ -1,6 +1,24 @@
-import { useState, useMemo } from 'react';
-import { GraduationCap, TrendingUp, CheckCircle, Clock, XCircle, Briefcase, ClipboardCheck, Lightbulb } from 'lucide-react';
-import { youthData, fieldLabels, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
+// src/components/dashboard/tabs/YouthTab.tsx
+import { useMemo, useState } from 'react';
+import {
+  GraduationCap,
+  TrendingUp,
+  CheckCircle,
+  Clock,
+  XCircle,
+  Briefcase,
+  ClipboardCheck,
+  Lightbulb,
+} from 'lucide-react';
+import {
+  fieldLabels,
+  generateInterviewerStats,
+  generateSubmissionQuality,
+  errorBreakdownData,
+  type YouthData,
+} from '@/data/mockData';
+import { useSheetData } from '@/hooks/useSheetData';
+import { mapYouthRow } from '@/lib/mappings';
 import { KPICard } from '../KPICard';
 import { DonutChart } from '../DonutChart';
 import { DataTable } from '../DataTable';
@@ -13,21 +31,57 @@ import { YouthInsights } from '../insights/YouthInsights';
 
 type SubTab = 'qc' | 'insights';
 
+const youthSheetId = import.meta.env.VITE_SHEET_ID_YOUTH as string;
+
 export function YouthTab() {
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('qc');
 
+  const {
+    data: youthData,
+    loading,
+    error,
+  } = useSheetData<YouthData>(youthSheetId, mapYouthRow);
+
   const stats = useMemo(() => {
     const total = youthData.length;
-    const approved = youthData.filter(y => y.status === 'Approved').length;
-    const pending = youthData.filter(y => y.status === 'Pending').length;
-    const rejected = youthData.filter(y => y.status === 'Rejected').length;
-    const male = youthData.filter(y => y.gender === 'Male').length;
-    const female = youthData.filter(y => y.gender === 'Female').length;
-    const trained = youthData.filter(y => y.trainingCompleted).length;
-    const employed = youthData.filter(y => y.employmentStatus === 'Employed' || y.employmentStatus === 'Self-employed').length;
+    if (!total) {
+      return {
+        total: 0,
+        approved: 0,
+        pending: 0,
+        rejected: 0,
+        male: 0,
+        female: 0,
+        trained: 0,
+        employed: 0,
+      };
+    }
 
-    return { total, approved, pending, rejected, male, female, trained, employed };
-  }, []);
+    const approved = youthData.filter((y) => y.status === 'Approved')
+      .length;
+    const pending = youthData.filter((y) => y.status === 'Pending').length;
+    const rejected = youthData.filter((y) => y.status === 'Rejected')
+      .length;
+    const male = youthData.filter((y) => y.gender === 'Male').length;
+    const female = youthData.filter((y) => y.gender === 'Female').length;
+    const trained = youthData.filter((y) => y.trainingCompleted).length;
+    const employed = youthData.filter(
+      (y) =>
+        y.employmentStatus === 'Employed' ||
+        y.employmentStatus === 'Self-employed'
+    ).length;
+
+    return {
+      total,
+      approved,
+      pending,
+      rejected,
+      male,
+      female,
+      trained,
+      employed,
+    };
+  }, [youthData]);
 
   const targetInterviews = 3000;
 
@@ -36,32 +90,62 @@ export function YouthTab() {
     { name: 'Female', value: stats.female, color: '#f472b6' },
   ];
 
-  const interviewerStats = useMemo(() => generateInterviewerStats(youthData), []);
-  const submissionQuality = useMemo(() => generateSubmissionQuality(youthData), []);
+  const interviewerStats = useMemo(
+    () => generateInterviewerStats(youthData),
+    [youthData]
+  );
+  const submissionQuality = useMemo(
+    () => generateSubmissionQuality(youthData),
+    [youthData]
+  );
 
   const columns = [
     { key: 'id' as const, label: 'ID', sortable: true },
-    { key: 'youthName' as const, label: fieldLabels.youth.youthName, sortable: true },
-    { key: 'region' as const, label: fieldLabels.youth.region, sortable: true },
-    { key: 'gender' as const, label: fieldLabels.youth.gender, sortable: true },
-    { key: 'ageGroup' as const, label: fieldLabels.youth.ageGroup, sortable: true },
-    { key: 'educationLevel' as const, label: fieldLabels.youth.educationLevel, sortable: true },
-    { key: 'employmentStatus' as const, label: fieldLabels.youth.employmentStatus, sortable: true },
-    { 
-      key: 'trainingCompleted' as const, 
-      label: fieldLabels.youth.trainingCompleted, 
+    {
+      key: 'youthName' as const,
+      label: fieldLabels.youth.youthName,
+      sortable: true,
+    },
+    {
+      key: 'region' as const,
+      label: fieldLabels.youth.region,
+      sortable: true,
+    },
+    {
+      key: 'gender' as const,
+      label: fieldLabels.youth.gender,
+      sortable: true,
+    },
+    {
+      key: 'ageGroup' as const,
+      label: fieldLabels.youth.ageGroup,
+      sortable: true,
+    },
+    {
+      key: 'educationLevel' as const,
+      label: fieldLabels.youth.educationLevel,
+      sortable: true,
+    },
+    {
+      key: 'employmentStatus' as const,
+      label: fieldLabels.youth.employmentStatus,
+      sortable: true,
+    },
+    {
+      key: 'trainingCompleted' as const,
+      label: fieldLabels.youth.trainingCompleted,
       sortable: true,
       render: (value: boolean) => (
         <span className={value ? 'text-green-400' : 'text-muted-foreground'}>
           {value ? 'Yes' : 'No'}
         </span>
-      )
+      ),
     },
-    { 
-      key: 'status' as const, 
-      label: fieldLabels.youth.status, 
+    {
+      key: 'status' as const,
+      label: fieldLabels.youth.status,
       sortable: true,
-      render: (value: string) => <StatusBadge status={value as any} />
+      render: (value: string) => <StatusBadge status={value as any} />,
     },
   ];
 
@@ -69,6 +153,22 @@ export function YouthTab() {
     { id: 'qc' as const, label: 'QC', icon: ClipboardCheck },
     { id: 'insights' as const, label: 'Insights', icon: Lightbulb },
   ];
+
+  if (loading) {
+    return (
+      <div className="animate-pulse text-sm text-muted-foreground">
+        Loading youth data…
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-sm text-red-500">
+        Failed to load Youth sheet: {error}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -104,33 +204,53 @@ export function YouthTab() {
             <KPICard
               title="Approved"
               value={stats.approved}
-              subtitle={`${((stats.approved / stats.total) * 100).toFixed(1)}%`}
+              subtitle={
+                stats.total
+                  ? `${((stats.approved / stats.total) * 100).toFixed(1)}%`
+                  : '0%'
+              }
               icon={CheckCircle}
               variant="youth"
             />
             <KPICard
               title="Pending"
               value={stats.pending}
-              subtitle={`${((stats.pending / stats.total) * 100).toFixed(1)}%`}
+              subtitle={
+                stats.total
+                  ? `${((stats.pending / stats.total) * 100).toFixed(1)}%`
+                  : '0%'
+              }
               icon={Clock}
               variant="youth"
             />
             <KPICard
               title="Rejected"
               value={stats.rejected}
-              subtitle={`${((stats.rejected / stats.total) * 100).toFixed(1)}%`}
+              subtitle={
+                stats.total
+                  ? `${((stats.rejected / stats.total) * 100).toFixed(1)}%`
+                  : '0%'
+              }
               icon={XCircle}
               variant="youth"
             />
             <KPICard
               title="Training Completed"
-              value={`${((stats.trained / stats.total) * 100).toFixed(0)}%`}
+              value={
+                stats.total
+                  ? `${((stats.trained / stats.total) * 100).toFixed(0)}%`
+                  : '0%'
+              }
               icon={GraduationCap}
               variant="youth"
             />
             <KPICard
               title="Employment Rate"
-              value={`${((stats.employed / stats.total) * 100).toFixed(0)}%`}
+              value={
+                stats.total
+                  ? `${((stats.employed / stats.total) * 100).toFixed(0)}%`
+                  : '0%'
+              }
               icon={Briefcase}
               variant="youth"
               trend={{ value: 5.2, isPositive: true }}
@@ -154,8 +274,14 @@ export function YouthTab() {
 
           {/* Submission Quality & Error Breakdown */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SubmissionQualityChart data={submissionQuality} variant="youth" />
-            <ErrorBreakdown data={errorBreakdownData.youth} variant="youth" />
+            <SubmissionQualityChart
+              data={submissionQuality}
+              variant="youth"
+            />
+            <ErrorBreakdown
+              data={errorBreakdownData.youth}
+              variant="youth"
+            />
           </div>
 
           {/* Charts Row */}
