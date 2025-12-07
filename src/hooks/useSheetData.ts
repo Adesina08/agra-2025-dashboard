@@ -7,15 +7,13 @@ export interface SheetHookState<T> {
   refresh: () => void;
 }
 
-/**
- * Generic hook to fetch and transform data from a public Google Sheet.
- *
- * It expects the sheet to be shared as "Anyone with the link can view".
- * It reads the CSV export, converts it to an array of row-objects
- * keyed by the header names, then maps each row using the provided mapper.
- */
+interface SheetConfig {
+  sheetId: string;
+  gid?: string;
+}
+
 export function useSheetData<T>(
-  sheetId: string | undefined,
+  config: SheetConfig | undefined,
   mapRow: (row: Record<string, string>) => T
 ): SheetHookState<T> {
   const [data, setData] = useState<T[]>([]);
@@ -28,8 +26,9 @@ export function useSheetData<T>(
   }, []);
 
   useEffect(() => {
-    if (!sheetId) {
-      setError('Missing Google Sheet ID');
+    if (!config?.sheetId) {
+      setError('Missing Google Sheet ID in environment variables');
+      setLoading(false);
       return;
     }
 
@@ -40,20 +39,31 @@ export function useSheetData<T>(
       setError(null);
 
       try {
-        const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+        let url = `https://docs.google.com/spreadsheets/d/${config.sheetId}/gviz/tq?tqx=out:csv`;
+        if (config.gid) {
+          url += `&gid=${config.gid}`;
+        }
+
         const res = await fetch(url, { signal: controller.signal });
 
         if (!res.ok) {
-          throw new Error(`Failed to fetch sheet ${sheetId}: HTTP ${res.status}`);
+          throw new Error(`HTTP ${res.status}: Unable to fetch sheet. Check Sheet ID and GID.`);
         }
 
         const csv = await res.text();
+
+        if (!csv.trim()) {
+          throw new Error('Sheet is empty or not accessible');
+        }
+
         const rows = csvToObjects(csv);
         const mapped = rows.map(mapRow);
 
         setData(mapped);
+        setError(null);
       } catch (err: any) {
         if (!controller.signal.aborted) {
+          console.error('Sheet fetch error:', err);
           setError(err?.message ?? 'Unknown error while fetching sheet');
           setData([]);
         }
@@ -67,14 +77,11 @@ export function useSheetData<T>(
     run();
 
     return () => controller.abort();
-  }, [sheetId, mapRow, reloadToken]);
+  }, [config?.sheetId, config?.gid, mapRow, reloadToken]);
 
   return { data, loading, error, refresh };
 }
 
-/**
- * Convert CSV text into array of row-objects keyed by header.
- */
 function csvToObjects(csv: string): Record<string, string>[] {
   const lines = csv
     .split(/\r?\n/)
@@ -100,9 +107,6 @@ function csvToObjects(csv: string): Record<string, string>[] {
   return rows;
 }
 
-/**
- * Minimal CSV line parser handling quoted values and commas.
- */
 function parseCsvLine(line: string): string[] {
   const result: string[] = [];
   let current = '';
@@ -113,7 +117,6 @@ function parseCsvLine(line: string): string[] {
 
     if (inQuotes) {
       if (c === '"' && line[i + 1] === '"') {
-        // Escaped quote
         current += '"';
         i++;
       } else if (c === '"') {
