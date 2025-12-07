@@ -18,7 +18,9 @@ import {
   type EnterpriseData,
 } from '@/data/mockData';
 import { useSheetData } from '@/hooks/useSheetData';
+import { useQCData } from '@/hooks/useQCData';
 import { mapEnterpriseRow } from '@/lib/mappings';
+import { mergeWithQC } from '@/lib/mergeQCData';
 import { KPICard } from '../KPICard';
 import { DonutChart } from '../DonutChart';
 import { DataTable } from '../DataTable';
@@ -31,17 +33,50 @@ import { EnterpriseInsights } from '../insights/EnterpriseInsights';
 
 type SubTab = 'qc' | 'insights';
 
-const enterpriseSheetId = import.meta.env
-  .VITE_SHEET_ID_ENTERPRISE as string;
+const enterpriseSheetId = import.meta.env.VITE_SHEET_ID_ENTERPRISE as
+  | string
+  | undefined;
+
+const enterpriseDataConfig = enterpriseSheetId
+  ? {
+      sheetId: enterpriseSheetId,
+      gid: import.meta.env.VITE_SHEET_GID_ENTERPRISE_DATA as string,
+    }
+  : undefined;
+
+const enterpriseQCConfig = enterpriseSheetId
+  ? {
+      sheetId: enterpriseSheetId,
+      gidDetail: import.meta.env.VITE_SHEET_GID_ENTERPRISE_QC_DETAIL as string,
+      gidSummary: import.meta.env.VITE_SHEET_GID_ENTERPRISE_QC_SUMMARY as string,
+      gidEnum: import.meta.env.VITE_SHEET_GID_ENTERPRISE_ENUM as string,
+    }
+  : undefined;
 
 export function EnterpriseTab() {
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('qc');
 
   const {
-    data: enterpriseData,
-    loading,
-    error,
-  } = useSheetData<EnterpriseData>(enterpriseSheetId, mapEnterpriseRow);
+    data: enterpriseRaw,
+    loading: enterpriseLoading,
+    error: enterpriseError,
+  } = useSheetData<EnterpriseData>(enterpriseDataConfig, mapEnterpriseRow);
+
+  const {
+    qcDetail,
+    qcSummary,
+    enumPerformance,
+    loading: qcLoading,
+    error: qcError,
+  } = useQCData(enterpriseQCConfig);
+
+  const enterpriseData = useMemo(
+    () => mergeWithQC(enterpriseRaw, qcDetail),
+    [enterpriseRaw, qcDetail]
+  );
+
+  const loading = enterpriseLoading || qcLoading;
+  const error = enterpriseError || qcError;
 
   const stats = useMemo(() => {
     const total = enterpriseData.length;
@@ -50,7 +85,7 @@ export function EnterpriseTab() {
         total: 0,
         approved: 0,
         pending: 0,
-        rejected: 0,
+        notApproved: 0,
         male: 0,
         female: 0,
         totalRevenue: 0,
@@ -58,37 +93,26 @@ export function EnterpriseTab() {
       };
     }
 
-    const approved = enterpriseData.filter(
-      (e) => e.status === 'Approved'
+    const approved = enterpriseData.filter((e) => e.status === 'Approved').length;
+    const pending = enterpriseData.filter((e) => e.status === 'Pending').length;
+    const notApproved = enterpriseData.filter(
+      (e) => e.status !== 'Approved' && e.status !== 'Pending'
     ).length;
-    const pending = enterpriseData.filter(
-      (e) => e.status === 'Pending'
-    ).length;
-    const rejected = enterpriseData.filter(
-      (e) => e.status === 'Rejected'
-    ).length;
-    const male = enterpriseData.filter(
-      (e) => e.gender === 'Male'
-    ).length;
-    const female = enterpriseData.filter(
-      (e) => e.gender === 'Female'
-    ).length;
+    const male = enterpriseData.filter((e) => e.gender === 'Male').length;
+    const female = enterpriseData.filter((e) => e.gender === 'Female').length;
 
     const totalRevenue = enterpriseData.reduce(
       (sum, e) => sum + (e.annualRevenue || 0),
       0
     );
     const avgEmployees =
-      enterpriseData.reduce(
-        (sum, e) => sum + (e.employees || 0),
-        0
-      ) / total;
+      enterpriseData.reduce((sum, e) => sum + (e.employees || 0), 0) / total;
 
     return {
       total,
       approved,
       pending,
-      rejected,
+      notApproved,
       male,
       female,
       totalRevenue,
@@ -103,13 +127,31 @@ export function EnterpriseTab() {
     { name: 'Female Owners', value: stats.female, color: '#ec4899' },
   ];
 
-  const interviewerStats = useMemo(
-    () => generateInterviewerStats(enterpriseData),
-    [enterpriseData]
-  );
+  const interviewerStats = useMemo(() => {
+    if (enumPerformance.length) {
+      return enumPerformance.map((perf) => ({
+        name: perf.enumeratorID || 'Unknown',
+        totalInterviews: perf.totalSubmissions,
+        approved: Math.max(0, perf.totalSubmissions - perf.totalFlags),
+      }));
+    }
+    return generateInterviewerStats(enterpriseData);
+  }, [enumPerformance, enterpriseData]);
   const submissionQuality = useMemo(
     () => generateSubmissionQuality(enterpriseData),
     [enterpriseData]
+  );
+
+  const qcErrorBreakdown = useMemo(
+    () =>
+      qcSummary.length
+        ? qcSummary.map((item) => ({
+            errorType: item.flagName || item.kpi,
+            relatedVariables: `${item.category} | ${item.type}`,
+            count: item.count,
+          }))
+        : errorBreakdownData.enterprise,
+    [qcSummary]
   );
 
   const columns = [
@@ -130,20 +172,14 @@ export function EnterpriseTab() {
       sortable: true,
     },
     {
-      key: 'gender' as const,
-      label: fieldLabels.enterprise.gender,
+      key: 'district' as const,
+      label: fieldLabels.enterprise.district,
       sortable: true,
     },
     {
       key: 'employees' as const,
       label: fieldLabels.enterprise.employees,
       sortable: true,
-    },
-    {
-      key: 'annualRevenue' as const,
-      label: fieldLabels.enterprise.annualRevenue,
-      sortable: true,
-      render: (value: number) => `$${(value || 0).toLocaleString()}`,
     },
     {
       key: 'status' as const,
@@ -164,11 +200,7 @@ export function EnterpriseTab() {
   ];
 
   if (loading) {
-    return (
-      <div className="animate-pulse text-sm text-muted-foreground">
-        Loading enterprise data…
-      </div>
-    );
+    return <div className="animate-pulse text-sm text-muted-foreground">Loading enterprise data…</div>;
   }
 
   if (error) {
@@ -208,7 +240,7 @@ export function EnterpriseTab() {
               value={stats.total}
               icon={Building2}
               variant="enterprise"
-              trend={{ value: 8.3, isPositive: true }}
+              trend={{ value: 8.2, isPositive: true }}
             />
             <KPICard
               title="Approved"
@@ -233,11 +265,11 @@ export function EnterpriseTab() {
               variant="enterprise"
             />
             <KPICard
-              title="Rejected"
-              value={stats.rejected}
+              title="Not Approved"
+              value={stats.notApproved}
               subtitle={
                 stats.total
-                  ? `${((stats.rejected / stats.total) * 100).toFixed(1)}%`
+                  ? `${((stats.notApproved / stats.total) * 100).toFixed(1)}%`
                   : '0%'
               }
               icon={XCircle}
@@ -245,65 +277,94 @@ export function EnterpriseTab() {
             />
             <KPICard
               title="Total Revenue"
-              value={`$${(stats.totalRevenue / 1_000_000).toFixed(1)}M`}
+              value={`$${(stats.totalRevenue / 1000).toFixed(1)}k`}
+              subtitle="Reported"
               icon={DollarSign}
               variant="enterprise"
             />
             <KPICard
-              title="Avg Employees"
-              value={stats.avgEmployees.toFixed(0)}
+              title="Avg. Employees"
+              value={stats.avgEmployees.toFixed(1)}
+              subtitle="Per enterprise"
               icon={TrendingUp}
               variant="enterprise"
             />
           </div>
 
-          <ProgressPanels
-            achieved={stats.total}
-            target={targetInterviews}
-            approvals={[
-              { label: 'Approved', value: stats.approved, color: '#22c55e' },
-              { label: 'Pending', value: stats.pending, color: '#facc15' },
-              { label: 'Rejected', value: stats.rejected, color: '#ef4444' },
-            ]}
-            accentColor="#f59e0b"
-            remainderColor="#fb923c"
-          />
+          {/* Progress & Quality Panels */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+            <div className="xl:col-span-2">
+              <ProgressPanels
+                achieved={stats.total}
+                target={targetInterviews}
+                approvals={[
+                  { label: 'Approved', value: stats.approved, color: '#f59e0b' },
+                  { label: 'Not Approved', value: stats.notApproved, color: '#ef4444' },
+                  { label: 'Pending', value: stats.pending, color: '#eab308' },
+                ]}
+                accentColor="#f59e0b"
+                remainderColor="#f59e0b20"
+              />
+            </div>
 
-          {/* Productivity Rankings */}
-          <ProductivityRankings
-            data={interviewerStats}
-            variant="enterprise"
-          />
+            <div className="minimal-card">
+              <h3 className="text-sm font-medium text-foreground mb-1">Ownership Gender</h3>
+              <p className="text-xs text-muted-foreground mb-4">
+                Distribution across male and female-owned enterprises
+              </p>
+              <div className="h-48">
+                <DonutChart data={genderData} variant="enterprise" />
+              </div>
+            </div>
+          </div>
 
-          {/* Submission Quality & Error Breakdown */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SubmissionQualityChart
-              data={submissionQuality}
+          {/* Data Table */}
+          <div className="minimal-card">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-sm font-medium text-foreground">Enterprise Submissions</h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Live data synced from the Enterprise survey sheet
+                </p>
+              </div>
+              <div className="text-xs text-muted-foreground">Updated automatically</div>
+            </div>
+            <DataTable data={enterpriseData} columns={columns} />
+          </div>
+
+          {/* Charts & Stats */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+            <div className="xl:col-span-2">
+              <SubmissionQualityChart
+                data={submissionQuality}
+                variant="enterprise"
+                title="Enumerator Submission Quality"
+              />
+            </div>
+            <ProductivityRankings
+              data={interviewerStats}
               variant="enterprise"
-            />
-            <ErrorBreakdown
-              data={errorBreakdownData.enterprise}
-              variant="enterprise"
+              title="Top Enumerator Performance"
             />
           </div>
 
-          {/* Charts Row */}
-          <DonutChart
-            data={genderData}
-            title="Owner Gender Distribution"
-            variant="enterprise"
-          />
-
-          {/* Data Table */}
-          <DataTable
-            data={enterpriseData}
-            columns={columns}
-            title="Enterprise Submissions"
-            variant="enterprise"
-          />
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <ErrorBreakdown
+              data={qcErrorBreakdown}
+              variant="enterprise"
+              title="Top Validation Flags"
+            />
+            <div className="minimal-card">
+              <h3 className="text-sm font-medium text-foreground mb-3">Insights & Recommendations</h3>
+              <p className="text-xs text-muted-foreground mb-4">
+                Automated insights based on the latest QC results
+              </p>
+              <EnterpriseInsights data={enterpriseData} />
+            </div>
+          </div>
         </>
       ) : (
-        <EnterpriseInsights />
+        <EnterpriseInsights data={enterpriseData} detailed />
       )}
     </div>
   );

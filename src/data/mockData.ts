@@ -7,8 +7,8 @@ export interface Submission {
   region: string;
   district: string;
   gender: 'Male' | 'Female';
+  status: 'Approved' | 'Pending' | 'Rejected' | 'Not Approved';
   ageGroup: string;
-  status: 'Approved' | 'Pending' | 'Rejected';
   latitude: number;
   longitude: number;
   enumerator: string;

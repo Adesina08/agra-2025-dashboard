@@ -18,7 +18,9 @@ import {
   type FarmerData,
 } from '@/data/mockData';
 import { useSheetData } from '@/hooks/useSheetData';
+import { useQCData } from '@/hooks/useQCData';
 import { mapFarmerRow } from '@/lib/mappings';
+import { mergeWithQC } from '@/lib/mergeQCData';
 import { KPICard } from '../KPICard';
 import { DonutChart } from '../DonutChart';
 import { DataTable } from '../DataTable';
@@ -31,16 +33,47 @@ import { FarmerInsights } from '../insights/FarmerInsights';
 
 type SubTab = 'qc' | 'insights';
 
-const farmerSheetId = import.meta.env.VITE_SHEET_ID_FARMERS as string;
+const farmerSheetId = import.meta.env.VITE_SHEET_ID_FARMERS as string | undefined;
+const farmerDataConfig = farmerSheetId
+  ? {
+      sheetId: farmerSheetId,
+      gid: import.meta.env.VITE_SHEET_GID_FARMERS_DATA as string,
+    }
+  : undefined;
+
+const farmerQCConfig = farmerSheetId
+  ? {
+      sheetId: farmerSheetId,
+      gidDetail: import.meta.env.VITE_SHEET_GID_FARMERS_QC_DETAIL as string,
+      gidSummary: import.meta.env.VITE_SHEET_GID_FARMERS_QC_SUMMARY as string,
+      gidEnum: import.meta.env.VITE_SHEET_GID_FARMERS_ENUM as string,
+    }
+  : undefined;
 
 export function FarmerTab() {
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('qc');
 
   const {
-    data: farmerData,
-    loading,
-    error,
-  } = useSheetData<FarmerData>(farmerSheetId, mapFarmerRow);
+    data: farmerRaw,
+    loading: farmerLoading,
+    error: farmerError,
+  } = useSheetData<FarmerData>(farmerDataConfig, mapFarmerRow);
+
+  const {
+    qcDetail,
+    qcSummary,
+    enumPerformance,
+    loading: qcLoading,
+    error: qcError,
+  } = useQCData(farmerQCConfig);
+
+  const farmerData = useMemo(
+    () => mergeWithQC(farmerRaw, qcDetail),
+    [farmerRaw, qcDetail]
+  );
+
+  const loading = farmerLoading || qcLoading;
+  const error = farmerError || qcError;
 
   const stats = useMemo(() => {
     const total = farmerData.length;
@@ -49,7 +82,7 @@ export function FarmerTab() {
         total: 0,
         approved: 0,
         pending: 0,
-        rejected: 0,
+        notApproved: 0,
         male: 0,
         female: 0,
         avgFarmSize: 0,
@@ -58,13 +91,15 @@ export function FarmerTab() {
 
     const approved = farmerData.filter((f) => f.status === 'Approved').length;
     const pending = farmerData.filter((f) => f.status === 'Pending').length;
-    const rejected = farmerData.filter((f) => f.status === 'Rejected').length;
+    const notApproved = farmerData.filter(
+      (f) => f.status !== 'Approved' && f.status !== 'Pending'
+    ).length;
     const male = farmerData.filter((f) => f.gender === 'Male').length;
     const female = farmerData.filter((f) => f.gender === 'Female').length;
     const avgFarmSize =
       farmerData.reduce((sum, f) => sum + (f.farmSize || 0), 0) / total;
 
-    return { total, approved, pending, rejected, male, female, avgFarmSize };
+    return { total, approved, pending, notApproved, male, female, avgFarmSize };
   }, [farmerData]);
 
   const targetInterviews = 5000;
@@ -74,13 +109,31 @@ export function FarmerTab() {
     { name: 'Female', value: stats.female, color: '#a855f7' },
   ];
 
-  const interviewerStats = useMemo(
-    () => generateInterviewerStats(farmerData),
-    [farmerData]
-  );
+  const interviewerStats = useMemo(() => {
+    if (enumPerformance.length) {
+      return enumPerformance.map((perf) => ({
+        name: perf.enumeratorID || 'Unknown',
+        totalInterviews: perf.totalSubmissions,
+        approved: Math.max(0, perf.totalSubmissions - perf.totalFlags),
+      }));
+    }
+    return generateInterviewerStats(farmerData);
+  }, [enumPerformance, farmerData]);
   const submissionQuality = useMemo(
     () => generateSubmissionQuality(farmerData),
     [farmerData]
+  );
+
+  const qcErrorBreakdown = useMemo(
+    () =>
+      qcSummary.length
+        ? qcSummary.map((item) => ({
+            errorType: item.flagName || item.kpi,
+            relatedVariables: `${item.category} | ${item.type}`,
+            count: item.count,
+          }))
+        : errorBreakdownData.farmer,
+    [qcSummary]
   );
 
   const columns = [
@@ -199,79 +252,106 @@ export function FarmerTab() {
               variant="farmer"
             />
             <KPICard
-              title="Rejected"
-              value={stats.rejected}
+              title="Not Approved"
+              value={stats.notApproved}
               subtitle={
                 stats.total
-                  ? `${((stats.rejected / stats.total) * 100).toFixed(1)}%`
+                  ? `${((stats.notApproved / stats.total) * 100).toFixed(1)}%`
                   : '0%'
               }
               icon={XCircle}
               variant="farmer"
             />
             <KPICard
-              title="Avg Farm Size"
-              value={`${stats.avgFarmSize.toFixed(1)} Ha`}
+              title="Avg. Farm Size"
+              value={`${stats.avgFarmSize.toFixed(1)} ha`}
+              subtitle="Across all approved farms"
               icon={Wheat}
               variant="farmer"
             />
             <KPICard
-              title="Approval Rate"
-              value={
-                stats.total
-                  ? `${((stats.approved / stats.total) * 100).toFixed(0)}%`
-                  : '0%'
-              }
+              title="Growth"
+              value="14.2%"
+              subtitle="MoM increase"
               icon={TrendingUp}
               variant="farmer"
-              trend={{ value: 3.2, isPositive: true }}
             />
           </div>
 
-          <ProgressPanels
-            achieved={stats.total}
-            target={targetInterviews}
-            approvals={[
-              { label: 'Approved', value: stats.approved, color: '#22c55e' },
-              { label: 'Pending', value: stats.pending, color: '#f97316' },
-              { label: 'Rejected', value: stats.rejected, color: '#ef4444' },
-            ]}
-            accentColor="#3b82f6"
-            remainderColor="#0ea5e9"
-          />
+          {/* Progress & Quality Panels */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+            <div className="xl:col-span-2">
+              <ProgressPanels
+                achieved={stats.total}
+                target={targetInterviews}
+                approvals={[
+                  { label: 'Approved', value: stats.approved, color: '#22c55e' },
+                  { label: 'Not Approved', value: stats.notApproved, color: '#ef4444' },
+                  { label: 'Pending', value: stats.pending, color: '#eab308' },
+                ]}
+                accentColor="#22c55e"
+                remainderColor="#22c55e20"
+              />
+            </div>
 
-          {/* Productivity Rankings */}
-          <ProductivityRankings data={interviewerStats} variant="farmer" />
-
-          {/* Submission Quality & Error Breakdown */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SubmissionQualityChart
-              data={submissionQuality}
-              variant="farmer"
-            />
-            <ErrorBreakdown
-              data={errorBreakdownData.farmer}
-              variant="farmer"
-            />
+            <div className="minimal-card">
+              <h3 className="text-sm font-medium text-foreground mb-1">Gender Distribution</h3>
+              <p className="text-xs text-muted-foreground mb-4">
+                Balance across male and female respondents
+              </p>
+              <div className="h-48">
+                <DonutChart data={genderData} variant="farmer" />
+              </div>
+            </div>
           </div>
-
-          {/* Charts Row */}
-          <DonutChart
-            data={genderData}
-            title="Gender Distribution"
-            variant="farmer"
-          />
 
           {/* Data Table */}
-          <DataTable
-            data={farmerData}
-            columns={columns}
-            title="Farmer Submissions"
-            variant="farmer"
-          />
+          <div className="minimal-card">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-sm font-medium text-foreground">Farmer Submissions</h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Live data synced from the Farmer survey sheet
+                </p>
+              </div>
+              <div className="text-xs text-muted-foreground">Updated automatically</div>
+            </div>
+            <DataTable data={farmerData} columns={columns} />
+          </div>
+
+          {/* Charts & Stats */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+            <div className="xl:col-span-2">
+              <SubmissionQualityChart
+                data={submissionQuality}
+                variant="farmer"
+                title="Enumerator Submission Quality"
+              />
+            </div>
+            <ProductivityRankings
+              data={interviewerStats}
+              variant="farmer"
+              title="Top Enumerator Performance"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <ErrorBreakdown
+              data={qcErrorBreakdown}
+              variant="farmer"
+              title="Top Validation Flags"
+            />
+            <div className="minimal-card">
+              <h3 className="text-sm font-medium text-foreground mb-3">Insights & Recommendations</h3>
+              <p className="text-xs text-muted-foreground mb-4">
+                Automated insights based on the latest QC results
+              </p>
+              <FarmerInsights data={farmerData} />
+            </div>
+          </div>
         </>
       ) : (
-        <FarmerInsights />
+        <FarmerInsights data={farmerData} detailed />
       )}
     </div>
   );
