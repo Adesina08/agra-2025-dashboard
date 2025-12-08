@@ -150,8 +150,8 @@ export function YouthTab({ data, isLoading = false }: YouthTabProps) {
               { label: 'Male', value: stats.male, color: '#3b82f6' },
               { label: 'Female', value: stats.female, color: '#ec4899' },
             ]}
-            accentColor="#0ea5e9"
-            remainderColor="#38bdf8"
+            accentColor="#16a34a"
+            remainderColor="#f97316"
           />
 
           {/* Productivity Rankings */}

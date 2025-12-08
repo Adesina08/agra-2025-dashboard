@@ -30,8 +30,8 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-[1400px] mx-auto px-6 py-8">
+    <div className="min-h-screen bg-background flex flex-col">
+      <div className="max-w-[1400px] mx-auto px-6 py-8 flex-1 w-full">
         <Header
           farmer={{ data: farmerQuery.data, isLive: farmerQuery.isLive, refreshedAt: farmerQuery.refreshedAt }}
           enterprise={{ data: enterpriseQuery.data, isLive: enterpriseQuery.isLive, refreshedAt: enterpriseQuery.refreshedAt }}
@@ -75,6 +75,10 @@ const Index = () => {
           )}
         </div>
       </div>
+
+      <footer className="border-t border-border/60 bg-card/80 backdrop-blur px-6 py-4 text-center text-sm text-muted-foreground">
+        © Inicio Tech 2025
+      </footer>
     </div>
   );
 };

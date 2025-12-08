@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Users, TrendingUp, CheckCircle, Clock, XCircle, Wheat, ClipboardCheck, Lightbulb } from 'lucide-react';
+import { Users, CheckCircle, Clock, XCircle, Wheat, ClipboardCheck, Lightbulb } from 'lucide-react';
 import { FarmerData, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
 import { KPICard } from '../KPICard';
 import { ProgressPanels } from '../ProgressPanels';
@@ -104,7 +104,7 @@ export function FarmerTab({ data, isLoading = false }: FarmerTabProps) {
       {activeSubTab === 'qc' ? (
         <>
           {/* KPI Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <KPICard
               title="Total Farmers"
               value={stats.total}
@@ -139,13 +139,6 @@ export function FarmerTab({ data, isLoading = false }: FarmerTabProps) {
               icon={Wheat}
               variant="farmer"
             />
-            <KPICard
-              title="Approval Rate"
-              value={`${((stats.approved / stats.safeTotal) * 100).toFixed(0)}%`}
-              icon={TrendingUp}
-              variant="farmer"
-              trend={{ value: 3.2, isPositive: true }}
-            />
           </div>
 
           <ProgressPanels
@@ -155,8 +148,8 @@ export function FarmerTab({ data, isLoading = false }: FarmerTabProps) {
               { label: 'Male', value: stats.male, color: '#3b82f6' },
               { label: 'Female', value: stats.female, color: '#ec4899' },
             ]}
-            accentColor="#3b82f6"
-            remainderColor="#0ea5e9"
+            accentColor="#16a34a"
+            remainderColor="#f97316"
           />
 
           {/* Productivity Rankings */}
