@@ -65,13 +65,13 @@ const Index = () => {
         {/* Tab Content */}
         <div className="pb-12">
           {activeTab === 'farmer' && (
-            <FarmerTab data={farmerQuery.data} isLoading={farmerQuery.isLoading} />
+            <FarmerTab />
           )}
           {activeTab === 'enterprise' && (
-            <EnterpriseTab data={enterpriseQuery.data} isLoading={enterpriseQuery.isLoading} />
+            <EnterpriseTab />
           )}
           {activeTab === 'youth' && (
-            <YouthTab data={youthQuery.data} isLoading={youthQuery.isLoading} />
+            <YouthTab />
           )}
         </div>
       </div>

@@ -1,181 +1,107 @@
-import { useState, useMemo } from 'react';
-import { Building2, TrendingUp, CheckCircle, Clock, XCircle, DollarSign, ClipboardCheck } from 'lucide-react';
-import { EnterpriseData, fieldLabels, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
-import { KPICard } from '../KPICard';
-import { DonutChart } from '../DonutChart';
-import { DataTable } from '../DataTable';
-import { StatusBadge } from '../StatusBadge';
-import { ProgressPanels } from '../ProgressPanels';
-import { ProductivityRankings } from '../ProductivityRankings';
-import { SubmissionQualityChart } from '../SubmissionQualityChart';
-import { ErrorBreakdown } from '../ErrorBreakdown';
-// import { EnterpriseInsights } from '../insights/EnterpriseInsights';
+import { CheckCircle2, ClipboardCheck, Factory, FlagTriangleRight, PhoneOff, TriangleAlert, Users, XCircle } from "lucide-react";
+import { useEnterpriseQcData } from "@/hooks/useSegmentQcData";
+import { KPICard } from "../KPICard";
+import { SubmissionQualityChart } from "../SubmissionQualityChart";
+import { ErrorBreakdown } from "../ErrorBreakdown";
+import { ProductivityRankings } from "../ProductivityRankings";
 
-type SubTab = 'qc'; // | 'insights';
-
-interface EnterpriseTabProps {
-  data: EnterpriseData[];
-  isLoading?: boolean;
+function formatPercent(value: number | null | undefined, digits = 1) {
+  if (value == null) return "—";
+  return `${(value * 100).toFixed(digits)}%`;
 }
 
-export function EnterpriseTab({ data, isLoading = false }: EnterpriseTabProps) {
-  const [activeSubTab, setActiveSubTab] = useState<SubTab>('qc');
+export function EnterpriseTab() {
+  const { loading, error, submissionQuality, errorBreakdown, interviewerStats, kpis } = useEnterpriseQcData();
 
-  const stats = useMemo(() => {
-    const total = data.length;
-    const safeTotal = total || 1;
-    const approved = data.filter(e => e.status === 'Approved').length;
-    const pending = data.filter(e => e.status === 'Pending').length;
-    const rejected = data.filter(e => e.status === 'Rejected').length;
-    const male = data.filter(e => e.gender === 'Male').length;
-    const female = data.filter(e => e.gender === 'Female').length;
-    const totalRevenue = data.reduce((sum, e) => sum + e.annualRevenue, 0);
-    const avgEmployees = total ? data.reduce((sum, e) => sum + e.employees, 0) / total : 0;
+  if (loading) return <div>Loading Enterprise QC…</div>;
+  if (error) return <div className="text-red-600">Error: {error}</div>;
+  if (!submissionQuality || !errorBreakdown || !interviewerStats || !kpis) {
+    return <div>No Enterprise QC data.</div>;
+  }
 
-    return { total, safeTotal, approved, pending, rejected, male, female, totalRevenue, avgEmployees };
-  }, [data]);
+  const submissionChartData = interviewerStats.map((i) => ({
+    name: i.enumeratorId,
+    approved: i.approvedInterviews,
+    notApproved: i.failedInterviews,
+  }));
 
-  const targetInterviews = 2200;
+  const productivityData = interviewerStats.map((i) => ({
+    name: i.enumeratorId,
+    totalInterviews: i.totalSubmissions,
+    approved: i.approvedInterviews,
+  }));
 
-  const genderData = [
-    { name: 'Male Owners', value: stats.male, color: '#f59e0b' },
-    { name: 'Female Owners', value: stats.female, color: '#ec4899' },
-  ];
-
-  const interviewerStats = useMemo(() => generateInterviewerStats(data), [data]);
-  const submissionQuality = useMemo(() => generateSubmissionQuality(data), [data]);
-
-  const columns = [
-    { key: 'id' as const, label: 'ID', sortable: true },
-    { key: 'enterpriseName' as const, label: fieldLabels.enterprise.enterpriseName, sortable: true },
-    { key: 'businessType' as const, label: fieldLabels.enterprise.businessType, sortable: true },
-    { key: 'region' as const, label: fieldLabels.enterprise.region, sortable: true },
-    { key: 'gender' as const, label: fieldLabels.enterprise.gender, sortable: true },
-    { key: 'employees' as const, label: fieldLabels.enterprise.employees, sortable: true },
-    { 
-      key: 'annualRevenue' as const, 
-      label: fieldLabels.enterprise.annualRevenue, 
-      sortable: true,
-      render: (value: number) => `$${value.toLocaleString()}`
-    },
-    { 
-      key: 'status' as const, 
-      label: fieldLabels.enterprise.status, 
-      sortable: true,
-      render: (value: string) => <StatusBadge status={value as any} />
-    },
-    { key: 'submissionDate' as const, label: fieldLabels.enterprise.submissionDate, sortable: true },
-  ];
-
-  const subTabs = [
-    { id: 'qc' as const, label: 'QC', icon: ClipboardCheck },
-    // { id: 'insights' as const, label: 'Insights', icon: Lightbulb },
-  ];
+  const errorBreakdownData = errorBreakdown.map((e) => ({
+    errorType: e.errorType,
+    relatedVariables: `${e.type} • ${e.category} • ${e.kpiCode}`,
+    count: e.count,
+  }));
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Sub-tabs */}
-      <div className="flex gap-2 border-b border-border/50 pb-2">
-        {subTabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveSubTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg transition-all ${
-              activeSubTab === tab.id
-                ? 'bg-amber-500/10 text-amber-500 border-b-2 border-amber-500'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-            }`}
-          >
-            <tab.icon className="w-4 h-4" />
-            {tab.label}
-          </button>
-        ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <KPICard
+          title="Total Interviews"
+          value={kpis.totalInterviews}
+          icon={Factory}
+          subtitle={formatPercent(kpis.approvalRate, 1) + " approval"}
+          variant="enterprise"
+        />
+        <KPICard
+          title="Approved"
+          value={kpis.approved}
+          icon={CheckCircle2}
+          subtitle={`${submissionQuality.approvalRate > 0 ? formatPercent(submissionQuality.approvalRate) : "0%"}`}
+          variant="enterprise"
+        />
+        <KPICard
+          title="Not Approved"
+          value={kpis.notApproved}
+          icon={XCircle}
+          variant="enterprise"
+        />
+        <KPICard
+          title="Total Flags"
+          value={kpis.totalFlags}
+          icon={TriangleAlert}
+          subtitle={`${submissionQuality.hardFlags.toLocaleString()} hard / ${submissionQuality.softFlags.toLocaleString()} soft`}
+          variant="enterprise"
+        />
+        <KPICard
+          title="Avg Flags / Interview"
+          value={kpis.avgFlagsPerInterview.toFixed(2)}
+          icon={FlagTriangleRight}
+          variant="enterprise"
+        />
       </div>
 
-      {activeSubTab === 'qc' && (
-        <>
-          {/* KPI Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <KPICard
-              title="Total Enterprises"
-              value={stats.total}
-              icon={Building2}
-              variant="enterprise"
-              trend={{ value: 8.3, isPositive: true }}
-            />
-            <KPICard
-              title="Approved"
-              value={stats.approved}
-              subtitle={`${((stats.approved / stats.safeTotal) * 100).toFixed(1)}%`}
-              icon={CheckCircle}
-              variant="enterprise"
-            />
-            <KPICard
-              title="Pending"
-              value={stats.pending}
-              subtitle={`${((stats.pending / stats.safeTotal) * 100).toFixed(1)}%`}
-              icon={Clock}
-              variant="enterprise"
-            />
-            <KPICard
-              title="Rejected"
-              value={stats.rejected}
-              subtitle={`${((stats.rejected / stats.safeTotal) * 100).toFixed(1)}%`}
-              icon={XCircle}
-              variant="enterprise"
-            />
-            <KPICard
-              title="Total Revenue"
-              value={`$${(stats.totalRevenue / 1000000).toFixed(1)}M`}
-              icon={DollarSign}
-              variant="enterprise"
-            />
-            <KPICard
-              title="Avg Employees"
-              value={stats.avgEmployees.toFixed(0)}
-              icon={TrendingUp}
-              variant="enterprise"
-            />
-          </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <KPICard
+          title="Duplicate Phones"
+          value={formatPercent(kpis.percentDuplicatePhone)}
+          icon={PhoneOff}
+          variant="enterprise"
+        />
+        <KPICard
+          title="LOI Issues"
+          value={formatPercent(kpis.percentLOIIssues)}
+          icon={Users}
+          variant="enterprise"
+        />
+        <KPICard
+          title="Hard Violations"
+          value={formatPercent(kpis.percentHardViolations)}
+          icon={TriangleAlert}
+          variant="enterprise"
+        />
+      </div>
 
-          <ProgressPanels
-            achieved={stats.total}
-            target={targetInterviews}
-            genderData={[
-              { label: 'Male', value: stats.male, color: '#3b82f6' },
-              { label: 'Female', value: stats.female, color: '#ec4899' },
-            ]}
-            accentColor="#16a34a"
-            remainderColor="#f97316"
-          />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <SubmissionQualityChart data={submissionChartData} variant="enterprise" />
+        <ErrorBreakdown data={errorBreakdownData} variant="enterprise" />
+      </div>
 
-          {/* Productivity Rankings */}
-          <ProductivityRankings data={interviewerStats} variant="enterprise" />
-
-          {/* Submission Quality & Error Breakdown */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SubmissionQualityChart data={submissionQuality} variant="enterprise" />
-            <ErrorBreakdown data={errorBreakdownData.enterprise} variant="enterprise" />
-          </div>
-
-          {/* Charts Row */}
-          <DonutChart
-            data={genderData}
-            title="Owner Gender Distribution"
-            variant="enterprise"
-          />
-
-          {/* Data Table */}
-          <DataTable
-            data={data}
-            columns={columns}
-            title="Enterprise Submissions"
-            variant="enterprise"
-            isLoading={isLoading}
-          />
-        </>
-      )}
-      {/* <EnterpriseInsights /> */}
+      <ProductivityRankings data={productivityData} variant="enterprise" />
     </div>
   );
 }
