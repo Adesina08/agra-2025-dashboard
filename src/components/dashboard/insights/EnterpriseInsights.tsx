@@ -1,28 +1,115 @@
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import { useMemo, useState } from 'react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { ChevronDown } from 'lucide-react';
 import { ChartCard } from './ChartCard';
 import { InsightsKpiRow } from './InsightsKpiRow';
-import { insightsData, calculateEnterpriseKpis } from '@/data/insightsData';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown } from 'lucide-react';
-import { useState } from 'react';
+import type { EnterpriseData } from '@/data/mockData';
 
 const COLORS = ['#f59e0b', '#fbbf24', '#fcd34d', '#fde68a', '#fef3c7'];
 const ENTERPRISE_PRIMARY = 'hsl(var(--enterprise-primary))';
 const ENTERPRISE_SECONDARY = 'hsl(var(--enterprise-secondary))';
 
-export function EnterpriseInsights() {
-  const data = insightsData.enterprises;
-  const kpis = calculateEnterpriseKpis(data);
+interface EnterpriseInsightsProps {
+  data: EnterpriseData[];
+}
+
+export function EnterpriseInsights({ data }: EnterpriseInsightsProps) {
   const [profileOpen, setProfileOpen] = useState(true);
   const [digitalOpen, setDigitalOpen] = useState(true);
   const [marketOpen, setMarketOpen] = useState(true);
 
-  const kpiData = [
-    { title: 'Total Enterprises', value: kpis.total, trend: { value: 12.3, isPositive: true } },
-    { title: 'Fully Operational', value: `${kpis.operationalPercent}%` },
-    { title: 'Digital Adoption', value: `${kpis.digitalAdoptionPercent}%`, trend: { value: 18.5, isPositive: true } },
-    { title: 'Avg Investments', value: kpis.avgInvestments },
-  ];
+  const kpiData = useMemo(() => {
+    const total = data.length;
+    const approved = data.filter((d) => d.status === 'Approved').length;
+    const avgEmployees = total
+      ? data.reduce((sum, d) => sum + (d.employeesCount || 0), 0) / total
+      : 0;
+    const avgTurnover = total
+      ? data.reduce((sum, d) => sum + (d.annualTurnover || 0), 0) / total
+      : 0;
+
+    return [
+      { title: 'Total Enterprises', value: total },
+      { title: 'Approval Rate', value: total ? `${((approved / total) * 100).toFixed(1)}%` : '0%' },
+      { title: 'Avg Employees', value: avgEmployees.toFixed(1) },
+      { title: 'Avg Turnover (USD)', value: avgTurnover.toFixed(0) },
+    ];
+  }, [data]);
+
+  const sectorData = useMemo(() => {
+    const map = new Map<string, number>();
+    data.forEach((d) => {
+      const sector = (d.sector || 'N/A').trim() || 'N/A';
+      map.set(sector, (map.get(sector) || 0) + 1);
+    });
+    return Array.from(map.entries()).map(([label, value]) => ({ label, value }));
+  }, [data]);
+
+  const genderData = useMemo(() => {
+    const male = data.filter((d) => d.gender?.toLowerCase() === 'male').length;
+    const female = data.filter((d) => d.gender?.toLowerCase() === 'female').length;
+    const other = data.length - male - female;
+    return [
+      { label: 'Male', value: male },
+      { label: 'Female', value: female },
+      { label: 'Other / Unknown', value: other },
+    ];
+  }, [data]);
+
+  const employeeDistribution = useMemo(() => {
+    const bins: Record<string, number> = {
+      '0-5': 0,
+      '6-10': 0,
+      '11-25': 0,
+      '26+': 0,
+    };
+
+    data.forEach((d) => {
+      const count = d.employeesCount || 0;
+      if (count <= 5) bins['0-5']++;
+      else if (count <= 10) bins['6-10']++;
+      else if (count <= 25) bins['11-25']++;
+      else bins['26+']++;
+    });
+
+    return Object.entries(bins).map(([label, value]) => ({ label, value }));
+  }, [data]);
+
+  const turnoverDistribution = useMemo(() => {
+    const bins: Record<string, number> = {
+      '<=10k': 0,
+      '10k-50k': 0,
+      '50k-100k': 0,
+      '100k+': 0,
+    };
+
+    data.forEach((d) => {
+      const turnover = d.annualTurnover || 0;
+      if (turnover <= 10000) bins['<=10k']++;
+      else if (turnover <= 50000) bins['10k-50k']++;
+      else if (turnover <= 100000) bins['50k-100k']++;
+      else bins['100k+']++;
+    });
+
+    return Object.entries(bins).map(([label, value]) => ({ label, value }));
+  }, [data]);
+
+  const regionDistribution = useMemo(() => {
+    const map = new Map<string, number>();
+    data.forEach((d) => {
+      const region = (d.region || 'N/A').trim() || 'N/A';
+      map.set(region, (map.get(region) || 0) + 1);
+    });
+    return Array.from(map.entries())
+      .map(([label, value]) => ({ label, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [data]);
+
+  const statusBreakdown = useMemo(() => {
+    const statuses: EnterpriseData['status'][] = ['Approved', 'Pending', 'Rejected'];
+    return statuses.map((label) => ({ label, value: data.filter((d) => d.status === label).length }));
+  }, [data]);
 
   return (
     <div className="space-y-6">
@@ -38,7 +125,7 @@ export function EnterpriseInsights() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <ChartCard title="Business Types" subtitle="Distribution by category">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.byBusinessType}>
+                <BarChart data={sectorData}>
                   <XAxis
                     dataKey="label"
                     tick={{ fontSize: 9, fill: 'hsl(var(--foreground))' }}
@@ -59,11 +146,11 @@ export function EnterpriseInsights() {
               </ResponsiveContainer>
             </ChartCard>
 
-            <ChartCard title="Operational Status">
+            <ChartCard title="Gender of Owners">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={data.operationalStatus}
+                    data={genderData}
                     cx="50%"
                     cy="50%"
                     innerRadius={50}
@@ -71,7 +158,7 @@ export function EnterpriseInsights() {
                     dataKey="value"
                     nameKey="label"
                   >
-                    {data.operationalStatus.map((_, index) => (
+                    {genderData.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
@@ -87,13 +174,13 @@ export function EnterpriseInsights() {
       <Collapsible open={digitalOpen} onOpenChange={setDigitalOpen}>
         <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-foreground/80 transition-colors">
           <ChevronDown className={`w-4 h-4 transition-transform ${digitalOpen ? '' : '-rotate-90'}`} />
-          Digitalisation & Investment
+          Scale & Operations
         </CollapsibleTrigger>
         <CollapsibleContent className="mt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <ChartCard title="Digital Adoption" subtitle="Level of digital tool usage">
+            <ChartCard title="Employee Size" subtitle="Distribution by workforce size">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.digitalAdoption}>
+                <BarChart data={employeeDistribution}>
                   <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
                   <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
                   <Tooltip
@@ -108,9 +195,9 @@ export function EnterpriseInsights() {
               </ResponsiveContainer>
             </ChartCard>
 
-            <ChartCard title="Investments (Last 12 Months)" subtitle="Investment areas">
+            <ChartCard title="Annual Turnover" subtitle="Self-reported turnover bands">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.investmentsLast12Months} layout="vertical">
+                <BarChart data={turnoverDistribution} layout="vertical">
                   <XAxis type="number" tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
                   <YAxis dataKey="label" type="category" tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }} width={80} />
                   <Tooltip
@@ -136,9 +223,9 @@ export function EnterpriseInsights() {
         </CollapsibleTrigger>
         <CollapsibleContent className="mt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <ChartCard title="Main Market" subtitle="Primary market reach">
+            <ChartCard title="Region Distribution" subtitle="Enterprises by region">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.mainMarket}>
+                <BarChart data={regionDistribution}>
                   <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
                   <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
                   <Tooltip
@@ -153,26 +240,24 @@ export function EnterpriseInsights() {
               </ResponsiveContainer>
             </ChartCard>
 
-            <ChartCard title="Establishment Trend" subtitle="New enterprises over years">
+            <ChartCard title="QC Status" subtitle="Approval outcomes">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={data.establishmentByYear}>
-                  <XAxis dataKey="year" tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
-                  <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
-                  <Tooltip
-                    contentStyle={{
-                      background: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      color: 'hsl(var(--foreground))',
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="count"
-                    stroke={ENTERPRISE_PRIMARY}
-                    strokeWidth={2}
-                    dot={{ fill: ENTERPRISE_PRIMARY }}
-                  />
-                </LineChart>
+                <PieChart>
+                  <Pie
+                    data={statusBreakdown}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={70}
+                    dataKey="value"
+                    nameKey="label"
+                  >
+                    {statusBreakdown.map((_, index) => (
+                      <Cell key={`cell-status-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
+                </PieChart>
               </ResponsiveContainer>
             </ChartCard>
           </div>

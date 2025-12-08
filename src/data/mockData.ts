@@ -1,17 +1,17 @@
-// Data structure based on AGRA 2025 Excel schema
-// Keys from NAME column, Labels from LABEL column
+// Data structure definitions shared across survey types
 
 export interface Submission {
   id: string;
   submissionDate: string;
-  region: string;
-  district: string;
-  gender: 'Male' | 'Female';
-  ageGroup: string;
+  country?: string;
+  region?: string;
+  district?: string;
+  gender?: string;
+  ageGroup?: string;
   status: 'Approved' | 'Pending' | 'Rejected';
-  latitude: number;
-  longitude: number;
-  enumerator: string;
+  latitude?: number;
+  longitude?: number;
+  enumerator?: string;
 }
 
 export interface FarmerData extends Submission {
@@ -20,7 +20,6 @@ export interface FarmerData extends Submission {
   cropType: string;
   yieldEstimate: number;
   inputAccess: boolean;
-  country?: string; // 🔹 new
   youthInWork?: string;
   cropsCultivated?: string[];
   rainfallAmount?: string;
@@ -41,19 +40,23 @@ export interface FarmerData extends Submission {
 }
 
 export interface EnterpriseData extends Submission {
-  enterpriseName: string;
-  businessType: string;
-  employees: number;
-  annualRevenue: number;
-  yearsOperating: number;
+  name: string;
+  gender?: string;
+  ageGroup?: string;
+  status: 'Approved' | 'Pending' | 'Rejected';
+  employeesCount?: number;
+  annualTurnover?: number;
+  sector?: string;
 }
 
 export interface YouthData extends Submission {
-  youthName: string;
-  educationLevel: string;
-  trainingCompleted: boolean;
-  employmentStatus: string;
-  businessIdea: string;
+  respondentName: string;
+  gender?: string;
+  ageGroup?: string;
+  status: 'Approved' | 'Pending' | 'Rejected';
+  isYouth?: boolean;
+  youthInWork?: string;
+  youthAttitudeScore?: number;
 }
 
 // Field mappings (NAME -> LABEL)
@@ -65,7 +68,7 @@ export const fieldLabels = {
     yieldEstimate: 'Yield Estimate (kg)',
     inputAccess: 'Has Input Access',
     gender: 'Gender',
-    country: 'Country',          // 🔹 new
+    country: 'Country',
     region: 'Region',
     district: 'District',
     ageGroup: 'Age Group',
@@ -73,227 +76,69 @@ export const fieldLabels = {
     submissionDate: 'Submission Date',
   },
   enterprise: {
-    enterpriseName: 'Enterprise Name',
-    businessType: 'Business Type',
-    employees: 'Number of Employees',
-    annualRevenue: 'Annual Revenue (USD)',
-    yearsOperating: 'Years Operating',
+    name: 'Enterprise Name',
+    sector: 'Business Sector',
+    employeesCount: 'Number of Employees',
+    annualTurnover: 'Annual Turnover (USD)',
+    country: 'Country',
+    region: 'Region',
+    district: 'District',
     gender: 'Owner Gender',
-    region: 'Region',
-    district: 'District',
-    status: 'QC Status',
-    submissionDate: 'Submission Date',
-  },
-  youth: {
-    youthName: 'Youth Name',
-    educationLevel: 'Education Level',
-    trainingCompleted: 'Training Completed',
-    employmentStatus: 'Employment Status',
-    businessIdea: 'Business Idea',
-    gender: 'Gender',
-    region: 'Region',
-    district: 'District',
     ageGroup: 'Age Group',
     status: 'QC Status',
     submissionDate: 'Submission Date',
   },
+  youth: {
+    respondentName: 'Respondent Name',
+    country: 'Country',
+    region: 'Region',
+    district: 'District',
+    gender: 'Gender',
+    ageGroup: 'Age Group',
+    status: 'QC Status',
+    submissionDate: 'Submission Date',
+    youthInWork: 'Youth In Work',
+  },
 };
 
-// Regions for the map
-export const regions = [
-  'Central', 'Western', 'Eastern', 'Northern', 'Southern',
-  'Rift Valley', 'Coast', 'Nyanza', 'North Eastern'
-];
-
-const districts = {
-  Central: ['Nairobi', 'Kiambu', 'Murang\'a', 'Nyeri'],
-  Western: ['Kakamega', 'Bungoma', 'Vihiga', 'Busia'],
-  Eastern: ['Meru', 'Embu', 'Machakos', 'Kitui'],
-  Northern: ['Garissa', 'Wajir', 'Mandera'],
-  Southern: ['Kajiado', 'Makueni', 'Taita Taveta'],
-  'Rift Valley': ['Nakuru', 'Eldoret', 'Kericho', 'Narok'],
-  Coast: ['Mombasa', 'Kilifi', 'Kwale', 'Lamu'],
-  Nyanza: ['Kisumu', 'Migori', 'Homa Bay', 'Siaya'],
-  'North Eastern': ['Marsabit', 'Isiolo', 'Samburu'],
-};
-
-const cropTypes = ['Maize', 'Wheat', 'Rice', 'Beans', 'Coffee', 'Tea', 'Sugarcane', 'Cassava'];
-const businessTypes = ['Agro-dealer', 'Food Processing', 'Transport', 'Storage', 'Retail', 'Export'];
-const educationLevels = ['Primary', 'Secondary', 'Diploma', 'Bachelor', 'Masters'];
-const employmentStatuses = ['Employed', 'Self-employed', 'Unemployed', 'Student'];
-
-function randomDate(start: Date, end: Date): string {
-  const date = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
-  return date.toISOString().split('T')[0];
-}
-
-function randomCoord(center: number, range: number): number {
-  return center + (Math.random() - 0.5) * range;
-}
-
-const baseCoords = { lat: -1.2921, lng: 36.8219 }; // Kenya center
-
-const enumeratorNames = {
-  farmer: ['Maryjane', 'Rosemary', 'Adekunle bunmi', 'Glory Emezurike', 'Omololu temitope', 'FISAYO', 'Oluwabunmi', 'Joshua', 'Samuel K.', 'Grace W.'],
-  enterprise: ['Alice R.', 'Bob T.', 'Carol M.', 'Dan K.', 'Eve N.', 'Frank O.', 'Helen P.', 'Isaac Q.', 'Jane R.', 'Ken S.'],
-  youth: ['Felix M.', 'Hannah K.', 'Isaac O.', 'Julia W.', 'Kevin N.', 'Linda P.', 'Mike Q.', 'Nancy R.', 'Oscar S.', 'Paula T.'],
-};
-
-function generateFarmerData(count: number): FarmerData[] {
-  const data: FarmerData[] = [];
-  
-  for (let i = 0; i < count; i++) {
-    const region = regions[Math.floor(Math.random() * regions.length)];
-    const districtList = districts[region as keyof typeof districts] || ['Unknown'];
-    const cropCount = Math.max(1, Math.floor(Math.random() * 3));
-    const cropSelection = Array.from({ length: cropCount }, () =>
-      cropTypes[Math.floor(Math.random() * cropTypes.length)]
-    );
-    const rainfallAmountOptions = [
-      'Much less than average',
-      'Less than average',
-      'About average',
-      'More than average',
-      'Much more than average',
-    ];
-    const rainfallSpreadOptions = ['Very poor', 'Poor', 'Fair', 'Very good'];
-    const heavyRainDamageOptions: FarmerData['heavyRainDamage'][] = ['Severe', 'Mild', 'No'];
-    const youthClassifications = ['Youth', 'Non-youth', 'Transitioning'];
-    const practiceOptions = ['Improved seed', 'Inorganic fertilizer', 'Organic manure', 'Pest management'];
-    const extensionChannels = ['Extension officer', 'Radio', 'TV', 'SMS', 'Farmer group'];
-
-    data.push({
-      id: `F${String(i + 1).padStart(5, '0')}`,
-      farmerName: `Farmer ${i + 1}`,
-      submissionDate: randomDate(new Date('2025-01-01'), new Date('2025-12-02')),
-      region,
-      district: districtList[Math.floor(Math.random() * districtList.length)],
-      gender: Math.random() > 0.45 ? 'Male' : 'Female',
-      ageGroup: ['18-25', '26-35', '36-45', '46-55', '55+'][Math.floor(Math.random() * 5)],
-      status: ['Approved', 'Pending', 'Rejected'][Math.floor(Math.random() * 3)] as any,
-      latitude: randomCoord(baseCoords.lat, 6),
-      longitude: randomCoord(baseCoords.lng, 6),
-      enumerator: enumeratorNames.farmer[Math.floor(Math.random() * enumeratorNames.farmer.length)],
-      farmSize: Math.round((Math.random() * 10 + 0.5) * 10) / 10,
-      cropType: cropTypes[Math.floor(Math.random() * cropTypes.length)],
-      yieldEstimate: Math.round(Math.random() * 5000 + 500),
-      inputAccess: Math.random() > 0.3,
-      country: 'Kenya', // 🔹 or any default country for mock data
-      youthInWork: youthClassifications[Math.floor(Math.random() * youthClassifications.length)],
-      cropsCultivated: cropSelection,
-      rainfallAmount: rainfallAmountOptions[Math.floor(Math.random() * rainfallAmountOptions.length)],
-      rainfallSpread: rainfallSpreadOptions[Math.floor(Math.random() * rainfallSpreadOptions.length)],
-      heavyRainDamage: heavyRainDamageOptions[Math.floor(Math.random() * heavyRainDamageOptions.length)],
-      drySpell: Math.random() > 0.5,
-      practicesApplied: practiceOptions.filter(() => Math.random() > 0.5),
-      usesImprovedSeed: Math.random() > 0.4,
-      usesFertilizer: Math.random() > 0.35,
-      commercializationRate: Math.round(Math.random() * 100),
-      hasFinancialAccount: Math.random() > 0.5,
-      hasAgLoan: Math.random() > 0.7,
-      creditConstrained: Math.random() > 0.65,
-      receivedExtension: Math.random() > 0.5,
-      extensionChannels: extensionChannels.filter(() => Math.random() > 0.65),
-      isYouth: Math.random() > 0.55,
-      youthAttitudeScore: Math.round((Math.random() * 4 + 1) * 10) / 10,
-    });
-  }
-  return data;
-}
-
-function generateEnterpriseData(count: number): EnterpriseData[] {
-  const data: EnterpriseData[] = [];
-  
-  for (let i = 0; i < count; i++) {
-    const region = regions[Math.floor(Math.random() * regions.length)];
-    const districtList = districts[region as keyof typeof districts] || ['Unknown'];
-    
-    data.push({
-      id: `E${String(i + 1).padStart(5, '0')}`,
-      enterpriseName: `Enterprise ${i + 1}`,
-      submissionDate: randomDate(new Date('2025-01-01'), new Date('2025-12-02')),
-      region,
-      district: districtList[Math.floor(Math.random() * districtList.length)],
-      gender: Math.random() > 0.6 ? 'Male' : 'Female',
-      ageGroup: ['18-25', '26-35', '36-45', '46-55', '55+'][Math.floor(Math.random() * 5)],
-      status: ['Approved', 'Pending', 'Rejected'][Math.floor(Math.random() * 3)] as any,
-      latitude: randomCoord(baseCoords.lat, 6),
-      longitude: randomCoord(baseCoords.lng, 6),
-      enumerator: enumeratorNames.enterprise[Math.floor(Math.random() * enumeratorNames.enterprise.length)],
-      businessType: businessTypes[Math.floor(Math.random() * businessTypes.length)],
-      employees: Math.floor(Math.random() * 50 + 1),
-      annualRevenue: Math.round(Math.random() * 100000 + 5000),
-      yearsOperating: Math.floor(Math.random() * 15 + 1),
-    });
-  }
-  return data;
-}
-
-function generateYouthData(count: number): YouthData[] {
-  const data: YouthData[] = [];
-  const businessIdeas = ['Poultry Farming', 'Digital Marketing', 'Agri-Tech App', 'Organic Farming', 'Food Delivery', 'Farm Equipment Rental'];
-  
-  for (let i = 0; i < count; i++) {
-    const region = regions[Math.floor(Math.random() * regions.length)];
-    const districtList = districts[region as keyof typeof districts] || ['Unknown'];
-    
-    data.push({
-      id: `Y${String(i + 1).padStart(5, '0')}`,
-      youthName: `Youth ${i + 1}`,
-      submissionDate: randomDate(new Date('2025-01-01'), new Date('2025-12-02')),
-      region,
-      district: districtList[Math.floor(Math.random() * districtList.length)],
-      gender: Math.random() > 0.5 ? 'Male' : 'Female',
-      ageGroup: ['18-21', '22-25', '26-29', '30-35'][Math.floor(Math.random() * 4)],
-      status: ['Approved', 'Pending', 'Rejected'][Math.floor(Math.random() * 3)] as any,
-      latitude: randomCoord(baseCoords.lat, 6),
-      longitude: randomCoord(baseCoords.lng, 6),
-      enumerator: enumeratorNames.youth[Math.floor(Math.random() * enumeratorNames.youth.length)],
-      educationLevel: educationLevels[Math.floor(Math.random() * educationLevels.length)],
-      trainingCompleted: Math.random() > 0.4,
-      employmentStatus: employmentStatuses[Math.floor(Math.random() * employmentStatuses.length)],
-      businessIdea: businessIdeas[Math.floor(Math.random() * businessIdeas.length)],
-    });
-  }
-  return data;
-}
-
-// Generate interviewer stats from data
+// Generate interviewer stats from live submission data
 export function generateInterviewerStats(data: Submission[]) {
   const stats: Record<string, { name: string; totalInterviews: number; approved: number }> = {};
-  
-  data.forEach(d => {
-    if (!stats[d.enumerator]) {
-      stats[d.enumerator] = { name: d.enumerator, totalInterviews: 0, approved: 0 };
+
+  data.forEach((d) => {
+    const interviewer = d.enumerator || 'Unknown';
+    if (!stats[interviewer]) {
+      stats[interviewer] = { name: interviewer, totalInterviews: 0, approved: 0 };
     }
-    stats[d.enumerator].totalInterviews++;
+    stats[interviewer].totalInterviews++;
     if (d.status === 'Approved') {
-      stats[d.enumerator].approved++;
+      stats[interviewer].approved++;
     }
   });
-  
+
   return Object.values(stats);
 }
 
 // Generate submission quality data
 export function generateSubmissionQuality(data: Submission[]) {
   const stats: Record<string, { name: string; approved: number; notApproved: number }> = {};
-  
-  data.forEach(d => {
-    if (!stats[d.enumerator]) {
-      stats[d.enumerator] = { name: d.enumerator, approved: 0, notApproved: 0 };
+
+  data.forEach((d) => {
+    const interviewer = d.enumerator || 'Unknown';
+    if (!stats[interviewer]) {
+      stats[interviewer] = { name: interviewer, approved: 0, notApproved: 0 };
     }
     if (d.status === 'Approved') {
-      stats[d.enumerator].approved++;
+      stats[interviewer].approved++;
     } else {
-      stats[d.enumerator].notApproved++;
+      stats[interviewer].notApproved++;
     }
   });
-  
+
   return Object.values(stats);
 }
 
-// Error breakdown mock data
+// Error breakdown placeholder data (to be replaced by live QC metrics if available)
 export const errorBreakdownData = {
   farmer: [
     { errorType: 'Low LOI', relatedVariables: 'start, end, Minutes Difference', count: 2218 },
@@ -319,9 +164,3 @@ export const errorBreakdownData = {
     { errorType: 'Missing Business Plan', relatedVariables: 'business_idea, plan_document', count: 67 },
   ],
 };
-
-export const farmerData = generateFarmerData(1250);
-export const enterpriseData = generateEnterpriseData(480);
-export const youthData = generateYouthData(890);
-
-export const lastUpdated = new Date().toISOString();

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Trophy, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -14,10 +14,10 @@ interface ProductivityRankingsProps {
   variant?: 'farmer' | 'enterprise' | 'youth';
 }
 
-export function ProductivityRankings({ 
-  data, 
-  title = "User Productivity Rankings",
-  variant = 'farmer' 
+export function ProductivityRankings({
+  data,
+  title = "Interviewer Productivity Rankings",
+  variant = 'farmer'
 }: ProductivityRankingsProps) {
   const variantColors = {
     farmer: 'text-farmer',
@@ -25,12 +25,15 @@ export function ProductivityRankings({
     youth: 'text-youth',
   };
 
-  const sorted = useMemo(() => {
-    return [...data].sort((a, b) => b.approved - a.approved).slice(0, 10);
-  }, [data]);
+  const [showLast10, setShowLast10] = useState(false);
 
-  const topPerformer = sorted[0];
-  const otherPerformers = sorted.slice(1);
+  const rows = useMemo(() => {
+    const base = [...data].sort((a, b) => b.approved - a.approved);
+    return showLast10 ? base.slice(-10) : base.slice(0, 10);
+  }, [data, showLast10]);
+
+  const topPerformer = rows[0];
+  const otherPerformers = rows.slice(1);
   const overallApproval = useMemo(() => {
     const totalApproved = data.reduce((sum, d) => sum + d.approved, 0);
     const totalInterviews = data.reduce((sum, d) => sum + d.totalInterviews, 0);
@@ -53,10 +56,26 @@ export function ProductivityRankings({
           </p>
         </div>
         <div className="flex gap-2">
-          <button className="px-3 py-1.5 text-xs font-medium bg-primary/20 text-primary rounded">
+          <button
+            onClick={() => setShowLast10(false)}
+            className={cn(
+              'px-3 py-1.5 text-xs font-medium rounded transition-colors',
+              showLast10
+                ? 'text-muted-foreground hover:bg-muted'
+                : 'bg-primary/20 text-primary'
+            )}
+          >
             Top 10
           </button>
-          <button className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted rounded transition-colors">
+          <button
+            onClick={() => setShowLast10(true)}
+            className={cn(
+              'px-3 py-1.5 text-xs font-medium rounded transition-colors',
+              showLast10
+                ? 'bg-primary/20 text-primary'
+                : 'text-muted-foreground hover:bg-muted'
+            )}
+          >
             Last 10
           </button>
         </div>

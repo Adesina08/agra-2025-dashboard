@@ -267,51 +267,83 @@ export function normalizeFarmerRow(row: SheetRow, index: number): FarmerData {
 
 export function normalizeEnterpriseRow(row: SheetRow, index: number): EnterpriseData {
   const submissionDate = normalizeSubmissionDate(row);
-  const region = pickValue(row, ['region', 'db1_q', 'province']);
-  const district = pickValue(row, ['district', 'db0_q']);
-  const gender = pickValue(row, ['gender', 'sex', 'a7'], 'Unknown');
+
+  const country = pickValue(row, ['dccot', 'country', 'dcountry']);
+  const region = pickValue(row, ['db11', 'region', 'province']);
+  const district = pickValue(row, ['db10', 'district']);
+  const gender = pickValue(row, ['db7', 'gender', 'sex']);
+  const ageGroup = pickValue(row, ['d6', 'agegroup', 'age']);
+
+  const status = pickValue(row, ['status', 'qc status', 'approval'], 'Pending') as EnterpriseData['status'];
+
+  const employeesCount = parseNumber(pickValue(row, ['emp_total', 'e_emp_total']), 0);
+  const annualTurnover = parseNumber(pickValue(row, ['turnover', 'annual_sales']), 0);
+  const sector = pickValue(row, ['sector', 'business_sector', 'main_activity'], 'N/A');
 
   return {
-    id: pickValue(row, ['id', 'caseid', 'case_id', 'id_num'], `enterprise-${index + 1}`),
-    enterpriseName: pickValue(row, ['enterpriseName', 'db8_q', 'db8_1', 'a2', 'name'], 'Unknown enterprise'),
+    id: pickValue(row, ['id', 'caseid', 'uuid'], `enterprise-${index + 1}`),
     submissionDate,
+    name: pickValue(row, ['enterprise_name', 'name', 'db2'], 'Unknown enterprise'),
+    country: country || 'Unknown country',
     region: region || 'Unknown region',
     district: district || 'Unknown district',
-    gender: (gender.charAt(0).toUpperCase() + gender.slice(1)) as EnterpriseData['gender'],
-    ageGroup: pickValue(row, ['agegroup', 'a3_1', 'years_operating'], 'N/A'),
-    status: pickValue(row, ['status', 'qc status', 'approval'], 'Pending') as EnterpriseData['status'],
+    gender,
+    ageGroup,
+    status,
+    employeesCount,
+    annualTurnover,
+    sector,
     latitude: parseNumber(pickValue(row, ['lat', 'latitude', 'gps_lat'])),
     longitude: parseNumber(pickValue(row, ['lon', 'longitude', 'gps_lon'])),
-    enumerator: pickValue(row, ['enumerator', 'int_name', 'survey_firm'], 'Unknown'),
-    businessType: pickValue(row, ['businessType', 'a4', 'a2', 'sector'], 'N/A'),
-    employees: parseNumber(pickValue(row, ['employees', 'b5_q1', 'b5_q2']), 0),
-    annualRevenue: parseNumber(pickValue(row, ['annualRevenue', 'b15_cal', 'b15_q']), 0),
-    yearsOperating: parseNumber(pickValue(row, ['yearsOperating', 'b9_year', 'b10_year']), 0),
+    enumerator: pickValue(row, ['enumerator', 'username', 'users', 'int_name'], 'Unknown'),
   };
 }
 
 export function normalizeYouthRow(row: SheetRow, index: number): YouthData {
   const submissionDate = normalizeSubmissionDate(row);
-  const region = pickValue(row, ['region']);
-  const district = pickValue(row, ['district']);
-  const gender = pickValue(row, ['gender', 'sex', 'sex_id'], 'Unknown');
+
+  const country = pickValue(row, ['dccot', 'country', 'dcountry']);
+  const region = pickValue(row, ['db11', 'region', 'province']);
+  const district = pickValue(row, ['db10', 'district']);
+  const gender = pickValue(row, ['db7', 'gender', 'sex']);
+  const ageGroup = pickValue(row, ['d6', 'agegroup', 'age']);
+
+  const status = pickValue(row, ['status', 'qc status', 'approval'], 'Pending') as YouthData['status'];
+
+  const youthInWork = pickValue(row, ['YouthinWork', 'youthinwork']);
+
+  const avFields = [
+    'av1','av2','av3','av4','av5','av6','av7','av8',
+    'av9','av10','av11','av12','av13','av14','av15','av16','av17',
+  ];
+  const avValues = avFields
+    .map((f) => parseNumber(pickValue(row, [f]), NaN))
+    .filter((v) => !Number.isNaN(v) && v > 0);
+
+  const youthAttitudeScore = avValues.length
+    ? avValues.reduce((sum, v) => sum + v, 0) / avValues.length
+    : undefined;
+
+  const isYouth =
+    (ageGroup || '').includes('18') ||
+    (ageGroup || '').includes('35') ||
+    youthInWork?.toLowerCase().includes('youth') === true;
 
   return {
-    id: pickValue(row, ['id', 'caseid', 'case_id'], `youth-${index + 1}`),
-    youthName: pickValue(row, ['youthName', 'name'], 'Unknown youth'),
+    id: pickValue(row, ['id', 'caseid', 'uuid'], `youth-${index + 1}`),
     submissionDate,
+    respondentName: pickValue(row, ['db2label', 'db2', 'name'], 'Unknown respondent'),
+    country: country || 'Unknown country',
     region: region || 'Unknown region',
     district: district || 'Unknown district',
-    gender: (gender.charAt(0).toUpperCase() + gender.slice(1)) as YouthData['gender'],
-    ageGroup: pickValue(row, ['agegroup', 'age'], 'N/A'),
-    status: pickValue(row, ['status', 'qc status', 'approval'], 'Pending') as YouthData['status'],
+    gender,
+    ageGroup,
+    status,
+    youthInWork,
+    youthAttitudeScore,
+    isYouth,
     latitude: parseNumber(pickValue(row, ['lat', 'latitude', 'gps_lat'])),
     longitude: parseNumber(pickValue(row, ['lon', 'longitude', 'gps_lon'])),
-    enumerator: pickValue(row, ['enumerator', 'users', 'partner_id', 'int_name'], 'Unknown'),
-    educationLevel: pickValue(row, ['educationLevel', 'education', 'education_level'], 'N/A'),
-    trainingCompleted:
-      pickValue(row, ['trainingCompleted', 'training_status', 'trainingcompleted'], 'false').toString().toLowerCase() === 'true',
-    employmentStatus: pickValue(row, ['employmentStatus', 'employment_status'], 'N/A'),
-    businessIdea: pickValue(row, ['businessIdea', 'service', 'chain'], 'N/A'),
+    enumerator: pickValue(row, ['enumerator', 'username', 'users', 'int_name'], 'Unknown'),
   };
 }

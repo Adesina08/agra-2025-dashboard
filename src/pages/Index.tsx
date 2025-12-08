@@ -74,6 +74,10 @@ const Index = () => {
             <YouthTab data={youthQuery.data} isLoading={youthQuery.isLoading} />
           )}
         </div>
+
+        <footer className="w-full py-3 text-center text-xs opacity-70">
+          © Inicio Tech 2025
+        </footer>
       </div>
     </div>
   );

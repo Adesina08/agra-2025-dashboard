@@ -1,28 +1,107 @@
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, FunnelChart, Funnel, LabelList } from 'recharts';
+import { useMemo, useState } from 'react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { ChevronDown } from 'lucide-react';
 import { ChartCard } from './ChartCard';
 import { InsightsKpiRow } from './InsightsKpiRow';
-import { insightsData, calculateYouthKpis } from '@/data/insightsData';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown } from 'lucide-react';
-import { useState } from 'react';
+import type { YouthData } from '@/data/mockData';
 
 const COLORS = ['#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe', '#ede9fe'];
 const YOUTH_PRIMARY = 'hsl(var(--youth-primary))';
 const YOUTH_SECONDARY = 'hsl(var(--youth-secondary))';
 
-export function YouthInsights() {
-  const data = insightsData.youth;
-  const kpis = calculateYouthKpis(data);
+interface YouthInsightsProps {
+  data: YouthData[];
+}
+
+export function YouthInsights({ data }: YouthInsightsProps) {
   const [demographicsOpen, setDemographicsOpen] = useState(true);
   const [employmentOpen, setEmploymentOpen] = useState(true);
   const [programmeOpen, setProgrammeOpen] = useState(true);
 
-  const kpiData = [
-    { title: 'Total Youth', value: kpis.total, trend: { value: 8.2, isPositive: true } },
-    { title: 'Engaged in Agriculture', value: `${kpis.engagedPercent}%` },
-    { title: 'Avg Satisfaction', value: `${kpis.avgSatisfaction}/5` },
-    { title: 'Completion Rate', value: `${kpis.completionRate}%`, trend: { value: 5.4, isPositive: true } },
-  ];
+  const kpiData = useMemo(() => {
+    const total = data.length;
+    const approved = data.filter((d) => d.status === 'Approved').length;
+    const youthDefined = data.filter((d) => d.isYouth).length;
+    const avgAttitude = data.reduce((sum, d) => sum + (d.youthAttitudeScore || 0), 0) / (total || 1);
+
+    return [
+      { title: 'Total Youth', value: total },
+      { title: 'Approval Rate', value: total ? `${((approved / total) * 100).toFixed(1)}%` : '0%' },
+      { title: 'Youth Share', value: total ? `${((youthDefined / total) * 100).toFixed(1)}%` : '0%' },
+      { title: 'Avg Attitude Score', value: avgAttitude ? avgAttitude.toFixed(1) : '0.0' },
+    ];
+  }, [data]);
+
+  const ageDistribution = useMemo(() => {
+    const map = new Map<string, number>();
+    data.forEach((d) => {
+      const age = (d.ageGroup || 'N/A').trim() || 'N/A';
+      map.set(age, (map.get(age) || 0) + 1);
+    });
+    return Array.from(map.entries()).map(([label, value]) => ({ label, value }));
+  }, [data]);
+
+  const genderDistribution = useMemo(() => {
+    const male = data.filter((d) => d.gender?.toLowerCase() === 'male').length;
+    const female = data.filter((d) => d.gender?.toLowerCase() === 'female').length;
+    const other = data.length - male - female;
+    return [
+      { label: 'Male', value: male },
+      { label: 'Female', value: female },
+      { label: 'Other / Unknown', value: other },
+    ];
+  }, [data]);
+
+  const youthInWorkDist = useMemo(() => {
+    const map = new Map<string, number>();
+    data.forEach((d) => {
+      const value = (d.youthInWork || 'N/A').trim() || 'N/A';
+      map.set(value, (map.get(value) || 0) + 1);
+    });
+    return Array.from(map.entries()).map(([label, value]) => ({ label, value }));
+  }, [data]);
+
+  const attitudeDistribution = useMemo(() => {
+    const bins: Record<string, number> = {
+      '0-1.9': 0,
+      '2-2.9': 0,
+      '3-3.9': 0,
+      '4-5': 0,
+    };
+    data.forEach((d) => {
+      const score = d.youthAttitudeScore;
+      if (score == null) return;
+      if (score < 2) bins['0-1.9']++;
+      else if (score < 3) bins['2-2.9']++;
+      else if (score < 4) bins['3-3.9']++;
+      else bins['4-5']++;
+    });
+    return Object.entries(bins).map(([label, value]) => ({ label, value }));
+  }, [data]);
+
+  const statusBreakdown = useMemo(() => {
+    const statuses: YouthData['status'][] = ['Approved', 'Pending', 'Rejected'];
+    return statuses.map((label) => ({ label, value: data.filter((d) => d.status === label).length }));
+  }, [data]);
+
+  const youthShareData = useMemo(() => {
+    const youthCount = data.filter((d) => d.isYouth).length;
+    const other = data.length - youthCount;
+    return [
+      { label: 'Youth', value: youthCount },
+      { label: 'Other / Unknown', value: other },
+    ];
+  }, [data]);
+
+  const regionDistribution = useMemo(() => {
+    const map = new Map<string, number>();
+    data.forEach((d) => {
+      const region = (d.region || 'N/A').trim() || 'N/A';
+      map.set(region, (map.get(region) || 0) + 1);
+    });
+    return Array.from(map.entries()).map(([label, value]) => ({ label, value }));
+  }, [data]);
 
   return (
     <div className="space-y-6">
@@ -38,7 +117,7 @@ export function YouthInsights() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <ChartCard title="Age Distribution" subtitle="Youth by age group">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.byAgeGroup}>
+                <BarChart data={ageDistribution}>
                   <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
                   <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
                   <Tooltip
@@ -57,7 +136,7 @@ export function YouthInsights() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={data.byGender}
+                    data={genderDistribution}
                     cx="50%"
                     cy="50%"
                     innerRadius={50}
@@ -65,7 +144,7 @@ export function YouthInsights() {
                     dataKey="value"
                     nameKey="label"
                   >
-                    {data.byGender.map((_, index) => (
+                    {genderDistribution.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
@@ -80,11 +159,11 @@ export function YouthInsights() {
               </ResponsiveContainer>
             </ChartCard>
 
-            <ChartCard title="Education Level">
+            <ChartCard title="Region Distribution">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.byEducation} layout="vertical">
+                <BarChart data={regionDistribution} layout="vertical">
                   <XAxis type="number" tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
-                  <YAxis dataKey="label" type="category" tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }} width={60} />
+                  <YAxis dataKey="label" type="category" tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }} width={80} />
                   <Tooltip
                     contentStyle={{
                       background: 'hsl(var(--card))',
@@ -108,9 +187,9 @@ export function YouthInsights() {
         </CollapsibleTrigger>
         <CollapsibleContent className="mt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <ChartCard title="Employment Type" subtitle="Current employment distribution">
+            <ChartCard title="Youth in Work" subtitle="Classification of youth respondents">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.employmentType}>
+                <BarChart data={youthInWorkDist}>
                   <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }} />
                   <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
                   <Tooltip
@@ -125,22 +204,11 @@ export function YouthInsights() {
               </ResponsiveContainer>
             </ChartCard>
 
-            <ChartCard title="Interest in Agriculture" subtitle="Youth aspiration towards agriculture">
+            <ChartCard title="Attitude Towards Agriculture" subtitle="Average attitude score buckets">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={data.interestInAgriculture}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={70}
-                    dataKey="value"
-                    nameKey="label"
-                    label={({ label, percent }) => `${label}: ${(percent * 100).toFixed(0)}%`}
-                  >
-                    <Cell fill="#22c55e" />
-                    <Cell fill="#ef4444" />
-                  </Pie>
+                <BarChart data={attitudeDistribution}>
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }} />
+                  <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
                   <Tooltip
                     contentStyle={{
                       background: 'hsl(var(--card))',
@@ -148,7 +216,8 @@ export function YouthInsights() {
                       color: 'hsl(var(--foreground))',
                     }}
                   />
-                </PieChart>
+                  <Bar dataKey="value" fill={YOUTH_SECONDARY} radius={[4, 4, 0, 0]} />
+                </BarChart>
               </ResponsiveContainer>
             </ChartCard>
           </div>
@@ -163,9 +232,22 @@ export function YouthInsights() {
         </CollapsibleTrigger>
         <CollapsibleContent className="mt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <ChartCard title="Participation Funnel" subtitle="Programme journey stages">
+            <ChartCard title="QC Status" subtitle="Approval outcomes">
               <ResponsiveContainer width="100%" height="100%">
-                  <FunnelChart>
+                <PieChart>
+                  <Pie
+                    data={statusBreakdown}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={70}
+                    dataKey="value"
+                    nameKey="label"
+                  >
+                    {statusBreakdown.map((_, index) => (
+                      <Cell key={`cell-status-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
                   <Tooltip
                     contentStyle={{
                       background: 'hsl(var(--card))',
@@ -173,21 +255,26 @@ export function YouthInsights() {
                       color: 'hsl(var(--foreground))',
                     }}
                   />
-                  <Funnel dataKey="value" data={data.programmeParticipationFunnel} isAnimationActive>
-                    {data.programmeParticipationFunnel.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                    <LabelList position="center" fill="hsl(var(--foreground))" stroke="none" dataKey="stage" fontSize={11} />
-                  </Funnel>
-                </FunnelChart>
+                </PieChart>
               </ResponsiveContainer>
             </ChartCard>
 
-            <ChartCard title="Satisfaction Scores" subtitle="Programme satisfaction (1-5)">
+            <ChartCard title="Youth Share" subtitle="Respondents qualifying as youth">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.satisfactionScores}>
-                  <XAxis dataKey="score" tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
-                  <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
+                <PieChart>
+                  <Pie
+                    data={youthShareData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={70}
+                    dataKey="value"
+                    nameKey="label"
+                  >
+                    {youthShareData.map((_, index) => (
+                      <Cell key={`cell-youth-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
                   <Tooltip
                     contentStyle={{
                       background: 'hsl(var(--card))',
@@ -195,8 +282,7 @@ export function YouthInsights() {
                       color: 'hsl(var(--foreground))',
                     }}
                   />
-                  <Bar dataKey="count" fill={YOUTH_PRIMARY} radius={[4, 4, 0, 0]} />
-                </BarChart>
+                </PieChart>
               </ResponsiveContainer>
             </ChartCard>
           </div>
