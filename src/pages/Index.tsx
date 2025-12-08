@@ -4,9 +4,11 @@ import { Header } from '@/components/dashboard/Header';
 import { FarmerTab } from '@/components/dashboard/tabs/FarmerTab';
 import { EnterpriseTab } from '@/components/dashboard/tabs/EnterpriseTab';
 import { YouthTab } from '@/components/dashboard/tabs/YouthTab';
+import { ExportBar } from '@/components/dashboard/ExportBar';
 import { cn } from '@/lib/utils';
 import { useSurveySheet } from '@/hooks/useSurveySheet';
 import { FarmerData, EnterpriseData, YouthData } from '@/data/mockData';
+import type { Segment } from '@/lib/exportAgraDashboard';
 
 type TabType = 'farmer' | 'enterprise' | 'youth';
 
@@ -22,6 +24,13 @@ const Index = () => {
   const farmerQuery = useSurveySheet<FarmerData>('farmer');
   const enterpriseQuery = useSurveySheet<EnterpriseData>('enterprise');
   const youthQuery = useSurveySheet<YouthData>('youth');
+
+  const activeRawRows =
+    activeTab === 'farmer'
+      ? farmerQuery.raw ?? []
+      : activeTab === 'enterprise'
+        ? enterpriseQuery.raw ?? []
+        : youthQuery.raw ?? [];
 
   const activeTabConfig = {
     farmer: 'border-farmer text-farmer',
@@ -63,7 +72,7 @@ const Index = () => {
         </div>
 
         {/* Tab Content */}
-        <div className="pb-12">
+        <div className="pb-8">
           {activeTab === 'farmer' && (
             <FarmerTab />
           )}
@@ -75,6 +84,9 @@ const Index = () => {
           )}
         </div>
       </div>
+
+      {/* Export bar – uses active tab & raw sheet rows */}
+      <ExportBar rows={activeRawRows} segment={activeTab as Segment} />
 
       <footer className="border-t border-border/60 bg-card/80 backdrop-blur px-6 py-4 text-center text-sm text-muted-foreground">
         © Inicio Tech 2025
