@@ -27,6 +27,17 @@ export interface FarmerData extends Submission {
   rainfallSpread?: string;
   heavyRainDamage?: 'Severe' | 'Mild' | 'No';
   drySpell?: boolean;
+  practicesApplied?: string[];
+  usesImprovedSeed?: boolean;
+  usesFertilizer?: boolean;
+  commercializationRate?: number;
+  hasFinancialAccount?: boolean;
+  hasAgLoan?: boolean;
+  creditConstrained?: boolean;
+  receivedExtension?: boolean;
+  extensionChannels?: string[];
+  isYouth?: boolean;
+  youthAttitudeScore?: number;
 }
 
 export interface EnterpriseData extends Submission {
@@ -148,6 +159,8 @@ function generateFarmerData(count: number): FarmerData[] {
     const rainfallSpreadOptions = ['Very poor', 'Poor', 'Fair', 'Very good'];
     const heavyRainDamageOptions: FarmerData['heavyRainDamage'][] = ['Severe', 'Mild', 'No'];
     const youthClassifications = ['Youth', 'Non-youth', 'Transitioning'];
+    const practiceOptions = ['Improved seed', 'Inorganic fertilizer', 'Organic manure', 'Pest management'];
+    const extensionChannels = ['Extension officer', 'Radio', 'TV', 'SMS', 'Farmer group'];
 
     data.push({
       id: `F${String(i + 1).padStart(5, '0')}`,
@@ -172,6 +185,17 @@ function generateFarmerData(count: number): FarmerData[] {
       rainfallSpread: rainfallSpreadOptions[Math.floor(Math.random() * rainfallSpreadOptions.length)],
       heavyRainDamage: heavyRainDamageOptions[Math.floor(Math.random() * heavyRainDamageOptions.length)],
       drySpell: Math.random() > 0.5,
+      practicesApplied: practiceOptions.filter(() => Math.random() > 0.5),
+      usesImprovedSeed: Math.random() > 0.4,
+      usesFertilizer: Math.random() > 0.35,
+      commercializationRate: Math.round(Math.random() * 100),
+      hasFinancialAccount: Math.random() > 0.5,
+      hasAgLoan: Math.random() > 0.7,
+      creditConstrained: Math.random() > 0.65,
+      receivedExtension: Math.random() > 0.5,
+      extensionChannels: extensionChannels.filter(() => Math.random() > 0.65),
+      isYouth: Math.random() > 0.55,
+      youthAttitudeScore: Math.round((Math.random() * 4 + 1) * 10) / 10,
     });
   }
   return data;

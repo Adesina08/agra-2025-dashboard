@@ -37,6 +37,9 @@ export function FarmerInsights({ data }: FarmerInsightsProps) {
   const [productionOpen, setProductionOpen] = useState(true);
   const [profileOpen, setProfileOpen] = useState(true);
   const [climateOpen, setClimateOpen] = useState(true);
+  const [inputsOpen, setInputsOpen] = useState(true);
+  const [marketsOpen, setMarketsOpen] = useState(false);
+  const [youthOpen, setYouthOpen] = useState(false);
 
   const totalFarmers = data.length;
 
@@ -60,6 +63,7 @@ export function FarmerInsights({ data }: FarmerInsightsProps) {
   const youthShare = useMemo(() => {
     if (!data.length) return 0;
     const youthCount = data.filter((f) => {
+      if (typeof f.isYouth === 'boolean') return f.isYouth;
       const classification = (f.youthInWork || '').toLowerCase();
       return classification && classification !== 'non-youth';
     }).length;
@@ -196,6 +200,112 @@ export function FarmerInsights({ data }: FarmerInsightsProps) {
     [data]
   );
 
+  // 🔹 Inputs & practices
+  const practiceAdoption = useMemo(() => {
+    const counts = new Map<string, number>();
+    let farmersWithAny = 0;
+
+    data.forEach((f) => {
+      const set = new Set(f.practicesApplied || []);
+      if (set.size > 0) farmersWithAny++;
+      set.forEach((p) => counts.set(p, (counts.get(p) || 0) + 1));
+    });
+
+    return Array.from(counts.entries())
+      .map(([practice, count]) => ({
+        practice,
+        adoptionRate: farmersWithAny ? (count / farmersWithAny) * 100 : 0,
+      }))
+      .sort((a, b) => b.adoptionRate - a.adoptionRate);
+  }, [data]);
+
+  const improvedSeedRate = useMemo(() => {
+    if (!data.length) return 0;
+    const num = data.filter((f) => f.usesImprovedSeed).length;
+    return (num / data.length) * 100;
+  }, [data]);
+
+  const fertilizerRate = useMemo(() => {
+    if (!data.length) return 0;
+    const num = data.filter((f) => f.usesFertilizer).length;
+    return (num / data.length) * 100;
+  }, [data]);
+
+  // 🔹 Markets & finance
+  const commercializationDist = useMemo(() => {
+    const bins: Record<string, number> = {
+      '0–10%': 0,
+      '10–30%': 0,
+      '30–50%': 0,
+      '50–80%': 0,
+      '80–100%': 0,
+    };
+
+    data.forEach((f) => {
+      const r = f.commercializationRate;
+      if (r == null || Number.isNaN(r)) return;
+      if (r <= 10) bins['0–10%']++;
+      else if (r <= 30) bins['10–30%']++;
+      else if (r <= 50) bins['30–50%']++;
+      else if (r <= 80) bins['50–80%']++;
+      else bins['80–100%']++;
+    });
+
+    return Object.entries(bins).map(([label, value]) => ({ label, value }));
+  }, [data]);
+
+  const financialInclusion = useMemo(() => {
+    if (!data.length) return { accounts: 0, loans: 0, constrained: 0 };
+    const accounts = data.filter((f) => f.hasFinancialAccount).length;
+    const loans = data.filter((f) => f.hasAgLoan).length;
+    const constrained = data.filter((f) => f.creditConstrained).length;
+    return {
+      accounts: (accounts / data.length) * 100,
+      loans: (loans / data.length) * 100,
+      constrained: (constrained / data.length) * 100,
+    };
+  }, [data]);
+
+  // 🔹 Youth & employment
+  const youthEmployment = useMemo(() => {
+    const total = data.length || 1;
+    const youth = data.filter((f) => (typeof f.isYouth === 'boolean' ? f.isYouth : false)).length;
+    const youthWorkClass = new Map<string, number>();
+
+    data.forEach((f) => {
+      if (!f.youthInWork) return;
+      youthWorkClass.set(f.youthInWork, (youthWorkClass.get(f.youthInWork) || 0) + 1);
+    });
+
+    return {
+      youthShare: (youth / total) * 100,
+      youthWorkClass: Array.from(youthWorkClass.entries()).map(([label, value]) => ({
+        label,
+        value: (value / total) * 100,
+      })),
+    };
+  }, [data]);
+
+  const attitudeDist = useMemo(() => {
+    const buckets: Record<string, number> = {
+      '1–2 (negative)': 0,
+      '2–3': 0,
+      '3–4': 0,
+      '4–5 (positive)': 0,
+    };
+
+    data.forEach((f) => {
+      if (!f.youthAttitudeScore) return;
+      const s = f.youthAttitudeScore;
+      if (s <= 2) buckets['1–2 (negative)']++;
+      else if (s <= 3) buckets['2–3']++;
+      else if (s <= 4) buckets['3–4']++;
+      else buckets['4–5 (positive)']++;
+    });
+
+    return Object.entries(buckets).map(([label, value]) => ({ label, value }));
+  }, [data]);
+
   // 🔹 Region distribution
   const regionDist = useMemo(
     () => {
@@ -323,6 +433,141 @@ export function FarmerInsights({ data }: FarmerInsightsProps) {
         </CollapsibleContent>
       </Collapsible>
 
+      {/* Inputs & Technology */}
+      <Collapsible open={inputsOpen} onOpenChange={setInputsOpen}>
+        <CollapsibleTrigger className="flex w-full items-center justify-between py-2 text-sm font-medium">
+          <span>Inputs &amp; Technology Adoption</span>
+          <ChevronDown
+            className={`h-4 w-4 transition-transform ${inputsOpen ? 'rotate-180' : ''}`}
+          />
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="grid md:grid-cols-2 gap-4">
+            <ChartCard
+              title="Practice adoption rates"
+              subtitle="% of farmers applying each practice"
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={practiceAdoption.slice(0, 8)}>
+                  <XAxis
+                    dataKey="practice"
+                    tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }}
+                    angle={-45}
+                    textAnchor="end"
+                    height={60}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }}
+                    tickFormatter={(v) => `${v.toFixed(0)}%`}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      color: 'hsl(var(--foreground))',
+                    }}
+                    formatter={(value: any) => [`${(value as number).toFixed(1)}%`, 'Adoption']}
+                  />
+                  <Bar dataKey="adoptionRate" radius={[4, 4, 0, 0]} fill="hsl(var(--primary))" />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
+
+            <ChartCard
+              title="Key input use"
+              subtitle="Share of farmers using improved seed & fertilizer"
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={[
+                    { label: 'Improved seed', value: improvedSeedRate },
+                    { label: 'Fertilizer', value: fertilizerRate },
+                  ]}
+                >
+                  <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }}
+                    tickFormatter={(v) => `${v}%`}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      color: 'hsl(var(--foreground))',
+                    }}
+                    formatter={(value: any) => [`${(value as number).toFixed(1)}%`, 'Farmers']}
+                  />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="hsl(var(--primary))" />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* Markets & Finance */}
+      <Collapsible open={marketsOpen} onOpenChange={setMarketsOpen}>
+        <CollapsibleTrigger className="flex w-full items-center justify-between py-2 text-sm font-medium">
+          <span>Markets &amp; Finance</span>
+          <ChevronDown
+            className={`h-4 w-4 transition-transform ${marketsOpen ? 'rotate-180' : ''}`}
+          />
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="grid md:grid-cols-2 gap-4">
+            <ChartCard
+              title="Commercialisation profile"
+              subtitle="Farmers by share of production sold"
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={commercializationDist}>
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }} />
+                  <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      color: 'hsl(var(--foreground))',
+                    }}
+                  />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="hsl(var(--primary))" />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
+
+            <ChartCard
+              title="Financial inclusion"
+              subtitle="% of farmers with accounts, loans & constraints"
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={[
+                    { label: 'Has account', value: financialInclusion.accounts },
+                    { label: 'Has agricultural loan', value: financialInclusion.loans },
+                    { label: 'Credit constrained', value: financialInclusion.constrained },
+                  ]}
+                >
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }} />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }}
+                    tickFormatter={(v) => `${v}%`}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      color: 'hsl(var(--foreground))',
+                    }}
+                    formatter={(value: any) => [`${(value as number).toFixed(1)}%`, 'Share of farmers']}
+                  />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="hsl(var(--primary))" />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
       {/* Climate & Shocks */}
       <Collapsible open={climateOpen} onOpenChange={setClimateOpen}>
         <CollapsibleTrigger className="flex w-full items-center justify-between py-2 text-sm font-medium">
@@ -385,6 +630,68 @@ export function FarmerInsights({ data }: FarmerInsightsProps) {
                     textAnchor="end"
                     height={60}
                   />
+                  <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      color: 'hsl(var(--foreground))',
+                    }}
+                  />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="hsl(var(--primary))" />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* Youth & Employment */}
+      <Collapsible open={youthOpen} onOpenChange={setYouthOpen}>
+        <CollapsibleTrigger className="flex w-full items-center justify-between py-2 text-sm font-medium">
+          <span>Youth &amp; Employment in Agriculture</span>
+          <ChevronDown
+            className={`h-4 w-4 transition-transform ${youthOpen ? 'rotate-180' : ''}`}
+          />
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="grid md:grid-cols-2 gap-4">
+            <ChartCard
+              title="Youth participation"
+              subtitle="Share of youth & employment classification"
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={[
+                    { label: '% of respondents who are youth', value: youthEmployment.youthShare },
+                    ...youthEmployment.youthWorkClass,
+                  ]}
+                >
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }} />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }}
+                    tickFormatter={(v) => `${v}%`}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      color: 'hsl(var(--foreground))',
+                    }}
+                    formatter={(value: any) => [`${(value as number).toFixed(1)}%`, 'Share of farmers']}
+                  />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="hsl(var(--primary))" />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
+
+            <ChartCard
+              title="Youth attitude towards agri work"
+              subtitle="Distribution of attitude scores (1–5)"
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={attitudeDist}>
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }} />
                   <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
                   <Tooltip
                     contentStyle={{

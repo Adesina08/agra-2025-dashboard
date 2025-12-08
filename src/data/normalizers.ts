@@ -77,6 +77,45 @@ export function normalizeFarmerRow(row: SheetRow, index: number): FarmerData {
     .map((f) => parseNumber(pickValue(row, [f]), 0))
     .reduce((sum, v) => sum + v, 0);
 
+  // --- practices applied (fm8_1..fm8_15) ---
+  const fm8Fields = [
+    'fm8_1',
+    'fm8_2',
+    'fm8_3',
+    'fm8_4',
+    'fm8_5',
+    'fm8_6',
+    'fm8_7',
+    'fm8_8',
+    'fm8_9',
+    'fm8_10',
+    'fm8_11',
+    'fm8_12',
+    'fm8_13',
+    'fm8_14',
+    'fm8_15',
+  ];
+  const PRACTICE_MAP: Record<string, string> = {
+    '1': 'Improved seed',
+    '2': 'Inorganic fertilizer',
+    '3': 'Organic manure',
+    '4': 'Pest & disease management',
+    '5': 'Soil & water conservation',
+  };
+  const practicesApplied = Array.from(
+    fm8Fields.reduce((set, field) => {
+      const raw = pickValue(row, [field], '').trim();
+      if (!raw) return set;
+      raw.split(/\s+/).forEach((code) => {
+        const label = PRACTICE_MAP[code] ?? code;
+        set.add(label);
+      });
+      return set;
+    }, new Set<string>())
+  );
+  const usesImprovedSeed = practicesApplied.includes('Improved seed');
+  const usesFertilizer = practicesApplied.includes('Inorganic fertilizer');
+
   // --- rainfall perception (e28) ---
   const e28Code = pickValue(row, ['e28']).trim();
   const E28_MAP: Record<string, string> = {
@@ -107,6 +146,75 @@ export function normalizeFarmerRow(row: SheetRow, index: number): FarmerData {
 
   const e30Code = pickValue(row, ['e30']).trim(); // dry spell yes/no
   const drySpell = e30Code === '1';
+
+  // --- markets & finance ---
+  const commercializationRate = parseNumber(pickValue(row, ['df6', 'df7', 'commercializationRate']), NaN);
+  const hasFinancialAccount = pickValue(row, ['h1', 'h2'], '')
+    .toString()
+    .trim()
+    .toLowerCase() === '1';
+  const hasAgLoan = pickValue(row, ['h7', 'h8'], '')
+    .toString()
+    .trim()
+    .toLowerCase() === '1';
+  const creditConstrained = pickValue(row, ['h9'], '')
+    .toString()
+    .trim() !== '';
+
+  // --- extension / advisory ---
+  const receivedExtension = pickValue(row, ['j2'], '')
+    .toString()
+    .trim()
+    .toLowerCase() === '1';
+  const extensionChannels = Array.from(
+    [
+      'j3_1',
+      'j3_2',
+      'j3_3',
+      'j3_4',
+      'j3_5',
+      'j3_6',
+      'j3_7',
+      'j3_8',
+      'j3_9',
+      'j3_10',
+      'j3_11',
+      'j3_12',
+      'j3_13',
+    ].reduce((set, field) => {
+      const raw = pickValue(row, [field], '').trim();
+      if (raw) set.add(raw);
+      return set;
+    }, new Set<string>())
+  );
+
+  // --- youth / attitudes ---
+  const isYouth = (ageGroup || '').includes('18') || (ageGroup || '').includes('35');
+  const avFields = [
+    'av1',
+    'av2',
+    'av3',
+    'av4',
+    'av5',
+    'av6',
+    'av7',
+    'av8',
+    'av9',
+    'av10',
+    'av11',
+    'av12',
+    'av13',
+    'av14',
+    'av15',
+    'av16',
+    'av17',
+  ];
+  const avValues = avFields
+    .map((f) => parseNumber(pickValue(row, [f]), NaN))
+    .filter((v) => !Number.isNaN(v) && v > 0);
+  const youthAttitudeScore = avValues.length
+    ? avValues.reduce((sum, v) => sum + v, 0) / avValues.length
+    : undefined;
 
   // --- main crop (just pick first fm2 crop if available) ---
   const mainCrop = cropsCultivated[0] ?? 'N/A';
@@ -143,6 +251,17 @@ export function normalizeFarmerRow(row: SheetRow, index: number): FarmerData {
     rainfallSpread,
     heavyRainDamage,
     drySpell,
+    practicesApplied,
+    usesImprovedSeed,
+    usesFertilizer,
+    commercializationRate: Number.isNaN(commercializationRate) ? undefined : commercializationRate,
+    hasFinancialAccount,
+    hasAgLoan,
+    creditConstrained,
+    receivedExtension,
+    extensionChannels,
+    isYouth,
+    youthAttitudeScore,
   };
 }
 
