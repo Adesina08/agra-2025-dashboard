@@ -4,7 +4,7 @@ import { SheetRow } from '@/lib/googleSheets';
 const toLowerKeyed = (row: SheetRow) => {
   const lowered: Record<string, string> = {};
   Object.entries(row).forEach(([key, value]) => {
-    lowered[key.toLowerCase()] = value;
+    lowered[key.toLowerCase()] = String(value);
   });
   return lowered;
 };
@@ -13,7 +13,7 @@ const pickValue = (row: SheetRow, keys: string[], fallback = ''): string => {
   const lowered = toLowerKeyed(row);
   for (const key of keys) {
     const lowerKey = key.toLowerCase();
-    if (row[key] !== undefined && row[key] !== '') return row[key];
+    if (row[key] !== undefined && row[key] !== '') return String(row[key]);
     if (lowered[lowerKey] !== undefined && lowered[lowerKey] !== '') return lowered[lowerKey];
   }
   return fallback;
@@ -98,7 +98,8 @@ export function normalizeYouthRow(row: SheetRow, index: number): YouthData {
     longitude: parseNumber(pickValue(row, ['lon', 'longitude', 'gps_lon'])),
     enumerator: pickValue(row, ['enumerator', 'users', 'partner_id', 'int_name'], 'Unknown'),
     educationLevel: pickValue(row, ['educationLevel', 'education', 'education_level'], 'N/A'),
-    trainingCompleted: pickValue(row, ['trainingCompleted', 'training_status', 'trainingcompleted'], 'false').toLowerCase() === 'true',
+    trainingCompleted:
+      pickValue(row, ['trainingCompleted', 'training_status', 'trainingcompleted'], 'false').toString().toLowerCase() === 'true',
     employmentStatus: pickValue(row, ['employmentStatus', 'employment_status'], 'N/A'),
     businessIdea: pickValue(row, ['businessIdea', 'service', 'chain'], 'N/A'),
   };
