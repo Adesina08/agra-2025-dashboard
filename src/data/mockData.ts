@@ -21,6 +21,12 @@ export interface FarmerData extends Submission {
   yieldEstimate: number;
   inputAccess: boolean;
   country?: string; // 🔹 new
+  youthInWork?: string;
+  cropsCultivated?: string[];
+  rainfallAmount?: string;
+  rainfallSpread?: string;
+  heavyRainDamage?: 'Severe' | 'Mild' | 'No';
+  drySpell?: boolean;
 }
 
 export interface EnterpriseData extends Submission {
@@ -128,7 +134,21 @@ function generateFarmerData(count: number): FarmerData[] {
   for (let i = 0; i < count; i++) {
     const region = regions[Math.floor(Math.random() * regions.length)];
     const districtList = districts[region as keyof typeof districts] || ['Unknown'];
-    
+    const cropCount = Math.max(1, Math.floor(Math.random() * 3));
+    const cropSelection = Array.from({ length: cropCount }, () =>
+      cropTypes[Math.floor(Math.random() * cropTypes.length)]
+    );
+    const rainfallAmountOptions = [
+      'Much less than average',
+      'Less than average',
+      'About average',
+      'More than average',
+      'Much more than average',
+    ];
+    const rainfallSpreadOptions = ['Very poor', 'Poor', 'Fair', 'Very good'];
+    const heavyRainDamageOptions: FarmerData['heavyRainDamage'][] = ['Severe', 'Mild', 'No'];
+    const youthClassifications = ['Youth', 'Non-youth', 'Transitioning'];
+
     data.push({
       id: `F${String(i + 1).padStart(5, '0')}`,
       farmerName: `Farmer ${i + 1}`,
@@ -146,6 +166,12 @@ function generateFarmerData(count: number): FarmerData[] {
       yieldEstimate: Math.round(Math.random() * 5000 + 500),
       inputAccess: Math.random() > 0.3,
       country: 'Kenya', // 🔹 or any default country for mock data
+      youthInWork: youthClassifications[Math.floor(Math.random() * youthClassifications.length)],
+      cropsCultivated: cropSelection,
+      rainfallAmount: rainfallAmountOptions[Math.floor(Math.random() * rainfallAmountOptions.length)],
+      rainfallSpread: rainfallSpreadOptions[Math.floor(Math.random() * rainfallSpreadOptions.length)],
+      heavyRainDamage: heavyRainDamageOptions[Math.floor(Math.random() * heavyRainDamageOptions.length)],
+      drySpell: Math.random() > 0.5,
     });
   }
   return data;
