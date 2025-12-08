@@ -20,6 +20,7 @@ export interface FarmerData extends Submission {
   cropType: string;
   yieldEstimate: number;
   inputAccess: boolean;
+  country?: string; // 🔹 new
 }
 
 export interface EnterpriseData extends Submission {
@@ -47,6 +48,7 @@ export const fieldLabels = {
     yieldEstimate: 'Yield Estimate (kg)',
     inputAccess: 'Has Input Access',
     gender: 'Gender',
+    country: 'Country',          // 🔹 new
     region: 'Region',
     district: 'District',
     ageGroup: 'Age Group',
@@ -143,6 +145,7 @@ function generateFarmerData(count: number): FarmerData[] {
       cropType: cropTypes[Math.floor(Math.random() * cropTypes.length)],
       yieldEstimate: Math.round(Math.random() * 5000 + 500),
       inputAccess: Math.random() > 0.3,
+      country: 'Kenya', // 🔹 or any default country for mock data
     });
   }
   return data;

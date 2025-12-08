@@ -30,6 +30,7 @@ export const normalizeSubmissionDate = (row: SheetRow) =>
 
 export function normalizeFarmerRow(row: SheetRow, index: number): FarmerData {
   const submissionDate = normalizeSubmissionDate(row);
+  const country = pickValue(row, ['country', 'dccot', 'dcountry'], ''); // 🔹 dccot is country in your sheet
   const region = pickValue(row, ['region', 'db11', 'province']);
   const district = pickValue(row, ['district', 'db10']);
   const gender = pickValue(row, ['gender', 'sex', 'e5'], 'Unknown');
@@ -39,6 +40,7 @@ export function normalizeFarmerRow(row: SheetRow, index: number): FarmerData {
     id: pickValue(row, ['id', 'caseid', 'case_id', 'uuid'], `farmer-${index + 1}`),
     farmerName: pickValue(row, ['farmerName', 'db2label', 'db2', 'name'], 'Unknown farmer'),
     submissionDate,
+    country: country || 'Unknown country',
     region: region || 'Unknown region',
     district: district || 'Unknown district',
     gender: (gender.charAt(0).toUpperCase() + gender.slice(1)) as FarmerData['gender'],

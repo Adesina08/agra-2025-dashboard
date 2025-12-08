@@ -1,65 +1,246 @@
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, ScatterChart, Scatter } from 'recharts';
+import { useMemo, useState } from 'react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  ScatterChart,
+  Scatter,
+} from 'recharts';
 import { ChartCard } from './ChartCard';
 import { InsightsKpiRow } from './InsightsKpiRow';
-import { insightsData, calculateFarmerKpis } from '@/data/insightsData';
+import type { FarmerData } from '@/data/mockData';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown } from 'lucide-react';
-import { useState } from 'react';
 
-export function FarmerInsights() {
-  const data = insightsData.farmers;
-  const kpis = calculateFarmerKpis(data);
-  const [cropOpen, setCropOpen] = useState(true);
-  const [climateOpen, setClimateOpen] = useState(true);
+interface FarmerInsightsProps {
+  data: FarmerData[];
+}
+
+function mode<T>(arr: T[]): T | null {
+  const counts = new Map<T, number>();
+  arr.forEach((v) => counts.set(v, (counts.get(v) || 0) + 1));
+  let best: T | null = null;
+  let bestCount = 0;
+  counts.forEach((c, v) => {
+    if (c > bestCount) {
+      bestCount = c;
+      best = v;
+    }
+  });
+  return best;
+}
+
+export function FarmerInsights({ data }: FarmerInsightsProps) {
+  const [productionOpen, setProductionOpen] = useState(true);
+  const [profileOpen, setProfileOpen] = useState(true);
+
+  const totalFarmers = data.length;
+
+  const avgFarmSize = useMemo(() => {
+    if (!data.length) return 0;
+    return data.reduce((s, f) => s + (f.farmSize || 0), 0) / data.length;
+  }, [data]);
+
+  const topCrop = useMemo(() => {
+    const m = mode(data.map((f) => f.cropType || 'N/A'));
+    return m || 'N/A';
+  }, [data]);
+
+  const femaleShare = useMemo(() => {
+    if (!data.length) return 0;
+    const female = data.filter((f) => f.gender === 'Female').length;
+    return (female / data.length) * 100;
+  }, [data]);
 
   const kpiData = [
-    { title: 'Total Households', value: kpis.totalHouseholds.toLocaleString(), trend: { value: 6.8, isPositive: true } },
-    { title: 'Practice Adoption', value: `${kpis.avgPracticeAdoption}%` },
-    { title: 'Top Crop', value: kpis.topCrop },
-    { title: 'Shock Exposure', value: `${kpis.shockExposureRate}%`, trend: { value: 3.2, isPositive: false } },
+    {
+      title: 'Total Farmers',
+      value: totalFarmers.toLocaleString(),
+      trend: undefined,
+    },
+    {
+      title: 'Avg Farm Size (Ha)',
+      value: avgFarmSize.toFixed(1),
+    },
+    {
+      title: 'Top Crop',
+      value: topCrop,
+    },
+    {
+      title: '% Female Farmers',
+      value: `${femaleShare.toFixed(1)}%`,
+    },
   ];
+
+  // 🔹 Crops cultivated (count of farmers by crop)
+  const cropsCultivated = useMemo(
+    () => {
+      const map = new Map<string, number>();
+      data.forEach((f) => {
+        const crop = (f.cropType || 'N/A').trim() || 'N/A';
+        map.set(crop, (map.get(crop) || 0) + 1);
+      });
+      return Array.from(map.entries())
+        .map(([crop, households]) => ({ crop, households }))
+        .sort((a, b) => b.households - a.households);
+    },
+    [data]
+  );
+
+  // 🔹 Farm size distribution (simple bins)
+  const farmSizeDist = useMemo(
+    () => {
+      const bins = {
+        '<1 Ha': 0,
+        '1–2 Ha': 0,
+        '2–5 Ha': 0,
+        '5+ Ha': 0,
+      };
+
+      data.forEach((f) => {
+        const s = f.farmSize || 0;
+        if (s < 1) bins['<1 Ha']++;
+        else if (s < 2) bins['1–2 Ha']++;
+        else if (s < 5) bins['2–5 Ha']++;
+        else bins['5+ Ha']++;
+      });
+
+      return Object.entries(bins).map(([label, value]) => ({ label, value }));
+    },
+    [data]
+  );
+
+  // 🔹 Gender distribution
+  const genderDist = useMemo(
+    () => {
+      const male = data.filter((f) => f.gender === 'Male').length;
+      const female = data.filter((f) => f.gender === 'Female').length;
+      const other = data.length - male - female;
+      return [
+        { label: 'Male', value: male },
+        { label: 'Female', value: female },
+        { label: 'Other / Unknown', value: other },
+      ];
+    },
+    [data]
+  );
+
+  // 🔹 Region distribution
+  const regionDist = useMemo(
+    () => {
+      const map = new Map<string, number>();
+      data.forEach((f) => {
+        const r = (f.region || 'Unknown').trim() || 'Unknown';
+        map.set(r, (map.get(r) || 0) + 1);
+      });
+      return Array.from(map.entries())
+        .map(([region, value]) => ({ region, value }))
+        .sort((a, b) => b.value - a.value);
+    },
+    [data]
+  );
+
+  // 🔹 Scatter: farm size vs yield
+  const scatterFarmYield = useMemo(
+    () =>
+      data
+        .filter((f) => f.farmSize && f.yieldEstimate)
+        .map((f) => ({
+          x: f.farmSize,
+          y: f.yieldEstimate,
+        })),
+    [data]
+  );
 
   return (
     <div className="space-y-6">
+      {/* KPI row */}
       <InsightsKpiRow kpis={kpiData} variant="farmer" />
 
-      {/* Crop & Practice Adoption */}
-      <Collapsible open={cropOpen} onOpenChange={setCropOpen}>
-        <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-foreground/80 transition-colors">
-          <ChevronDown className={`w-4 h-4 transition-transform ${cropOpen ? '' : '-rotate-90'}`} />
-          Crop & Practice Adoption
+      {/* Production & agronomy */}
+      <Collapsible open={productionOpen} onOpenChange={setProductionOpen}>
+        <CollapsibleTrigger className="flex w-full items-center justify-between py-2 text-sm font-medium">
+          <span>Production & Agronomy</span>
+          <ChevronDown
+            className={`h-4 w-4 transition-transform ${
+              productionOpen ? 'rotate-180' : ''
+            }`}
+          />
         </CollapsibleTrigger>
-        <CollapsibleContent className="mt-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <ChartCard title="Crops Cultivated" subtitle="Households by crop type">
+        <CollapsibleContent>
+          <div className="grid md:grid-cols-2 gap-4">
+            <ChartCard
+              title="Crops Cultivated"
+              subtitle="Farmers by primary crop"
+            >
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.cropsCultivated.slice(0, 6)}>
-                  <XAxis dataKey="crop" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={50} />
+                <BarChart data={cropsCultivated.slice(0, 8)}>
+                  <XAxis
+                    dataKey="crop"
+                    tick={{ fontSize: 10 }}
+                    angle={-45}
+                    textAnchor="end"
+                    height={50}
+                  />
                   <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
-                  <Bar dataKey="households" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                    }}
+                  />
+                  <Bar dataKey="households" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>
 
-            <ChartCard title="Practice Adoption" subtitle="Adoption rate by practice">
+            <ChartCard
+              title="Farm Size Distribution"
+              subtitle="Number of farmers by farm size class"
+            >
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.practicesAdoption} layout="vertical">
-                  <XAxis type="number" tick={{ fontSize: 11 }} domain={[0, 100]} />
-                  <YAxis dataKey="practice" type="category" tick={{ fontSize: 9 }} width={80} />
-                  <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} formatter={(value) => `${value}%`} />
-                  <Bar dataKey="adoptionRate" fill="#4ade80" radius={[0, 4, 4, 0]} />
+                <BarChart data={farmSizeDist}>
+                  <XAxis dataKey="label" tick={{ fontSize: 10 }} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                    }}
+                  />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>
 
-            <ChartCard title="Land Size vs Crops" subtitle="Diversification by farm size">
+            <ChartCard
+              title="Farm Size vs Yield"
+              subtitle="Scatter of farm size and estimated yield"
+            >
               <ResponsiveContainer width="100%" height="100%">
                 <ScatterChart>
-                  <XAxis dataKey="landSize" name="Land Size (Ha)" tick={{ fontSize: 11 }} />
-                  <YAxis dataKey="cropCount" name="Crop Count" tick={{ fontSize: 11 }} />
-                  <Tooltip cursor={{ strokeDasharray: '3 3' }} contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
-                  <Scatter data={data.landSizeVsCrops} fill="#22c55e" />
+                  <XAxis
+                    type="number"
+                    dataKey="x"
+                    name="Farm size (Ha)"
+                    tick={{ fontSize: 10 }}
+                  />
+                  <YAxis
+                    type="number"
+                    dataKey="y"
+                    name="Yield (kg)"
+                    tick={{ fontSize: 10 }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                    }}
+                  />
+                  <Scatter data={scatterFarmYield} />
                 </ScatterChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -67,43 +248,55 @@ export function FarmerInsights() {
         </CollapsibleContent>
       </Collapsible>
 
-      {/* Climate & Resilience */}
-      <Collapsible open={climateOpen} onOpenChange={setClimateOpen}>
-        <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-foreground/80 transition-colors">
-          <ChevronDown className={`w-4 h-4 transition-transform ${climateOpen ? '' : '-rotate-90'}`} />
-          Climate & Resilience
+      {/* Household profile */}
+      <Collapsible open={profileOpen} onOpenChange={setProfileOpen}>
+        <CollapsibleTrigger className="flex w-full items-center justify-between py-2 text-sm font-medium">
+          <span>Household Profile</span>
+          <ChevronDown
+            className={`h-4 w-4 transition-transform ${
+              profileOpen ? 'rotate-180' : ''
+            }`}
+          />
         </CollapsibleTrigger>
-        <CollapsibleContent className="mt-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <ChartCard title="Rainfall Start Month" subtitle="When rains typically begin">
+        <CollapsibleContent>
+          <div className="grid md:grid-cols-2 gap-4">
+            <ChartCard
+              title="Gender Distribution"
+              subtitle="Farmers by gender"
+            >
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.rainfallStartMonth}>
-                  <XAxis dataKey="month" tick={{ fontSize: 10 }} />
+                <BarChart data={genderDist}>
+                  <XAxis dataKey="label" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
-                  <Bar dataKey="households" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                    }}
+                  />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>
 
-            <ChartCard title="Rainfall Perception" subtitle="Compared to normal">
+            <ChartCard title="Region Distribution" subtitle="Farmers by region">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.rainfallPerception}>
-                  <XAxis dataKey="label" tick={{ fontSize: 9 }} angle={-30} textAnchor="end" height={50} />
+                <BarChart data={regionDist}>
+                  <XAxis
+                    dataKey="region"
+                    tick={{ fontSize: 10 }}
+                    angle={-45}
+                    textAnchor="end"
+                    height={50}
+                  />
                   <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
-                  <Bar dataKey="value" fill="#4ade80" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartCard>
-
-            <ChartCard title="Shock Exposure" subtitle="Climate shocks experienced">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.shockExposure} layout="vertical">
-                  <XAxis type="number" tick={{ fontSize: 11 }} />
-                  <YAxis dataKey="type" type="category" tick={{ fontSize: 10 }} width={60} />
-                  <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
-                  <Bar dataKey="value" fill="#ef4444" radius={[0, 4, 4, 0]} />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                    }}
+                  />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>
