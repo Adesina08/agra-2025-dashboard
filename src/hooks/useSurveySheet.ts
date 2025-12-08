@@ -11,6 +11,8 @@ interface SurveyResult<T> {
   isLoading: boolean;
   error: Error | null;
   refreshedAt?: Date;
+  isFetching: boolean;
+  refetch: () => Promise<any>;
 }
 
 const normalizerMap: Record<SurveyKey, (row: SheetRow, index: number) => any> = {
@@ -36,6 +38,8 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
       return { rows, refreshedAt: new Date() };
     },
     refetchOnWindowFocus: false,
+    refetchInterval: 1000 * 60 * 60, // Refresh every hour to keep the dashboard in sync
+    staleTime: 1000 * 60 * 60,
     retry: 1,
   });
 
@@ -71,6 +75,8 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
       isLoading: query.isLoading,
       error: query.error as Error | null,
       refreshedAt: query.data?.refreshedAt,
+      isFetching: query.isFetching,
+      refetch: query.refetch,
     };
   }
 
@@ -83,5 +89,7 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
     isLoading: query.isLoading,
     error: null,
     refreshedAt: query.data.refreshedAt,
+    isFetching: query.isFetching,
+    refetch: query.refetch,
   };
 }

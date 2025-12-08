@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
 import { Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getChartHeaderClasses } from './chartStyles';
 
 interface InterviewerQuality {
   name: string;
@@ -15,10 +16,10 @@ interface SubmissionQualityChartProps {
   variant?: 'farmer' | 'enterprise' | 'youth';
 }
 
-export function SubmissionQualityChart({ 
-  data, 
+export function SubmissionQualityChart({
+  data,
   title = "Submission Quality Overview",
-  variant = 'farmer' 
+  variant = 'farmer'
 }: SubmissionQualityChartProps) {
   const [view, setView] = useState<'chart' | 'table'>('chart');
 
@@ -76,16 +77,16 @@ export function SubmissionQualityChart({
 
   return (
     <div className="minimal-card">
-      <div className="flex items-center justify-between mb-4">
+      <div className={cn('flex items-center justify-between rounded-lg px-4 py-3 mb-4 shadow-sm', getChartHeaderClasses(variant))}>
         <div>
-          <h3 className="text-sm font-medium text-foreground">{title}</h3>
-          <p className="text-xs text-muted-foreground mt-1">
+          <h3 className="text-sm font-medium">{title}</h3>
+          <p className="text-xs opacity-90 mt-1">
             Monitor interviewer throughput and approvals
           </p>
         </div>
-        <button 
+        <button
           onClick={handleExport}
-          className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground bg-muted/50 hover:bg-muted rounded transition-colors"
+          className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-white/15 hover:bg-white/25 rounded transition-colors"
         >
           <Download className="w-3 h-3" />
           Export table

@@ -13,11 +13,12 @@ interface HeaderProps {
   farmer: SurveyState<FarmerData>;
   enterprise: SurveyState<EnterpriseData>;
   youth: SurveyState<YouthData>;
+  onRefresh: () => Promise<void>;
+  isRefreshing: boolean;
 }
 
-export function Header({ farmer, enterprise, youth }: HeaderProps) {
+export function Header({ farmer, enterprise, youth, onRefresh, isRefreshing }: HeaderProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const latestSubmissionDate = useMemo(() => {
     const submissions = [...farmer.data, ...enterprise.data, ...youth.data];
@@ -41,8 +42,7 @@ export function Header({ farmer, enterprise, youth }: HeaderProps) {
   }, [enterprise.refreshedAt, farmer.refreshedAt, youth.refreshedAt]);
 
   const handleRefresh = () => {
-    setIsRefreshing(true);
-    setTimeout(() => setIsRefreshing(false), 1000);
+    onRefresh();
   };
 
   const formatDateTime = (date: Date | null) => {
@@ -88,7 +88,8 @@ export function Header({ farmer, enterprise, youth }: HeaderProps) {
           <div className="flex items-center gap-2">
             <button
               onClick={handleRefresh}
-              className="rounded p-1.5 transition-all hover:-translate-y-0.5 hover:bg-secondary"
+              disabled={isRefreshing}
+              className="rounded p-1.5 transition-all hover:-translate-y-0.5 hover:bg-secondary disabled:opacity-70"
               title="Refresh"
             >
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />

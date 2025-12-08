@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Trophy, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getChartHeaderClasses } from './chartStyles';
 
 interface InterviewerStats {
   name: string;
@@ -51,10 +52,10 @@ export function ProductivityRankings({
 
   return (
     <div className="minimal-card">
-      <div className="flex items-center justify-between mb-6">
+      <div className={cn('flex items-center justify-between mb-6 rounded-lg px-4 py-3 shadow-sm', getChartHeaderClasses(variant))}>
         <div>
-          <h3 className="text-sm font-medium text-foreground">{title}</h3>
-          <p className="text-xs text-muted-foreground mt-1">
+          <h3 className="text-sm font-medium">{title}</h3>
+          <p className="text-xs opacity-90 mt-1">
             Track interviewer performance and highlight key performers
           </p>
         </div>
@@ -63,8 +64,8 @@ export function ProductivityRankings({
             className={cn(
               'px-3 py-1.5 text-xs font-medium rounded transition-colors',
               view === 'top'
-                ? 'bg-primary/20 text-primary'
-                : 'text-muted-foreground hover:bg-muted'
+                ? 'bg-white/20 text-white'
+                : 'text-white/80 hover:bg-white/10'
             )}
             onClick={() => setView('top')}
           >
@@ -74,8 +75,8 @@ export function ProductivityRankings({
             className={cn(
               'px-3 py-1.5 text-xs font-medium rounded transition-colors',
               view === 'last'
-                ? 'bg-primary/20 text-primary'
-                : 'text-muted-foreground hover:bg-muted'
+                ? 'bg-white/20 text-white'
+                : 'text-white/80 hover:bg-white/10'
             )}
             onClick={() => setView('last')}
           >

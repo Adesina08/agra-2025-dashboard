@@ -18,10 +18,24 @@ const tabs = [
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<TabType>('farmer');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const farmerQuery = useSurveySheet<FarmerData>('farmer');
   const enterpriseQuery = useSurveySheet<EnterpriseData>('enterprise');
   const youthQuery = useSurveySheet<YouthData>('youth');
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        farmerQuery.refetch(),
+        enterpriseQuery.refetch(),
+        youthQuery.refetch(),
+      ]);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const activeTabConfig = {
     farmer: 'border-farmer text-farmer',
@@ -36,6 +50,8 @@ const Index = () => {
           farmer={{ data: farmerQuery.data, isLive: farmerQuery.isLive, refreshedAt: farmerQuery.refreshedAt }}
           enterprise={{ data: enterpriseQuery.data, isLive: enterpriseQuery.isLive, refreshedAt: enterpriseQuery.refreshedAt }}
           youth={{ data: youthQuery.data, isLive: youthQuery.isLive, refreshedAt: youthQuery.refreshedAt }}
+          onRefresh={handleRefresh}
+          isRefreshing={isRefreshing || farmerQuery.isFetching || enterpriseQuery.isFetching || youthQuery.isFetching}
         />
 
         {/* Tab Navigation */}

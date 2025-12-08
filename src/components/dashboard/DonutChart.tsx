@@ -1,4 +1,6 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { cn } from '@/lib/utils';
+import { getChartHeaderClasses } from './chartStyles';
 
 interface DonutChartProps {
   data: { name: string; value: number; color: string }[];
@@ -6,12 +8,14 @@ interface DonutChartProps {
   variant?: 'farmer' | 'enterprise' | 'youth';
 }
 
-export function DonutChart({ data, title }: DonutChartProps) {
+export function DonutChart({ data, title, variant = 'farmer' }: DonutChartProps) {
   const total = data.reduce((sum, item) => sum + item.value, 0);
 
   return (
     <div className="minimal-card h-full">
-      <h3 className="text-sm text-muted-foreground mb-4">{title}</h3>
+      <div className={cn('rounded-lg px-4 py-3 mb-4 shadow-sm', getChartHeaderClasses(variant))}>
+        <h3 className="text-sm font-medium">{title}</h3>
+      </div>
       <div className="h-48">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>

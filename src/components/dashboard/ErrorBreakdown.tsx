@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { AlertTriangle, ArrowDown, ArrowUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getChartHeaderClasses } from './chartStyles';
 
 interface ErrorType {
   errorType: string;
@@ -52,15 +53,11 @@ export function ErrorBreakdown({
 
   return (
     <div className="minimal-card">
-      <div className="flex items-center gap-3 mb-4">
-        <AlertTriangle className={cn('w-4 h-4', {
-          'text-farmer': variant === 'farmer',
-          'text-enterprise': variant === 'enterprise',
-          'text-youth': variant === 'youth',
-        })} />
+      <div className={cn('flex items-center gap-3 mb-4 rounded-lg px-4 py-3 shadow-sm', getChartHeaderClasses(variant))}>
+        <AlertTriangle className="w-4 h-4" />
         <div>
-          <h3 className="text-sm font-medium text-foreground">{title}</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <h3 className="text-sm font-medium">{title}</h3>
+          <p className="text-xs opacity-90 mt-0.5">
             Identify the most common data-quality flags
           </p>
         </div>
