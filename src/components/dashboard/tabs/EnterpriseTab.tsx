@@ -141,10 +141,9 @@ export function EnterpriseTab({ data, isLoading = false }: EnterpriseTabProps) {
           <ProgressPanels
             achieved={stats.total}
             target={targetInterviews}
-            approvals={[
-              { label: 'Approved', value: stats.approved, color: '#22c55e' },
-              { label: 'Pending', value: stats.pending, color: '#facc15' },
-              { label: 'Rejected', value: stats.rejected, color: '#ef4444' },
+            genderData={[
+              { label: 'Male', value: stats.male, color: '#3b82f6' },
+              { label: 'Female', value: stats.female, color: '#ec4899' },
             ]}
             accentColor="#f59e0b"
             remainderColor="#fb923c"

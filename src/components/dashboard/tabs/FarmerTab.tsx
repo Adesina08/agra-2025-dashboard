@@ -137,10 +137,9 @@ export function FarmerTab({ data, isLoading = false }: FarmerTabProps) {
           <ProgressPanels
             achieved={stats.total}
             target={targetInterviews}
-            approvals={[
-              { label: 'Approved', value: stats.approved, color: '#22c55e' },
-              { label: 'Pending', value: stats.pending, color: '#f97316' },
-              { label: 'Rejected', value: stats.rejected, color: '#ef4444' },
+            genderData={[
+              { label: 'Male', value: stats.male, color: '#3b82f6' },
+              { label: 'Female', value: stats.female, color: '#ec4899' },
             ]}
             accentColor="#3b82f6"
             remainderColor="#0ea5e9"

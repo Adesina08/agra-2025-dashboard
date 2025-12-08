@@ -3,7 +3,7 @@ import { Pie, PieChart, ResponsiveContainer, Cell } from 'recharts';
 interface ProgressPanelsProps {
   achieved: number;
   target: number;
-  approvals: { label: string; value: number; color: string }[];
+  genderData: { label: string; value: number; color: string }[];
   accentColor: string;
   remainderColor: string;
 }
@@ -11,7 +11,7 @@ interface ProgressPanelsProps {
 export function ProgressPanels({
   achieved,
   target,
-  approvals,
+  genderData,
   accentColor,
   remainderColor,
 }: ProgressPanelsProps) {
@@ -21,7 +21,7 @@ export function ProgressPanels({
     { name: 'Remaining', value: remaining, color: remainderColor },
   ];
 
-  const approvalTotal = approvals.reduce((sum, item) => sum + item.value, 0) || 1;
+  const genderTotal = genderData.reduce((sum, item) => sum + item.value, 0) || 1;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -84,17 +84,17 @@ export function ProgressPanels({
         </div>
       </div>
 
-      <div className="minimal-card relative overflow-hidden bg-gradient-to-br from-emerald-400/10 via-emerald-500/5 to-background">
+      <div className="minimal-card relative overflow-hidden bg-gradient-to-br from-pink-400/10 via-blue-500/5 to-background">
         <div className="absolute inset-0 pointer-events-none" aria-hidden>
-          <div className="absolute -left-8 top-6 h-28 w-28 rounded-full bg-emerald-400/10 blur-3xl" />
-          <div className="absolute right-0 bottom-0 h-32 w-32 rounded-full bg-red-500/10 blur-3xl" />
+          <div className="absolute -left-8 top-6 h-28 w-28 rounded-full bg-pink-400/10 blur-3xl" />
+          <div className="absolute right-0 bottom-0 h-32 w-32 rounded-full bg-blue-500/10 blur-3xl" />
         </div>
 
         <div className="relative z-10 flex flex-col gap-4">
           <div>
-            <h3 className="text-base font-semibold text-foreground">Approval Breakdown</h3>
+            <h3 className="text-base font-semibold text-foreground">Gender Distribution</h3>
             <p className="text-sm text-muted-foreground">
-              See the balance between validated and flagged interviews to prioritise follow-up reviews.
+              Overview of respondent gender breakdown across all submissions.
             </p>
           </div>
 
@@ -103,7 +103,7 @@ export function ProgressPanels({
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={approvals}
+                    data={genderData}
                     dataKey="value"
                     nameKey="label"
                     innerRadius={35}
@@ -111,7 +111,7 @@ export function ProgressPanels({
                     paddingAngle={2}
                     stroke="none"
                   >
-                    {approvals.map((item) => (
+                    {genderData.map((item) => (
                       <Cell key={item.label} fill={item.color} />
                     ))}
                   </Pie>
@@ -119,14 +119,14 @@ export function ProgressPanels({
               </ResponsiveContainer>
             </div>
             <div className="space-y-2">
-              {approvals.map((item) => (
+              {genderData.map((item) => (
                 <div key={item.label} className="flex items-center justify-between text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
                     <span className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
                     <span>{item.label}</span>
                   </div>
                   <span className="font-semibold text-foreground">
-                    {item.value.toLocaleString()} ({((item.value / approvalTotal) * 100).toFixed(1)}%)
+                    {item.value.toLocaleString()} ({((item.value / genderTotal) * 100).toFixed(1)}%)
                   </span>
                 </div>
               ))}
