@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Trophy, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -14,34 +14,40 @@ interface ProductivityRankingsProps {
   variant?: 'farmer' | 'enterprise' | 'youth';
 }
 
-export function ProductivityRankings({ 
-  data, 
-  title = "User Productivity Rankings",
-  variant = 'farmer' 
+export function ProductivityRankings({
+  data,
+  title = "Interviewers Productivity Rankings",
+  variant = 'farmer'
 }: ProductivityRankingsProps) {
+  const [view, setView] = useState<'top' | 'last'>('top');
   const variantColors = {
     farmer: 'text-farmer',
     enterprise: 'text-enterprise',
     youth: 'text-youth',
   };
 
-  const sorted = useMemo(() => {
-    return [...data].sort((a, b) => b.approved - a.approved).slice(0, 10);
-  }, [data]);
+  const rankedList = useMemo(() => {
+    const ordered = [...data].sort((a, b) => b.approved - a.approved);
+    if (view === 'last') {
+      return ordered.reverse().slice(0, 10);
+    }
+    return ordered.slice(0, 10);
+  }, [data, view]);
 
-  const topPerformer = sorted[0];
-  const otherPerformers = sorted.slice(1);
+  const topPerformer = rankedList[0];
+  const otherPerformers = rankedList.slice(1);
   const overallApproval = useMemo(() => {
     const totalApproved = data.reduce((sum, d) => sum + d.approved, 0);
     const totalInterviews = data.reduce((sum, d) => sum + d.totalInterviews, 0);
     return totalInterviews > 0 ? ((totalApproved / totalInterviews) * 100).toFixed(1) : '0';
   }, [data]);
 
-  const topPerformerRate = topPerformer 
-    ? ((topPerformer.approved / topPerformer.totalInterviews) * 100).toFixed(1) 
+  const topPerformerRate = topPerformer
+    ? ((topPerformer.approved / topPerformer.totalInterviews) * 100).toFixed(1)
     : '0';
 
   const flagged = topPerformer ? topPerformer.totalInterviews - topPerformer.approved : 0;
+  const performerLabel = view === 'top' ? 'Top Performer' : 'Lowest Performer';
 
   return (
     <div className="minimal-card">
@@ -53,10 +59,26 @@ export function ProductivityRankings({
           </p>
         </div>
         <div className="flex gap-2">
-          <button className="px-3 py-1.5 text-xs font-medium bg-primary/20 text-primary rounded">
+          <button
+            className={cn(
+              'px-3 py-1.5 text-xs font-medium rounded transition-colors',
+              view === 'top'
+                ? 'bg-primary/20 text-primary'
+                : 'text-muted-foreground hover:bg-muted'
+            )}
+            onClick={() => setView('top')}
+          >
             Top 10
           </button>
-          <button className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted rounded transition-colors">
+          <button
+            className={cn(
+              'px-3 py-1.5 text-xs font-medium rounded transition-colors',
+              view === 'last'
+                ? 'bg-primary/20 text-primary'
+                : 'text-muted-foreground hover:bg-muted'
+            )}
+            onClick={() => setView('last')}
+          >
             Last 10
           </button>
         </div>
@@ -68,7 +90,7 @@ export function ProductivityRankings({
           <div className="bg-muted/30 rounded-lg p-4 border border-border/50">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground uppercase tracking-wide">Top Performer</span>
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">{performerLabel}</span>
               </div>
               <span className="text-xs px-2 py-1 rounded bg-green-500/20 text-green-400">
                 Overall approval {overallApproval}%
@@ -114,29 +136,32 @@ export function ProductivityRankings({
           </div>
         )}
 
-        {/* Top 10 Interviewers List */}
+        {/* Interviewers List */}
         <div>
           <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3">
-            Top 10 Interviewers
+            {view === 'top' ? 'Top 10 Interviewers' : 'Last 10 Interviewers'}
           </p>
           <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
             {otherPerformers.map((interviewer, index) => {
               const approvalRate = ((interviewer.approved / interviewer.totalInterviews) * 100).toFixed(1);
+              const rankNumber = view === 'top' ? index + 2 : data.length - index;
               return (
-                <div 
-                  key={interviewer.name} 
+                <div
+                  key={interviewer.name}
                   className="flex items-center justify-between py-2 px-3 bg-muted/20 rounded border border-border/30 hover:bg-muted/30 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <span className={cn(
-                      'w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium',
-                      {
-                        'bg-farmer/20 text-farmer': variant === 'farmer',
-                        'bg-enterprise/20 text-enterprise': variant === 'enterprise',
-                        'bg-youth/20 text-youth': variant === 'youth',
-                      }
-                    )}>
-                      #{index + 2}
+                    <span
+                      className={cn(
+                        'w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium',
+                        {
+                          'bg-farmer/20 text-farmer': variant === 'farmer',
+                          'bg-enterprise/20 text-enterprise': variant === 'enterprise',
+                          'bg-youth/20 text-youth': variant === 'youth',
+                        }
+                      )}
+                    >
+                      #{rankNumber}
                     </span>
                     <div>
                       <p className="text-sm font-medium text-foreground">{interviewer.name}</p>

@@ -145,8 +145,8 @@ export function EnterpriseTab({ data, isLoading = false }: EnterpriseTabProps) {
               { label: 'Male', value: stats.male, color: '#3b82f6' },
               { label: 'Female', value: stats.female, color: '#ec4899' },
             ]}
-            accentColor="#f59e0b"
-            remainderColor="#fb923c"
+            accentColor="#16a34a"
+            remainderColor="#f97316"
           />
 
           {/* Productivity Rankings */}
