@@ -1,3 +1,5 @@
+// src/lib/publicSheet.ts
+
 // Fetches a tab's data as a 2D array (string[][]) without API keys.
 // Requires that the sheet is viewable by "anyone with the link".
 export async function fetchPublicSheetValues(
@@ -18,34 +20,53 @@ export async function fetchPublicSheetValues(
 
   const text = await res.text();
 
-  // gviz returns JS, not pure JSON; strip wrapper
-  const jsonText = text
-    .replace(/^[^{]+/, "") // remove leading "/*O_o*/google.visualization.Query.setResponse("
-    .replace(/;?$/, "");   // remove trailing ");"
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(jsonText);
-  } catch (e) {
-    console.error("Failed to parse gviz response", e, text);
+  // --- 1) Robustly strip the gviz JS wrapper ---
+  // Response looks like:  /*O_o*/\ngoogle.visualization.Query.setResponse({...});
+  const jsonStart = text.indexOf("{");
+  const jsonEnd = text.lastIndexOf("}");
+  if (jsonStart === -1 || jsonEnd === -1 || jsonEnd <= jsonStart) {
+    console.error("Unexpected gviz response format:", text);
     throw new Error("Could not parse Google Sheets response");
   }
 
-  const table = (parsed as { table?: { rows?: Array<{ c?: Array<{ v: unknown } | null> }> } }).table;
+  const jsonText = text.slice(jsonStart, jsonEnd + 1);
 
-  if (!table || !table.rows) {
+  let parsed: any;
+  try {
+    parsed = JSON.parse(jsonText);
+  } catch (e) {
+    console.error("Failed to parse gviz JSON:", e, jsonText);
+    throw new Error("Could not parse Google Sheets response");
+  }
+
+  if (!parsed.table) {
     return [];
   }
 
-  const rows = table.rows as Array<{ c?: Array<{ v: unknown } | null> }>;
-  const values: string[][] = rows.map((row) =>
-    (row.c || []).map((cell) =>
+  const table = parsed.table;
+  const cols = table.cols || [];
+  const rows = table.rows || [];
+
+  // --- 2) Build header row ---
+  // Prefer column labels from "cols"; if all empty, fallback to first data row.
+  let header: string[] = cols.map((c: any) => (c && c.label) || "");
+
+  const bodyRows: string[][] = rows.map((row: any) =>
+    (row.c || []).map((cell: any) =>
       cell && cell.v != null ? String(cell.v) : ""
     )
   );
 
-  // Header row: we assume first row contains header text
-  // If your sheet already has a proper header row at row 1, this is fine.
-  // If you do something more complex, adjust here.
-  return values;
+  const allHeaderEmpty = header.every((h) => h === "");
+
+  if (allHeaderEmpty) {
+    // e.g. your QC_*_DETAIL with "parsedNumHeaders": 0
+    if (bodyRows.length === 0) return [];
+    // First row in body is the header row
+    const [firstRow, ...rest] = bodyRows;
+    return [firstRow, ...rest];
+  }
+
+  // Normal case: use cols[].label as header
+  return [header, ...bodyRows];
 }
