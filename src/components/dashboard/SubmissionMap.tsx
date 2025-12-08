@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MapPin } from "lucide-react";
 import { Submission } from "@/data/mockData";
+import { cn } from "@/lib/utils";
 
 type Variant = "farmer" | "enterprise" | "youth";
 
@@ -35,6 +36,12 @@ const variantColors: Record<Variant, string> = {
   farmer: "#22c55e",
   enterprise: "#f59e0b",
   youth: "#06b6d4",
+};
+
+const headerTone: Record<Variant, string> = {
+  farmer: 'bg-farmer/10 border-farmer/30 text-farmer',
+  enterprise: 'bg-enterprise/10 border-enterprise/30 text-enterprise',
+  youth: 'bg-youth/10 border-youth/30 text-youth',
 };
 
 const LEAFLET_CSS = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
@@ -133,23 +140,33 @@ export function SubmissionMap({
         }).addTo(map);
 
         points.forEach((submission) => {
+          const approvalColor = statusPill(submission.status as string);
           const marker = L.circleMarker([submission.latitude, submission.longitude], {
-            radius: 6,
+            radius: 7,
             color: variantColors[variant],
-            weight: 1,
+            weight: 2,
             fillColor: variantColors[variant],
-            fillOpacity: 0.75,
+            fillOpacity: 0.85,
           })
             .bindTooltip(
-              `<div style="display:flex;flex-direction:column;gap:2px;font-size:12px;">
-                <div style="font-weight:600;">${submission.region}</div>
-                <div>${submission.district}</div>
-                <div>Enumerator: ${submission.enumerator}</div>
-                <div>Status: ${submission.status}</div>
+              `<div class="submission-tooltip">
+                <div class="tooltip-title">${submission.region}</div>
+                <div class="tooltip-sub">${submission.district}</div>
+                <div class="tooltip-row">
+                  <span class="tooltip-label">Enumerator</span>
+                  <span>${submission.enumerator}</span>
+                </div>
+                <div class="tooltip-row">
+                  <span class="tooltip-label">Status</span>
+                  <span class="tooltip-pill" style="background:${approvalColor}1a;color:${approvalColor};border:1px solid ${approvalColor}40;">${submission.status}</span>
+                </div>
               </div>`,
-              { direction: "top" }
+              { direction: "top", opacity: 0.95, className: 'submission-tooltip-wrapper' }
             )
             .addTo(map);
+
+          (marker as any).on('mouseover', () => marker.setStyle({ radius: 9, weight: 3 }));
+          (marker as any).on('mouseout', () => marker.setStyle({ radius: 7, weight: 2 }));
 
           markers.push(marker);
         });
@@ -171,11 +188,18 @@ export function SubmissionMap({
     };
   }, [center, points, variant]);
 
+  const statusPill = (status?: string) => {
+    const normalized = status?.trim().toLowerCase();
+    if (normalized === 'approved') return '#22c55e';
+    if (normalized === 'rejected' || normalized === 'not approved') return '#ef4444';
+    return '#f59e0b';
+  };
+
   return (
     <div className="minimal-card h-full">
-      <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
+      <div className={cn('flex items-center gap-2 mb-3 text-sm rounded-lg px-4 py-3 border', headerTone[variant])}>
         <MapPin className="h-4 w-4" />
-        <span>{title}</span>
+        <span className="font-semibold">{title}</span>
       </div>
 
       {mapError ? (

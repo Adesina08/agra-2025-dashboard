@@ -95,17 +95,20 @@ const Index = () => {
     downloadCsv(`${activeTab}_all_data.csv`, rows);
   };
 
+  const isApprovedStatus = (status: unknown) =>
+    typeof status === 'string' && status.trim().toLowerCase() === 'approved';
+
   const exportApprovedRows = () => {
     const rows = (activeSheetQuery.raw as SheetRow[]) ?? [];
     const normalized = activeSheetQuery.data ?? [];
-    const filtered = rows.filter((_, index) => normalized[index]?.status === 'Approved');
+    const filtered = rows.filter((_, index) => isApprovedStatus(normalized[index]?.status));
     downloadCsv(`${activeTab}_approved_data.csv`, filtered);
   };
 
   const exportNotApprovedRows = () => {
     const rows = (activeSheetQuery.raw as SheetRow[]) ?? [];
     const normalized = activeSheetQuery.data ?? [];
-    const filtered = rows.filter((_, index) => normalized[index]?.status !== 'Approved');
+    const filtered = rows.filter((_, index) => !isApprovedStatus(normalized[index]?.status));
     downloadCsv(`${activeTab}_not_approved_data.csv`, filtered);
   };
 

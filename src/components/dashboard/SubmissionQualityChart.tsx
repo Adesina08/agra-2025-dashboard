@@ -15,12 +15,18 @@ interface SubmissionQualityChartProps {
   variant?: 'farmer' | 'enterprise' | 'youth';
 }
 
-export function SubmissionQualityChart({ 
-  data, 
+export function SubmissionQualityChart({
+  data,
   title = "Submission Quality Overview",
-  variant = 'farmer' 
+  variant = 'farmer'
 }: SubmissionQualityChartProps) {
   const [view, setView] = useState<'chart' | 'table'>('chart');
+
+  const headerTone = {
+    farmer: 'bg-farmer/10 border-farmer/30 text-farmer',
+    enterprise: 'bg-enterprise/10 border-enterprise/30 text-enterprise',
+    youth: 'bg-youth/10 border-youth/30 text-youth',
+  };
 
   const sortedData = useMemo(() => {
     return [...data]
@@ -76,16 +82,16 @@ export function SubmissionQualityChart({
 
   return (
     <div className="minimal-card">
-      <div className="flex items-center justify-between mb-4">
+      <div className={cn('flex items-center justify-between mb-4 rounded-lg px-4 py-3 border', headerTone[variant])}>
         <div>
-          <h3 className="text-sm font-medium text-foreground">{title}</h3>
-          <p className="text-xs text-muted-foreground mt-1">
+          <h3 className="text-sm font-semibold">{title}</h3>
+          <p className="text-xs opacity-80 mt-1">
             Monitor interviewer throughput and approvals
           </p>
         </div>
-        <button 
+        <button
           onClick={handleExport}
-          className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground bg-muted/50 hover:bg-muted rounded transition-colors"
+          className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded bg-background/80 text-foreground hover:bg-background/60 transition-colors shadow-sm"
         >
           <Download className="w-3 h-3" />
           Export table

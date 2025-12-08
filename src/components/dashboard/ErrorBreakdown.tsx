@@ -14,10 +14,10 @@ interface ErrorBreakdownProps {
   variant?: 'farmer' | 'enterprise' | 'youth';
 }
 
-export function ErrorBreakdown({ 
-  data, 
+export function ErrorBreakdown({
+  data,
   title = "Error Breakdown",
-  variant = 'farmer' 
+  variant = 'farmer'
 }: ErrorBreakdownProps) {
   const [sortField, setSortField] = useState<'count' | 'errorType'>('count');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
@@ -50,17 +50,19 @@ export function ErrorBreakdown({
       : <ArrowDown className="w-3 h-3 inline ml-1" />;
   };
 
+  const headerTone = {
+    farmer: 'bg-farmer/10 border-farmer/30 text-farmer',
+    enterprise: 'bg-enterprise/10 border-enterprise/30 text-enterprise',
+    youth: 'bg-youth/10 border-youth/30 text-youth',
+  };
+
   return (
     <div className="minimal-card">
-      <div className="flex items-center gap-3 mb-4">
-        <AlertTriangle className={cn('w-4 h-4', {
-          'text-farmer': variant === 'farmer',
-          'text-enterprise': variant === 'enterprise',
-          'text-youth': variant === 'youth',
-        })} />
+      <div className={cn('flex items-center gap-3 mb-4 rounded-lg px-4 py-3 border', headerTone[variant])}>
+        <AlertTriangle className="w-4 h-4" />
         <div>
-          <h3 className="text-sm font-medium text-foreground">{title}</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <h3 className="text-sm font-semibold">{title}</h3>
+          <p className="text-xs opacity-80 mt-0.5">
             Identify the most common data-quality flags
           </p>
         </div>
