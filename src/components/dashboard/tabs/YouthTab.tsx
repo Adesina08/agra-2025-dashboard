@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
-import { GraduationCap, TrendingUp, CheckCircle, Clock, XCircle, Briefcase, ClipboardCheck, Lightbulb } from 'lucide-react';
+import { ClipboardCheck, Lightbulb } from 'lucide-react';
 import { YouthData, fieldLabels, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
-import { KPICard } from '../KPICard';
 import { DonutChart } from '../DonutChart';
 import { DataTable } from '../DataTable';
 import { StatusBadge } from '../StatusBadge';
@@ -98,49 +97,45 @@ export function YouthTab({ data, isLoading = false }: YouthTabProps) {
 
       {activeSubTab === 'qc' ? (
         <>
-          {/* KPI Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <KPICard
-              title="Total Youth"
-              value={stats.total}
-              icon={GraduationCap}
-              variant="youth"
-              trend={{ value: 15.7, isPositive: true }}
-            />
-            <KPICard
-              title="Approved"
-              value={stats.approved}
-              subtitle={`${((stats.approved / stats.safeTotal) * 100).toFixed(1)}%`}
-              icon={CheckCircle}
-              variant="youth"
-            />
-            <KPICard
-              title="Pending"
-              value={stats.pending}
-              subtitle={`${((stats.pending / stats.safeTotal) * 100).toFixed(1)}%`}
-              icon={Clock}
-              variant="youth"
-            />
-            <KPICard
-              title="Rejected"
-              value={stats.rejected}
-              subtitle={`${((stats.rejected / stats.safeTotal) * 100).toFixed(1)}%`}
-              icon={XCircle}
-              variant="youth"
-            />
-            <KPICard
-              title="Training Completed"
-              value={`${((stats.trained / stats.safeTotal) * 100).toFixed(0)}%`}
-              icon={GraduationCap}
-              variant="youth"
-            />
-            <KPICard
-              title="Employment Rate"
-              value={`${((stats.employed / stats.safeTotal) * 100).toFixed(0)}%`}
-              icon={Briefcase}
-              variant="youth"
-              trend={{ value: 5.2, isPositive: true }}
-            />
+          <div className="minimal-card flex flex-col gap-2">
+            <p className="text-xs font-medium text-muted-foreground uppercase">
+              QC KPIs
+            </p>
+            <p className="text-sm text-foreground flex flex-wrap gap-x-2 gap-y-1">
+              <span>
+                <span className="font-semibold">Total Youth:</span>{' '}
+                {stats.total.toLocaleString()}
+              </span>
+              <span>|</span>
+              <span>
+                <span className="font-semibold">Approved:</span>{' '}
+                {stats.approved.toLocaleString()}
+              </span>
+              <span>|</span>
+              <span>
+                <span className="font-semibold">Pending:</span>{' '}
+                {stats.pending.toLocaleString()}
+              </span>
+              <span>|</span>
+              <span>
+                <span className="font-semibold">Rejected:</span>{' '}
+                {stats.rejected.toLocaleString()}
+              </span>
+              <span>|</span>
+              <span>
+                <span className="font-semibold">Training Completed:</span>{' '}
+                {stats.safeTotal
+                  ? `${((stats.trained / stats.safeTotal) * 100).toFixed(0)}%`
+                  : '0%'}
+              </span>
+              <span>|</span>
+              <span>
+                <span className="font-semibold">Employment Rate:</span>{' '}
+                {stats.safeTotal
+                  ? `${((stats.employed / stats.safeTotal) * 100).toFixed(0)}%`
+                  : '0%'}
+              </span>
+            </p>
           </div>
 
           <ProgressPanels
@@ -150,8 +145,8 @@ export function YouthTab({ data, isLoading = false }: YouthTabProps) {
               { label: 'Male', value: stats.male, color: '#3b82f6' },
               { label: 'Female', value: stats.female, color: '#ec4899' },
             ]}
-            accentColor="#0ea5e9"
-            remainderColor="#38bdf8"
+            accentColor="#6366f1"
+            remainderColor="#6b7280"
           />
 
           {/* Productivity Rankings */}

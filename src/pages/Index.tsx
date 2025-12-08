@@ -30,52 +30,58 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-[1400px] mx-auto px-6 py-8">
-        <Header
-          farmer={{ data: farmerQuery.data, isLive: farmerQuery.isLive, refreshedAt: farmerQuery.refreshedAt }}
-          enterprise={{ data: enterpriseQuery.data, isLive: enterpriseQuery.isLive, refreshedAt: enterpriseQuery.refreshedAt }}
-          youth={{ data: youthQuery.data, isLive: youthQuery.isLive, refreshedAt: youthQuery.refreshedAt }}
-        />
+    <>
+      <div className="min-h-screen bg-gradient-to-b from-background to-background/80">
+        <div className="max-w-[1400px] mx-auto px-6 py-8">
+          <Header
+            farmer={{ data: farmerQuery.data, isLive: farmerQuery.isLive, refreshedAt: farmerQuery.refreshedAt }}
+            enterprise={{ data: enterpriseQuery.data, isLive: enterpriseQuery.isLive, refreshedAt: enterpriseQuery.refreshedAt }}
+            youth={{ data: youthQuery.data, isLive: youthQuery.isLive, refreshedAt: youthQuery.refreshedAt }}
+          />
 
-        {/* Tab Navigation */}
-        <div className="flex gap-1 mb-8 border-b border-border">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={cn(
-                  'flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all border-b-2 -mb-px hover:-translate-y-0.5',
-                  isActive
-                    ? cn('border-current', activeTabConfig[tab.id])
-                    : 'text-muted-foreground hover:text-foreground border-transparent hover:border-border'
-                )}
-              >
-                <Icon className="w-4 h-4" />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
+          {/* Tab Navigation */}
+          <div className="flex gap-1 mb-8 border-b border-border">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
 
-        {/* Tab Content */}
-        <div className="pb-12">
-          {activeTab === 'farmer' && (
-            <FarmerTab data={farmerQuery.data} isLoading={farmerQuery.isLoading} />
-          )}
-          {activeTab === 'enterprise' && (
-            <EnterpriseTab data={enterpriseQuery.data} isLoading={enterpriseQuery.isLoading} />
-          )}
-          {activeTab === 'youth' && (
-            <YouthTab data={youthQuery.data} isLoading={youthQuery.isLoading} />
-          )}
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    'flex items-center gap-2 rounded-t-lg px-4 py-3 text-sm font-medium transition-all border-b-2 -mb-px hover:-translate-y-0.5',
+                    isActive
+                      ? cn('border-current', activeTabConfig[tab.id])
+                      : 'text-muted-foreground hover:text-foreground border-transparent hover:border-border'
+                  )}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Tab Content */}
+          <div className="pb-12">
+            {activeTab === 'farmer' && (
+              <FarmerTab data={farmerQuery.data} isLoading={farmerQuery.isLoading} />
+            )}
+            {activeTab === 'enterprise' && (
+              <EnterpriseTab data={enterpriseQuery.data} isLoading={enterpriseQuery.isLoading} />
+            )}
+            {activeTab === 'youth' && (
+              <YouthTab data={youthQuery.data} isLoading={youthQuery.isLoading} />
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      <footer className="w-full border-t border-border/60 py-4 text-center text-xs text-muted-foreground">
+        © Inicio Tech 2025
+      </footer>
+    </>
   );
 };
 

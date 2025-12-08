@@ -33,7 +33,7 @@ export function normalizeFarmerRow(row: SheetRow, index: number): FarmerData {
   const country = pickValue(row, ['dccot', 'country', 'dcountry']);
   const region = pickValue(row, ['region', 'db11', 'province']);
   const district = pickValue(row, ['district', 'db10']);
-  const gender = pickValue(row, ['gender', 'sex', 'e5'], 'Unknown');
+  const gender = pickValue(row, ['db7', 'gender', 'sex', 'e5'], 'Unknown');
   const ageGroup = pickValue(row, ['agegroup', 'd6', 'age']);
   const youthInWork = pickValue(row, ['YouthinWork', 'youthinwork']);
 
@@ -73,9 +73,14 @@ export function normalizeFarmerRow(row: SheetRow, index: number): FarmerData {
     'fm6_14',
     'fm6_15',
   ];
-  const totalFarmSize = cropLandFields
+
+  const cropLandValues = cropLandFields
     .map((f) => parseNumber(pickValue(row, [f]), 0))
-    .reduce((sum, v) => sum + v, 0);
+    .filter((v) => v > 0);
+
+  const totalFarmSize = cropLandValues.length
+    ? cropLandValues.reduce((sum, v) => sum + v, 0)
+    : 0;
 
   // --- practices applied (fm8_1..fm8_15) ---
   const fm8Fields = [

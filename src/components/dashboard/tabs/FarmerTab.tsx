@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
-import { Users, TrendingUp, CheckCircle, Clock, XCircle, Wheat, ClipboardCheck, Lightbulb } from 'lucide-react';
+import { ClipboardCheck, Lightbulb } from 'lucide-react';
 import { FarmerData, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
-import { KPICard } from '../KPICard';
 import { ProgressPanels } from '../ProgressPanels';
 import { ProductivityRankings } from '../ProductivityRankings';
 import { SubmissionQualityChart } from '../SubmissionQualityChart';
@@ -103,49 +102,44 @@ export function FarmerTab({ data, isLoading = false }: FarmerTabProps) {
 
       {activeSubTab === 'qc' ? (
         <>
-          {/* KPI Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <KPICard
-              title="Total Farmers"
-              value={stats.total}
-              icon={Users}
-              variant="farmer"
-              trend={{ value: 12.5, isPositive: true }}
-            />
-            <KPICard
-              title="Approved"
-              value={stats.approved}
-              subtitle={`${((stats.approved / stats.safeTotal) * 100).toFixed(1)}%`}
-              icon={CheckCircle}
-              variant="farmer"
-            />
-            <KPICard
-              title="Pending"
-              value={stats.pending}
-              subtitle={`${((stats.pending / stats.safeTotal) * 100).toFixed(1)}%`}
-              icon={Clock}
-              variant="farmer"
-            />
-            <KPICard
-              title="Rejected"
-              value={stats.rejected}
-              subtitle={`${((stats.rejected / stats.safeTotal) * 100).toFixed(1)}%`}
-              icon={XCircle}
-              variant="farmer"
-            />
-            <KPICard
-              title="Avg Farm Size"
-              value={`${stats.avgFarmSize.toFixed(1)} Ha`}
-              icon={Wheat}
-              variant="farmer"
-            />
-            <KPICard
-              title="Approval Rate"
-              value={`${((stats.approved / stats.safeTotal) * 100).toFixed(0)}%`}
-              icon={TrendingUp}
-              variant="farmer"
-              trend={{ value: 3.2, isPositive: true }}
-            />
+          {/* Single KPI Card for QC */}
+          <div className="minimal-card flex flex-col gap-2">
+            <p className="text-xs font-medium text-muted-foreground uppercase">
+              QC KPIs
+            </p>
+            <p className="text-sm text-foreground flex flex-wrap gap-x-2 gap-y-1">
+              <span>
+                <span className="font-semibold">Total Farmers:</span>{' '}
+                {stats.total.toLocaleString()}
+              </span>
+              <span>|</span>
+              <span>
+                <span className="font-semibold">Approved:</span>{' '}
+                {stats.approved.toLocaleString()}
+              </span>
+              <span>|</span>
+              <span>
+                <span className="font-semibold">Pending:</span>{' '}
+                {stats.pending.toLocaleString()}
+              </span>
+              <span>|</span>
+              <span>
+                <span className="font-semibold">Rejected:</span>{' '}
+                {stats.rejected.toLocaleString()}
+              </span>
+              <span>|</span>
+              <span>
+                <span className="font-semibold">Avg Farm Size:</span>{' '}
+                {stats.avgFarmSize.toFixed(1)} Ha
+              </span>
+              <span>|</span>
+              <span>
+                <span className="font-semibold">Approval Rate:</span>{' '}
+                {stats.safeTotal
+                  ? `${((stats.approved / stats.safeTotal) * 100).toFixed(1)}%`
+                  : '0%'}
+              </span>
+            </p>
           </div>
 
           <ProgressPanels
@@ -155,8 +149,8 @@ export function FarmerTab({ data, isLoading = false }: FarmerTabProps) {
               { label: 'Male', value: stats.male, color: '#3b82f6' },
               { label: 'Female', value: stats.female, color: '#ec4899' },
             ]}
-            accentColor="#3b82f6"
-            remainderColor="#0ea5e9"
+            accentColor="#22c55e"
+            remainderColor="#6b7280"
           />
 
           {/* Productivity Rankings */}

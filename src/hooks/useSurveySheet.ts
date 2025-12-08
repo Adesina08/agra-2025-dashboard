@@ -42,13 +42,11 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
 
   const normalizer = mockConfig.normalizer as (row: SheetRow, index: number) => T;
 
-  // Fallback to mock data if live sheet fails or is empty
+  // Fallback: no mock data – just empty data so all KPIs show 0
   if (query.isError || !query.data || !query.data.rows.length) {
-    const rawMock = (mockConfig.data as SheetRow[]).map((row) => row);
-    const normalized = rawMock.map((row, idx) => normalizer(row, idx));
     return {
-      data: normalized,
-      raw: rawMock,
+      data: [] as T[],
+      raw: [],
       isLive: false,
       isLoading: query.isLoading,
       error: query.error as Error | null,
@@ -57,7 +55,10 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
   }
 
   // 🔹 Clean live rows: drop empty rows and any accidental header rows
-  const cleanedRows = query.data.rows.filter((row) => {
+  const cleanedRows = query.data.rows.filter((row, index) => {
+    // Always skip the very first row from the parsed data – treat it as row 1 / header
+    if (index === 0) return false;
+
     const entries = Object.entries(row);
     const nonEmpty = entries.filter(([, v]) => v !== '' && v != null);
 
