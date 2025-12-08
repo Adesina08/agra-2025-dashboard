@@ -1,168 +1,107 @@
-import { useState, useMemo } from 'react';
-import { Users, CheckCircle, Clock, XCircle, Wheat, ClipboardCheck } from 'lucide-react';
-import { FarmerData, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
-import { KPICard } from '../KPICard';
-import { ProgressPanels } from '../ProgressPanels';
-import { ProductivityRankings } from '../ProductivityRankings';
-import { SubmissionQualityChart } from '../SubmissionQualityChart';
-import { ErrorBreakdown } from '../ErrorBreakdown';
-// import { FarmerInsights } from '../insights/FarmerInsights';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CheckCircle2, ClipboardCheck, FlagTriangleRight, PhoneOff, TriangleAlert, Users, XCircle } from "lucide-react";
+import { useFarmerQcData } from "@/hooks/useSegmentQcData";
+import { KPICard } from "../KPICard";
+import { SubmissionQualityChart } from "../SubmissionQualityChart";
+import { ErrorBreakdown } from "../ErrorBreakdown";
+import { ProductivityRankings } from "../ProductivityRankings";
 
-type SubTab = 'qc'; // | 'insights';
-
-interface FarmerTabProps {
-  data: FarmerData[];
-  isLoading?: boolean;
-  isLive?: boolean;
+function formatPercent(value: number | null | undefined, digits = 1) {
+  if (value == null) return "—";
+  return `${(value * 100).toFixed(digits)}%`;
 }
 
-export function FarmerTab({ data, isLoading = false }: FarmerTabProps) {
-  const [activeSubTab, setActiveSubTab] = useState<SubTab>('qc');
+export function FarmerTab() {
+  const { loading, error, submissionQuality, errorBreakdown, interviewerStats, kpis } = useFarmerQcData();
 
-  const [selectedCountry, setSelectedCountry] = useState<string>('all');
+  if (loading) return <div>Loading Farmer QC…</div>;
+  if (error) return <div className="text-red-600">Error: {error}</div>;
+  if (!submissionQuality || !errorBreakdown || !interviewerStats || !kpis) {
+    return <div>No Farmer QC data.</div>;
+  }
 
-  // 🔹 derive unique list of countries from normalized data
-  const countries = useMemo(() => {
-    const set = new Set<string>();
-    data.forEach((f) => {
-      const c = (f.country || '').trim();
-      if (c) set.add(c);
-    });
-    return Array.from(set).sort();
-  }, [data]);
+  const submissionChartData = interviewerStats.map((i) => ({
+    name: i.enumeratorId,
+    approved: i.approvedInterviews,
+    notApproved: i.failedInterviews,
+  }));
 
-  // 🔹 apply country filter
-  const filteredData = useMemo(() => {
-    if (selectedCountry === 'all') return data;
-    return data.filter((f) => (f.country || '').trim() === selectedCountry);
-  }, [data, selectedCountry]);
+  const productivityData = interviewerStats.map((i) => ({
+    name: i.enumeratorId,
+    totalInterviews: i.totalSubmissions,
+    approved: i.approvedInterviews,
+  }));
 
-  const stats = useMemo(() => {
-    const total = filteredData.length;
-    const safeTotal = total || 1;
-    const approved = filteredData.filter(f => f.status === 'Approved').length;
-    const pending = filteredData.filter(f => f.status === 'Pending').length;
-    const rejected = filteredData.filter(f => f.status === 'Rejected').length;
-    const male = filteredData.filter(f => f.gender === 'Male').length;
-    const female = filteredData.filter(f => f.gender === 'Female').length;
-    const avgFarmSize = total ? filteredData.reduce((sum, f) => sum + f.farmSize, 0) / total : 0;
-
-    return { total, safeTotal, approved, pending, rejected, male, female, avgFarmSize };
-  }, [filteredData]);
-
-  const targetInterviews = 5000;
-
-  const interviewerStats = useMemo(() => generateInterviewerStats(filteredData), [filteredData]);
-  const submissionQuality = useMemo(() => generateSubmissionQuality(filteredData), [filteredData]);
-
-  const subTabs = [
-    { id: 'qc' as const, label: 'QC', icon: ClipboardCheck },
-    // { id: 'insights' as const, label: 'Insights', icon: Lightbulb },
-  ];
+  const errorBreakdownData = errorBreakdown.map((e) => ({
+    errorType: e.errorType,
+    relatedVariables: `${e.type} • ${e.category} • ${e.kpiCode}`,
+    count: e.count,
+  }));
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Sub-tabs + Country Filter */}
-      <div className="flex items-center justify-between gap-4 border-b border-border/70 pb-2 flex-wrap">
-        <div className="flex gap-2">
-          {subTabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveSubTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 text-sm md:text-[0.95rem] font-medium rounded-t-lg transition-all ${
-                activeSubTab === tab.id
-                  ? 'bg-emerald-500/15 text-emerald-400 border-b-2 border-emerald-400'
-                  : 'text-foreground/70 hover:text-foreground hover:bg-muted/70'
-              }`}
-            >
-              <tab.icon className="w-4 h-4" />
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* 🔹 Country Filter */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs md:text-sm text-muted-foreground">Country</span>
-          <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-            <SelectTrigger className="w-[190px] h-9 text-sm md:text-[0.95rem]">
-              <SelectValue placeholder="All countries" />
-            </SelectTrigger>
-            <SelectContent className="text-sm">
-              <SelectItem value="all">All countries</SelectItem>
-              {countries.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <KPICard
+          title="Total Interviews"
+          value={kpis.totalInterviews}
+          icon={ClipboardCheck}
+          subtitle={formatPercent(kpis.approvalRate, 1) + " approval"}
+          variant="farmer"
+        />
+        <KPICard
+          title="Approved"
+          value={kpis.approved}
+          icon={CheckCircle2}
+          subtitle={`${submissionQuality.approvalRate > 0 ? formatPercent(submissionQuality.approvalRate) : "0%"}`}
+          variant="farmer"
+        />
+        <KPICard
+          title="Not Approved"
+          value={kpis.notApproved}
+          icon={XCircle}
+          variant="farmer"
+        />
+        <KPICard
+          title="Total Flags"
+          value={kpis.totalFlags}
+          icon={TriangleAlert}
+          subtitle={`${submissionQuality.hardFlags.toLocaleString()} hard / ${submissionQuality.softFlags.toLocaleString()} soft`}
+          variant="farmer"
+        />
+        <KPICard
+          title="Avg Flags / Interview"
+          value={kpis.avgFlagsPerInterview.toFixed(2)}
+          icon={FlagTriangleRight}
+          variant="farmer"
+        />
       </div>
 
-      {activeSubTab === 'qc' && (
-        <>
-          {/* KPI Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            <KPICard
-              title="Total Farmers"
-              value={stats.total}
-              icon={Users}
-              variant="farmer"
-              trend={{ value: 12.5, isPositive: true }}
-            />
-            <KPICard
-              title="Approved"
-              value={stats.approved}
-              subtitle={`${((stats.approved / stats.safeTotal) * 100).toFixed(1)}%`}
-              icon={CheckCircle}
-              variant="farmer"
-            />
-            <KPICard
-              title="Pending"
-              value={stats.pending}
-              subtitle={`${((stats.pending / stats.safeTotal) * 100).toFixed(1)}%`}
-              icon={Clock}
-              variant="farmer"
-            />
-            <KPICard
-              title="Rejected"
-              value={stats.rejected}
-              subtitle={`${((stats.rejected / stats.safeTotal) * 100).toFixed(1)}%`}
-              icon={XCircle}
-              variant="farmer"
-            />
-            <KPICard
-              title="Avg Farm Size"
-              value={`${stats.avgFarmSize.toFixed(1)} Ha`}
-              icon={Wheat}
-              variant="farmer"
-            />
-          </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <KPICard
+          title="Duplicate Phones"
+          value={formatPercent(kpis.percentDuplicatePhone)}
+          icon={PhoneOff}
+          variant="farmer"
+        />
+        <KPICard
+          title="LOI Issues"
+          value={formatPercent(kpis.percentLOIIssues)}
+          icon={Users}
+          variant="farmer"
+        />
+        <KPICard
+          title="Hard Violations"
+          value={formatPercent(kpis.percentHardViolations)}
+          icon={TriangleAlert}
+          variant="farmer"
+        />
+      </div>
 
-          <ProgressPanels
-            achieved={stats.total}
-            target={targetInterviews}
-            genderData={[
-              { label: 'Male', value: stats.male, color: '#3b82f6' },
-              { label: 'Female', value: stats.female, color: '#ec4899' },
-            ]}
-            accentColor="#16a34a"
-            remainderColor="#f97316"
-          />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <SubmissionQualityChart data={submissionChartData} variant="farmer" />
+        <ErrorBreakdown data={errorBreakdownData} variant="farmer" />
+      </div>
 
-          {/* Productivity Rankings */}
-          <ProductivityRankings data={interviewerStats} variant="farmer" />
-
-          {/* Submission Quality & Error Breakdown */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SubmissionQualityChart data={submissionQuality} variant="farmer" />
-            <ErrorBreakdown data={errorBreakdownData.farmer} variant="farmer" />
-          </div>
-        </>
-      )}
-      {/* <FarmerInsights data={filteredData} /> */}
+      <ProductivityRankings data={productivityData} variant="farmer" />
     </div>
   );
 }
