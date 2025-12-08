@@ -65,13 +65,25 @@ const Index = () => {
         {/* Tab Content */}
         <div className="pb-12">
           {activeTab === 'farmer' && (
-            <FarmerTab data={farmerQuery.data} isLoading={farmerQuery.isLoading} />
+            <FarmerTab
+              data={farmerQuery.data}
+              rawRows={farmerQuery.raw}
+              isLoading={farmerQuery.isLoading}
+            />
           )}
           {activeTab === 'enterprise' && (
-            <EnterpriseTab data={enterpriseQuery.data} isLoading={enterpriseQuery.isLoading} />
+            <EnterpriseTab
+              data={enterpriseQuery.data}
+              rawRows={enterpriseQuery.raw}
+              isLoading={enterpriseQuery.isLoading}
+            />
           )}
           {activeTab === 'youth' && (
-            <YouthTab data={youthQuery.data} isLoading={youthQuery.isLoading} />
+            <YouthTab
+              data={youthQuery.data}
+              rawRows={youthQuery.raw}
+              isLoading={youthQuery.isLoading}
+            />
           )}
         </div>
       </div>

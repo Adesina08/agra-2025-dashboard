@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Building2, TrendingUp, CheckCircle, Clock, XCircle, DollarSign, ClipboardCheck, Lightbulb } from 'lucide-react';
-import { EnterpriseData, fieldLabels, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
+import { EnterpriseData, fieldLabels } from '@/data/mockData';
 import { KPICard } from '../KPICard';
 import { DonutChart } from '../DonutChart';
 import { DataTable } from '../DataTable';
@@ -10,15 +10,18 @@ import { ProductivityRankings } from '../ProductivityRankings';
 import { SubmissionQualityChart } from '../SubmissionQualityChart';
 import { ErrorBreakdown } from '../ErrorBreakdown';
 import { EnterpriseInsights } from '../insights/EnterpriseInsights';
+import { SheetRow } from '@/lib/googleSheets';
+import { useQualityChecks } from '@/hooks/useQualityChecks';
 
 type SubTab = 'qc' | 'insights';
 
 interface EnterpriseTabProps {
   data: EnterpriseData[];
   isLoading?: boolean;
+  rawRows?: SheetRow[];
 }
 
-export function EnterpriseTab({ data, isLoading = false }: EnterpriseTabProps) {
+export function EnterpriseTab({ data, rawRows = [], isLoading = false }: EnterpriseTabProps) {
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('qc');
 
   const stats = useMemo(() => {
@@ -42,8 +45,11 @@ export function EnterpriseTab({ data, isLoading = false }: EnterpriseTabProps) {
     { name: 'Female Owners', value: stats.female, color: '#ec4899' },
   ];
 
-  const interviewerStats = useMemo(() => generateInterviewerStats(data), [data]);
-  const submissionQuality = useMemo(() => generateSubmissionQuality(data), [data]);
+  const { metrics } = useQualityChecks({
+    survey: 'enterprise',
+    rawRows,
+    fallbackSubmissions: data,
+  });
 
   const columns = [
     { key: 'id' as const, label: 'ID', sortable: true },
@@ -150,12 +156,12 @@ export function EnterpriseTab({ data, isLoading = false }: EnterpriseTabProps) {
           />
 
           {/* Productivity Rankings */}
-          <ProductivityRankings data={interviewerStats} variant="enterprise" />
+          <ProductivityRankings data={metrics.interviewerStats} variant="enterprise" />
 
           {/* Submission Quality & Error Breakdown */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SubmissionQualityChart data={submissionQuality} variant="enterprise" />
-            <ErrorBreakdown data={errorBreakdownData.enterprise} variant="enterprise" />
+            <SubmissionQualityChart data={metrics.submissionQuality} variant="enterprise" />
+            <ErrorBreakdown data={metrics.errorBreakdown} variant="enterprise" />
           </div>
 
           {/* Charts Row */}

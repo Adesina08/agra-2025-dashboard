@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Users, CheckCircle, Clock, XCircle, Wheat, ClipboardCheck, Lightbulb } from 'lucide-react';
-import { FarmerData, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
+import { FarmerData } from '@/data/mockData';
 import { KPICard } from '../KPICard';
 import { ProgressPanels } from '../ProgressPanels';
 import { ProductivityRankings } from '../ProductivityRankings';
@@ -8,16 +8,19 @@ import { SubmissionQualityChart } from '../SubmissionQualityChart';
 import { ErrorBreakdown } from '../ErrorBreakdown';
 import { FarmerInsights } from '../insights/FarmerInsights';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SheetRow } from '@/lib/googleSheets';
+import { useQualityChecks } from '@/hooks/useQualityChecks';
 
 type SubTab = 'qc' | 'insights';
 
 interface FarmerTabProps {
   data: FarmerData[];
   isLoading?: boolean;
+  rawRows?: SheetRow[];
   isLive?: boolean;
 }
 
-export function FarmerTab({ data, isLoading = false }: FarmerTabProps) {
+export function FarmerTab({ data, rawRows = [], isLoading = false }: FarmerTabProps) {
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('qc');
 
   const [selectedCountry, setSelectedCountry] = useState<string>('all');
@@ -53,8 +56,11 @@ export function FarmerTab({ data, isLoading = false }: FarmerTabProps) {
 
   const targetInterviews = 5000;
 
-  const interviewerStats = useMemo(() => generateInterviewerStats(filteredData), [filteredData]);
-  const submissionQuality = useMemo(() => generateSubmissionQuality(filteredData), [filteredData]);
+  const { metrics } = useQualityChecks({
+    survey: 'farmer',
+    rawRows,
+    fallbackSubmissions: filteredData,
+  });
 
   const subTabs = [
     { id: 'qc' as const, label: 'QC', icon: ClipboardCheck },
@@ -153,12 +159,12 @@ export function FarmerTab({ data, isLoading = false }: FarmerTabProps) {
           />
 
           {/* Productivity Rankings */}
-          <ProductivityRankings data={interviewerStats} variant="farmer" />
+          <ProductivityRankings data={metrics.interviewerStats} variant="farmer" />
 
           {/* Submission Quality & Error Breakdown */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SubmissionQualityChart data={submissionQuality} variant="farmer" />
-            <ErrorBreakdown data={errorBreakdownData.farmer} variant="farmer" />
+            <SubmissionQualityChart data={metrics.submissionQuality} variant="farmer" />
+            <ErrorBreakdown data={metrics.errorBreakdown} variant="farmer" />
           </div>
         </>
       ) : (

@@ -1,5 +1,5 @@
 export interface SheetRow {
-  [key: string]: string;
+  [key: string]: string | number | undefined;
 }
 
 interface FetchSheetOptions {
