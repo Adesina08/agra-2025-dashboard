@@ -74,6 +74,11 @@ const Index = () => {
             <YouthTab data={youthQuery.data} isLoading={youthQuery.isLoading} />
           )}
         </div>
+
+        {/* Global footer */}
+        <footer className="mt-10 border-t border-border pt-4 text-xs text-muted-foreground text-center">
+          © Inicio Tech 2025
+        </footer>
       </div>
     </div>
   );

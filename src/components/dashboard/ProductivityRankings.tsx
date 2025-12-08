@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Trophy, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -14,10 +14,10 @@ interface ProductivityRankingsProps {
   variant?: 'farmer' | 'enterprise' | 'youth';
 }
 
-export function ProductivityRankings({ 
-  data, 
-  title = "User Productivity Rankings",
-  variant = 'farmer' 
+export function ProductivityRankings({
+  data,
+  title = 'Interviewer Productivity Rankings',
+  variant = 'farmer',
 }: ProductivityRankingsProps) {
   const variantColors = {
     farmer: 'text-farmer',
@@ -25,21 +25,30 @@ export function ProductivityRankings({
     youth: 'text-youth',
   };
 
-  const sorted = useMemo(() => {
-    return [...data].sort((a, b) => b.approved - a.approved).slice(0, 10);
+  const [view, setView] = useState<'top' | 'last'>('top');
+
+  const baseSorted = useMemo(() => {
+    return [...data].sort((a, b) => b.approved - a.approved);
   }, [data]);
 
-  const topPerformer = sorted[0];
-  const otherPerformers = sorted.slice(1);
+  const list = useMemo(() => {
+    if (!baseSorted.length) return [];
+    if (view === 'top') return baseSorted.slice(0, 10);
+    return baseSorted.slice(-10);
+  }, [baseSorted, view]);
+
+  const topPerformer = list[0] ?? baseSorted[0] ?? null;
+  const otherPerformers = list.slice(1);
   const overallApproval = useMemo(() => {
     const totalApproved = data.reduce((sum, d) => sum + d.approved, 0);
     const totalInterviews = data.reduce((sum, d) => sum + d.totalInterviews, 0);
     return totalInterviews > 0 ? ((totalApproved / totalInterviews) * 100).toFixed(1) : '0';
   }, [data]);
 
-  const topPerformerRate = topPerformer 
-    ? ((topPerformer.approved / topPerformer.totalInterviews) * 100).toFixed(1) 
-    : '0';
+  const topPerformerRate =
+    topPerformer && topPerformer.totalInterviews > 0
+      ? ((topPerformer.approved / topPerformer.totalInterviews) * 100).toFixed(1)
+      : '0';
 
   const flagged = topPerformer ? topPerformer.totalInterviews - topPerformer.approved : 0;
 
@@ -53,10 +62,26 @@ export function ProductivityRankings({
           </p>
         </div>
         <div className="flex gap-2">
-          <button className="px-3 py-1.5 text-xs font-medium bg-primary/20 text-primary rounded">
+          <button
+            onClick={() => setView('top')}
+            className={cn(
+              'px-3 py-1.5 text-xs font-medium rounded transition-colors',
+              view === 'top'
+                ? 'bg-primary/20 text-primary'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+            )}
+          >
             Top 10
           </button>
-          <button className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted rounded transition-colors">
+          <button
+            onClick={() => setView('last')}
+            className={cn(
+              'px-3 py-1.5 text-xs font-medium rounded transition-colors',
+              view === 'last'
+                ? 'bg-primary/20 text-primary'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+            )}
+          >
             Last 10
           </button>
         </div>
@@ -123,7 +148,7 @@ export function ProductivityRankings({
             {otherPerformers.map((interviewer, index) => {
               const approvalRate = ((interviewer.approved / interviewer.totalInterviews) * 100).toFixed(1);
               return (
-                <div 
+                <div
                   key={interviewer.name} 
                   className="flex items-center justify-between py-2 px-3 bg-muted/20 rounded border border-border/30 hover:bg-muted/30 transition-colors"
                 >

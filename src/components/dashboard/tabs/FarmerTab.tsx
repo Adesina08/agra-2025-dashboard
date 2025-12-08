@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
-import { Users, TrendingUp, CheckCircle, Clock, XCircle, Wheat, ClipboardCheck, Lightbulb } from 'lucide-react';
+import { ClipboardCheck, Lightbulb } from 'lucide-react';
 import { FarmerData, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
-import { KPICard } from '../KPICard';
 import { ProgressPanels } from '../ProgressPanels';
 import { ProductivityRankings } from '../ProductivityRankings';
 import { SubmissionQualityChart } from '../SubmissionQualityChart';
@@ -41,12 +40,18 @@ export function FarmerTab({ data, isLoading = false }: FarmerTabProps) {
   const stats = useMemo(() => {
     const total = filteredData.length;
     const safeTotal = total || 1;
-    const approved = filteredData.filter(f => f.status === 'Approved').length;
-    const pending = filteredData.filter(f => f.status === 'Pending').length;
-    const rejected = filteredData.filter(f => f.status === 'Rejected').length;
-    const male = filteredData.filter(f => f.gender === 'Male').length;
-    const female = filteredData.filter(f => f.gender === 'Female').length;
-    const avgFarmSize = total ? filteredData.reduce((sum, f) => sum + f.farmSize, 0) / total : 0;
+    const approved = filteredData.filter((f) => f.status === 'Approved').length;
+    const pending = filteredData.filter((f) => f.status === 'Pending').length;
+    const rejected = filteredData.filter((f) => f.status === 'Rejected').length;
+    const male = filteredData.filter(
+      (f) => f.gender && f.gender.toLowerCase() === 'male'
+    ).length;
+    const female = filteredData.filter(
+      (f) => f.gender && f.gender.toLowerCase() === 'female'
+    ).length;
+    const avgFarmSize = total
+      ? filteredData.reduce((sum, f) => sum + f.farmSize, 0) / total
+      : 0;
 
     return { total, safeTotal, approved, pending, rejected, male, female, avgFarmSize };
   }, [filteredData]);
@@ -103,49 +108,39 @@ export function FarmerTab({ data, isLoading = false }: FarmerTabProps) {
 
       {activeSubTab === 'qc' ? (
         <>
-          {/* KPI Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <KPICard
-              title="Total Farmers"
-              value={stats.total}
-              icon={Users}
-              variant="farmer"
-              trend={{ value: 12.5, isPositive: true }}
-            />
-            <KPICard
-              title="Approved"
-              value={stats.approved}
-              subtitle={`${((stats.approved / stats.safeTotal) * 100).toFixed(1)}%`}
-              icon={CheckCircle}
-              variant="farmer"
-            />
-            <KPICard
-              title="Pending"
-              value={stats.pending}
-              subtitle={`${((stats.pending / stats.safeTotal) * 100).toFixed(1)}%`}
-              icon={Clock}
-              variant="farmer"
-            />
-            <KPICard
-              title="Rejected"
-              value={stats.rejected}
-              subtitle={`${((stats.rejected / stats.safeTotal) * 100).toFixed(1)}%`}
-              icon={XCircle}
-              variant="farmer"
-            />
-            <KPICard
-              title="Avg Farm Size"
-              value={`${stats.avgFarmSize.toFixed(1)} Ha`}
-              icon={Wheat}
-              variant="farmer"
-            />
-            <KPICard
-              title="Approval Rate"
-              value={`${((stats.approved / stats.safeTotal) * 100).toFixed(0)}%`}
-              icon={TrendingUp}
-              variant="farmer"
-              trend={{ value: 3.2, isPositive: true }}
-            />
+          {/* KPI Strip (single card with multiple KPIs) */}
+          <div className="w-full bg-card/95 border rounded-lg px-4 py-3 text-xs md:text-sm font-medium flex flex-wrap gap-x-3 gap-y-1">
+            <span>Total farmers: {stats.total}</span>
+            <span className="opacity-50">|</span>
+
+            <span>
+              Approved: {stats.approved} (
+              {stats.safeTotal ? ((stats.approved / stats.safeTotal) * 100).toFixed(1) : '0.0'}%
+              )
+            </span>
+            <span className="opacity-50">|</span>
+
+            <span>
+              Pending: {stats.pending} (
+              {stats.safeTotal ? ((stats.pending / stats.safeTotal) * 100).toFixed(1) : '0.0'}%
+              )
+            </span>
+            <span className="opacity-50">|</span>
+
+            <span>
+              Rejected: {stats.rejected} (
+              {stats.safeTotal ? ((stats.rejected / stats.safeTotal) * 100).toFixed(1) : '0.0'}%
+              )
+            </span>
+            <span className="opacity-50">|</span>
+
+            <span>Avg farm size: {stats.avgFarmSize.toFixed(1)} ha</span>
+            <span className="opacity-50">|</span>
+
+            <span>Male: {stats.male}</span>
+            <span className="opacity-50">|</span>
+
+            <span>Female: {stats.female}</span>
           </div>
 
           <ProgressPanels
@@ -155,8 +150,8 @@ export function FarmerTab({ data, isLoading = false }: FarmerTabProps) {
               { label: 'Male', value: stats.male, color: '#3b82f6' },
               { label: 'Female', value: stats.female, color: '#ec4899' },
             ]}
-            accentColor="#3b82f6"
-            remainderColor="#0ea5e9"
+            accentColor="#22c55e"
+            remainderColor="#e5e7eb"
           />
 
           {/* Productivity Rankings */}
