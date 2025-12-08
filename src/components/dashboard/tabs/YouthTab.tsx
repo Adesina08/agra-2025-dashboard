@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { GraduationCap, TrendingUp, CheckCircle, Clock, XCircle, Briefcase, ClipboardCheck, Lightbulb } from 'lucide-react';
+import { GraduationCap, TrendingUp, CheckCircle, Clock, XCircle, Briefcase, ClipboardCheck } from 'lucide-react';
 import { YouthData, fieldLabels, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
 import { KPICard } from '../KPICard';
 import { DonutChart } from '../DonutChart';
@@ -9,9 +9,9 @@ import { ProgressPanels } from '../ProgressPanels';
 import { ProductivityRankings } from '../ProductivityRankings';
 import { SubmissionQualityChart } from '../SubmissionQualityChart';
 import { ErrorBreakdown } from '../ErrorBreakdown';
-import { YouthInsights } from '../insights/YouthInsights';
+// import { YouthInsights } from '../insights/YouthInsights';
 
-type SubTab = 'qc' | 'insights';
+type SubTab = 'qc'; // | 'insights';
 
 interface YouthTabProps {
   data: YouthData[];
@@ -73,7 +73,7 @@ export function YouthTab({ data, isLoading = false }: YouthTabProps) {
 
   const subTabs = [
     { id: 'qc' as const, label: 'QC', icon: ClipboardCheck },
-    { id: 'insights' as const, label: 'Insights', icon: Lightbulb },
+    // { id: 'insights' as const, label: 'Insights', icon: Lightbulb },
   ];
 
   return (
@@ -96,7 +96,7 @@ export function YouthTab({ data, isLoading = false }: YouthTabProps) {
         ))}
       </div>
 
-      {activeSubTab === 'qc' ? (
+      {activeSubTab === 'qc' && (
         <>
           {/* KPI Cards */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -179,9 +179,8 @@ export function YouthTab({ data, isLoading = false }: YouthTabProps) {
             isLoading={isLoading}
           />
         </>
-      ) : (
-        <YouthInsights />
       )}
+      {/* <YouthInsights /> */}
     </div>
   );
 }

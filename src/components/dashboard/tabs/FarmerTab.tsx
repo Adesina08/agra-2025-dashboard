@@ -1,15 +1,15 @@
 import { useState, useMemo } from 'react';
-import { Users, CheckCircle, Clock, XCircle, Wheat, ClipboardCheck, Lightbulb } from 'lucide-react';
+import { Users, CheckCircle, Clock, XCircle, Wheat, ClipboardCheck } from 'lucide-react';
 import { FarmerData, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
 import { KPICard } from '../KPICard';
 import { ProgressPanels } from '../ProgressPanels';
 import { ProductivityRankings } from '../ProductivityRankings';
 import { SubmissionQualityChart } from '../SubmissionQualityChart';
 import { ErrorBreakdown } from '../ErrorBreakdown';
-import { FarmerInsights } from '../insights/FarmerInsights';
+// import { FarmerInsights } from '../insights/FarmerInsights';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-type SubTab = 'qc' | 'insights';
+type SubTab = 'qc'; // | 'insights';
 
 interface FarmerTabProps {
   data: FarmerData[];
@@ -58,7 +58,7 @@ export function FarmerTab({ data, isLoading = false }: FarmerTabProps) {
 
   const subTabs = [
     { id: 'qc' as const, label: 'QC', icon: ClipboardCheck },
-    { id: 'insights' as const, label: 'Insights', icon: Lightbulb },
+    // { id: 'insights' as const, label: 'Insights', icon: Lightbulb },
   ];
 
   return (
@@ -101,7 +101,7 @@ export function FarmerTab({ data, isLoading = false }: FarmerTabProps) {
         </div>
       </div>
 
-      {activeSubTab === 'qc' ? (
+      {activeSubTab === 'qc' && (
         <>
           {/* KPI Cards */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -161,9 +161,8 @@ export function FarmerTab({ data, isLoading = false }: FarmerTabProps) {
             <ErrorBreakdown data={errorBreakdownData.farmer} variant="farmer" />
           </div>
         </>
-      ) : (
-        <FarmerInsights data={filteredData} />
       )}
+      {/* <FarmerInsights data={filteredData} /> */}
     </div>
   );
 }

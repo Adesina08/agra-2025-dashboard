@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Building2, TrendingUp, CheckCircle, Clock, XCircle, DollarSign, ClipboardCheck, Lightbulb } from 'lucide-react';
+import { Building2, TrendingUp, CheckCircle, Clock, XCircle, DollarSign, ClipboardCheck } from 'lucide-react';
 import { EnterpriseData, fieldLabels, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
 import { KPICard } from '../KPICard';
 import { DonutChart } from '../DonutChart';
@@ -9,9 +9,9 @@ import { ProgressPanels } from '../ProgressPanels';
 import { ProductivityRankings } from '../ProductivityRankings';
 import { SubmissionQualityChart } from '../SubmissionQualityChart';
 import { ErrorBreakdown } from '../ErrorBreakdown';
-import { EnterpriseInsights } from '../insights/EnterpriseInsights';
+// import { EnterpriseInsights } from '../insights/EnterpriseInsights';
 
-type SubTab = 'qc' | 'insights';
+type SubTab = 'qc'; // | 'insights';
 
 interface EnterpriseTabProps {
   data: EnterpriseData[];
@@ -69,7 +69,7 @@ export function EnterpriseTab({ data, isLoading = false }: EnterpriseTabProps) {
 
   const subTabs = [
     { id: 'qc' as const, label: 'QC', icon: ClipboardCheck },
-    { id: 'insights' as const, label: 'Insights', icon: Lightbulb },
+    // { id: 'insights' as const, label: 'Insights', icon: Lightbulb },
   ];
 
   return (
@@ -92,7 +92,7 @@ export function EnterpriseTab({ data, isLoading = false }: EnterpriseTabProps) {
         ))}
       </div>
 
-      {activeSubTab === 'qc' ? (
+      {activeSubTab === 'qc' && (
         <>
           {/* KPI Cards */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -174,9 +174,8 @@ export function EnterpriseTab({ data, isLoading = false }: EnterpriseTabProps) {
             isLoading={isLoading}
           />
         </>
-      ) : (
-        <EnterpriseInsights />
       )}
+      {/* <EnterpriseInsights /> */}
     </div>
   );
 }
