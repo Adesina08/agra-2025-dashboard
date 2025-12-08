@@ -42,6 +42,7 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
 
   const normalizer = mockConfig.normalizer as (row: SheetRow, index: number) => T;
 
+  // Fallback to mock data if live sheet fails or is empty
   if (query.isError || !query.data || !query.data.rows.length) {
     const rawMock = (mockConfig.data as SheetRow[]).map((row) => row);
     const normalized = rawMock.map((row, idx) => normalizer(row, idx));
@@ -55,11 +56,30 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
     };
   }
 
-  const normalized = query.data.rows.map((row, idx) => normalizer(row, idx));
+  // 🔹 Clean live rows: drop empty rows and any accidental header rows
+  const cleanedRows = query.data.rows.filter((row) => {
+    const entries = Object.entries(row);
+    const nonEmpty = entries.filter(([, v]) => v !== '' && v != null);
+
+    // Drop completely empty rows
+    if (nonEmpty.length === 0) return false;
+
+    // Drop rows that look like a repeated header row
+    const headerLike = nonEmpty.filter(
+      ([k, v]) => typeof v === 'string' && v.trim() === k.trim()
+    );
+
+    // If *all* non-empty cells equal their column name -> header row, skip it
+    if (headerLike.length === nonEmpty.length) return false;
+
+    return true;
+  });
+
+  const normalized = cleanedRows.map((row, idx) => normalizer(row, idx));
 
   return {
     data: normalized,
-    raw: query.data.rows,
+    raw: cleanedRows,
     isLive: true,
     isLoading: query.isLoading,
     error: null,
