@@ -64,16 +64,16 @@ export function FarmerTab({ data, isLoading = false }: FarmerTabProps) {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Sub-tabs + Country Filter */}
-      <div className="flex items-center justify-between gap-4 border-b border-border/50 pb-2 flex-wrap">
+      <div className="flex items-center justify-between gap-4 border-b border-border/70 pb-2 flex-wrap">
         <div className="flex gap-2">
           {subTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveSubTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 text-sm md:text-[0.95rem] font-medium rounded-t-lg transition-all ${
                 activeSubTab === tab.id
-                  ? 'bg-emerald-500/10 text-emerald-500 border-b-2 border-emerald-500'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  ? 'bg-emerald-500/15 text-emerald-400 border-b-2 border-emerald-400'
+                  : 'text-foreground/70 hover:text-foreground hover:bg-muted/70'
               }`}
             >
               <tab.icon className="w-4 h-4" />
@@ -84,12 +84,12 @@ export function FarmerTab({ data, isLoading = false }: FarmerTabProps) {
 
         {/* 🔹 Country Filter */}
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Country</span>
+          <span className="text-xs md:text-sm text-muted-foreground">Country</span>
           <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-            <SelectTrigger className="w-[180px] h-9 text-sm">
+            <SelectTrigger className="w-[190px] h-9 text-sm md:text-[0.95rem]">
               <SelectValue placeholder="All countries" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="text-sm">
               <SelectItem value="all">All countries</SelectItem>
               {countries.map((c) => (
                 <SelectItem key={c} value={c}>

@@ -19,24 +19,25 @@ export function LineChartComponent({ data, title, color }: LineChartProps) {
                 <stop offset="95%" stopColor={color} stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 15% 12%)" vertical={false} />
-            <XAxis 
-              dataKey="date" 
-              tick={{ fill: 'hsl(220 10% 50%)', fontSize: 10 }}
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+            <XAxis
+              dataKey="date"
+              tick={{ fill: 'hsl(var(--foreground))', fontSize: 10 }}
               axisLine={false}
               tickLine={false}
             />
-            <YAxis 
-              tick={{ fill: 'hsl(220 10% 50%)', fontSize: 10 }}
+            <YAxis
+              tick={{ fill: 'hsl(var(--foreground))', fontSize: 10 }}
               axisLine={false}
               tickLine={false}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: 'hsl(220 18% 7%)',
-                border: '1px solid hsl(220 15% 12%)',
+                backgroundColor: 'hsl(var(--card))',
+                border: '1px solid hsl(var(--border))',
                 borderRadius: '6px',
                 fontSize: '12px',
+                color: 'hsl(var(--foreground))',
               }}
               formatter={(value: number) => [value.toLocaleString(), 'Submissions']}
             />

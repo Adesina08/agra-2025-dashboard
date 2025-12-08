@@ -14,27 +14,28 @@ export function BarChartComponent({ data, title, color }: BarChartProps) {
       <div className="h-48">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} layout="vertical" margin={{ left: 0, right: 10 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 15% 12%)" horizontal={false} />
-            <XAxis 
-              type="number" 
-              tick={{ fill: 'hsl(220 10% 50%)', fontSize: 11 }}
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+            <XAxis
+              type="number"
+              tick={{ fill: 'hsl(var(--foreground))', fontSize: 11 }}
               axisLine={false}
               tickLine={false}
             />
-            <YAxis 
-              type="category" 
-              dataKey="name" 
-              tick={{ fill: 'hsl(220 10% 50%)', fontSize: 11 }}
+            <YAxis
+              type="category"
+              dataKey="name"
+              tick={{ fill: 'hsl(var(--foreground))', fontSize: 11 }}
               axisLine={false}
               tickLine={false}
               width={70}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: 'hsl(220 18% 7%)',
-                border: '1px solid hsl(220 15% 12%)',
+                backgroundColor: 'hsl(var(--card))',
+                border: '1px solid hsl(var(--border))',
                 borderRadius: '6px',
                 fontSize: '12px',
+                color: 'hsl(var(--foreground))',
               }}
               formatter={(value: number) => [value.toLocaleString(), 'Count']}
             />

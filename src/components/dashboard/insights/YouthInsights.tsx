@@ -7,6 +7,8 @@ import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 
 const COLORS = ['#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe', '#ede9fe'];
+const YOUTH_PRIMARY = 'hsl(var(--youth-primary))';
+const YOUTH_SECONDARY = 'hsl(var(--youth-secondary))';
 
 export function YouthInsights() {
   const data = insightsData.youth;
@@ -37,10 +39,16 @@ export function YouthInsights() {
             <ChartCard title="Age Distribution" subtitle="Youth by age group">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.byAgeGroup}>
-                  <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
-                  <Bar dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                  <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
+                  <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      color: 'hsl(var(--foreground))',
+                    }}
+                  />
+                  <Bar dataKey="value" fill={YOUTH_PRIMARY} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -61,7 +69,13 @@ export function YouthInsights() {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      color: 'hsl(var(--foreground))',
+                    }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -69,10 +83,16 @@ export function YouthInsights() {
             <ChartCard title="Education Level">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.byEducation} layout="vertical">
-                  <XAxis type="number" tick={{ fontSize: 11 }} />
-                  <YAxis dataKey="label" type="category" tick={{ fontSize: 10 }} width={60} />
-                  <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
-                  <Bar dataKey="value" fill="#a78bfa" radius={[0, 4, 4, 0]} />
+                  <XAxis type="number" tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
+                  <YAxis dataKey="label" type="category" tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }} width={60} />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      color: 'hsl(var(--foreground))',
+                    }}
+                  />
+                  <Bar dataKey="value" fill={YOUTH_SECONDARY} radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -91,10 +111,16 @@ export function YouthInsights() {
             <ChartCard title="Employment Type" subtitle="Current employment distribution">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.employmentType}>
-                  <XAxis dataKey="label" tick={{ fontSize: 10 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
-                  <Bar dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }} />
+                  <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      color: 'hsl(var(--foreground))',
+                    }}
+                  />
+                  <Bar dataKey="value" fill={YOUTH_PRIMARY} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -115,7 +141,13 @@ export function YouthInsights() {
                     <Cell fill="#22c55e" />
                     <Cell fill="#ef4444" />
                   </Pie>
-                  <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      color: 'hsl(var(--foreground))',
+                    }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -133,13 +165,19 @@ export function YouthInsights() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <ChartCard title="Participation Funnel" subtitle="Programme journey stages">
               <ResponsiveContainer width="100%" height="100%">
-                <FunnelChart>
-                  <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
+                  <FunnelChart>
+                  <Tooltip
+                    contentStyle={{
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      color: 'hsl(var(--foreground))',
+                    }}
+                  />
                   <Funnel dataKey="value" data={data.programmeParticipationFunnel} isAnimationActive>
                     {data.programmeParticipationFunnel.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
-                    <LabelList position="center" fill="#fff" stroke="none" dataKey="stage" fontSize={11} />
+                    <LabelList position="center" fill="hsl(var(--foreground))" stroke="none" dataKey="stage" fontSize={11} />
                   </Funnel>
                 </FunnelChart>
               </ResponsiveContainer>
@@ -148,10 +186,16 @@ export function YouthInsights() {
             <ChartCard title="Satisfaction Scores" subtitle="Programme satisfaction (1-5)">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.satisfactionScores}>
-                  <XAxis dataKey="score" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
-                  <Bar dataKey="count" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                  <XAxis dataKey="score" tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
+                  <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      color: 'hsl(var(--foreground))',
+                    }}
+                  />
+                  <Bar dataKey="count" fill={YOUTH_PRIMARY} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>

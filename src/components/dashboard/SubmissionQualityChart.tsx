@@ -54,7 +54,7 @@ export function SubmissionQualityChart({
       const approved = payload.find((p: any) => p.dataKey === 'approved')?.value || 0;
       const notApproved = payload.find((p: any) => p.dataKey === 'notApproved')?.value || 0;
       return (
-        <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
+        <div className="bg-[hsl(var(--card))] text-foreground border border-border rounded-lg p-3 shadow-lg">
           <p className="font-medium text-foreground mb-2">{label}</p>
           <div className="space-y-1 text-xs">
             <div className="flex items-center gap-2">
@@ -131,32 +131,32 @@ export function SubmissionQualityChart({
                 margin={{ left: 10, right: 20, top: 10, bottom: 10 }}
                 barGap={0}
               >
-                <XAxis 
-                  type="number" 
-                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                <XAxis
+                  type="number"
+                  tick={{ fill: 'hsl(var(--foreground))', fontSize: 10 }}
                   axisLine={false}
                   tickLine={false}
                 />
-                <YAxis 
-                  type="category" 
-                  dataKey="name" 
-                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  tick={{ fill: 'hsl(var(--foreground))', fontSize: 10 }}
                   axisLine={false}
                   tickLine={false}
                   width={100}
                 />
                 <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
-                <Bar 
-                  dataKey="approved" 
-                  stackId="a" 
-                  fill="#22c55e" 
+                <Bar
+                  dataKey="approved"
+                  stackId="a"
+                  fill="hsl(var(--primary))"
                   radius={[0, 0, 0, 0]}
                   name="Approved"
                 />
-                <Bar 
-                  dataKey="notApproved" 
-                  stackId="a" 
-                  fill="#ef4444" 
+                <Bar
+                  dataKey="notApproved"
+                  stackId="a"
+                  fill="hsl(var(--destructive))"
                   radius={[0, 4, 4, 0]}
                   name="Not Approved"
                 />

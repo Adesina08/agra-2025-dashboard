@@ -180,19 +180,24 @@ export function FarmerInsights({ data }: FarmerInsightsProps) {
                 <BarChart data={cropsCultivated.slice(0, 8)}>
                   <XAxis
                     dataKey="crop"
-                    tick={{ fontSize: 10 }}
+                    tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }}
                     angle={-45}
                     textAnchor="end"
                     height={50}
                   />
-                  <YAxis tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
                   <Tooltip
                     contentStyle={{
                       background: 'hsl(var(--card))',
                       border: '1px solid hsl(var(--border))',
+                      color: 'hsl(var(--foreground))',
                     }}
                   />
-                  <Bar dataKey="households" radius={[4, 4, 0, 0]} />
+                  <Bar
+                    dataKey="households"
+                    radius={[4, 4, 0, 0]}
+                    fill="hsl(var(--primary))"
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -203,15 +208,16 @@ export function FarmerInsights({ data }: FarmerInsightsProps) {
             >
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={farmSizeDist}>
-                  <XAxis dataKey="label" tick={{ fontSize: 10 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }} />
+                  <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
                   <Tooltip
                     contentStyle={{
                       background: 'hsl(var(--card))',
                       border: '1px solid hsl(var(--border))',
+                      color: 'hsl(var(--foreground))',
                     }}
                   />
-                  <Bar dataKey="value" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="hsl(var(--primary))" />
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -226,21 +232,22 @@ export function FarmerInsights({ data }: FarmerInsightsProps) {
                     type="number"
                     dataKey="x"
                     name="Farm size (Ha)"
-                    tick={{ fontSize: 10 }}
+                    tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }}
                   />
                   <YAxis
                     type="number"
                     dataKey="y"
                     name="Yield (kg)"
-                    tick={{ fontSize: 10 }}
+                    tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }}
                   />
                   <Tooltip
                     contentStyle={{
                       background: 'hsl(var(--card))',
                       border: '1px solid hsl(var(--border))',
+                      color: 'hsl(var(--foreground))',
                     }}
                   />
-                  <Scatter data={scatterFarmYield} />
+                  <Scatter data={scatterFarmYield} fill="hsl(var(--primary))" />
                 </ScatterChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -266,15 +273,16 @@ export function FarmerInsights({ data }: FarmerInsightsProps) {
             >
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={genderDist}>
-                  <XAxis dataKey="label" tick={{ fontSize: 10 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }} />
+                  <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
                   <Tooltip
                     contentStyle={{
                       background: 'hsl(var(--card))',
                       border: '1px solid hsl(var(--border))',
+                      color: 'hsl(var(--foreground))',
                     }}
                   />
-                  <Bar dataKey="value" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="hsl(var(--primary))" />
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -284,19 +292,20 @@ export function FarmerInsights({ data }: FarmerInsightsProps) {
                 <BarChart data={regionDist}>
                   <XAxis
                     dataKey="region"
-                    tick={{ fontSize: 10 }}
+                    tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }}
                     angle={-45}
                     textAnchor="end"
                     height={50}
                   />
-                  <YAxis tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
                   <Tooltip
                     contentStyle={{
                       background: 'hsl(var(--card))',
                       border: '1px solid hsl(var(--border))',
+                      color: 'hsl(var(--foreground))',
                     }}
                   />
-                  <Bar dataKey="value" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="hsl(var(--primary))" />
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>
