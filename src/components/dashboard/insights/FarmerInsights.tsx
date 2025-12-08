@@ -15,6 +15,111 @@ import type { FarmerData } from '@/data/mockData';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown } from 'lucide-react';
 
+const farmerIndicatorSources = [
+  {
+    indicator: 'Avg Farm Size',
+    variable: 'fm6_*',
+    choiceList: '—',
+    notes: 'Area cultivated per crop — sum across crops. (This is the farm size variable)',
+  },
+  {
+    indicator: 'Top Crop',
+    variable: 'fm2',
+    choiceList: 'crops list in choices',
+    notes: 'Crop grown in last season — use frequency or area via fm6_*.',
+  },
+  {
+    indicator: '% Youth (in work)',
+    variable: 'b4 (age) + b5 (activity)',
+    choiceList: 'employment_status list',
+    notes: 'Filter b4 by age bracket, then check b5.',
+  },
+  {
+    indicator: 'Crops Cultivated',
+    variable: 'fm2 / fm3 / fm4',
+    choiceList: 'crop lists FM block',
+    notes: 'fm2 is most direct presence marker.',
+  },
+  {
+    indicator: 'Farm Size Distribution',
+    variable: 'fm6_total = sum(fm6_*)',
+    choiceList: '—',
+    notes: 'Derive from fm6_* then categorize.',
+  },
+  {
+    indicator: 'Farm Size vs Yield',
+    variable: 'fm6_* vs fm7_*',
+    choiceList: '—',
+    notes: 'Use matched crop index: fm7_1 / fm6_1, etc.',
+  },
+  {
+    indicator: 'Practice adoption rates',
+    variable: 'fm8_*',
+    choiceList: 'practice_name list from choices',
+    notes: 'Checks adoption per crop & practice type.',
+  },
+  {
+    indicator: 'Key input use',
+    variable: 'h4',
+    choiceList: 'yesno / inputs_received',
+    notes: '"Did you receive any input/machinery on credit?" Most direct indicator of access.',
+  },
+  {
+    indicator: 'Commercialisation profile',
+    variable: 'e20 (proportion sold)',
+    choiceList: 'share_value scale',
+    notes: 'Core commercialization indicator → % harvest sold.',
+  },
+  {
+    indicator: 'Financial inclusion',
+    variable: 'h7 (account/SACCO/mobile money access)',
+    choiceList: 'account_type',
+    notes: 'Strongest FI visibility variable.',
+  },
+  {
+    indicator: 'Rainfall Perception',
+    variable: 'e27',
+    choiceList: 'better/same/worse scale',
+    notes: 'Compares this year to a normal one.',
+  },
+  {
+    indicator: 'Rainfall Spread',
+    variable: 'e29',
+    choiceList: 'rainfall spread choices',
+    notes: 'Captures onset, breaks, distribution.',
+  },
+  {
+    indicator: 'Shock Exposure',
+    variable: 'e31',
+    choiceList: 'shock_type',
+    notes: 'List includes drought, pests, price, flood etc.',
+  },
+  {
+    indicator: 'Youth participation',
+    variable: 'b5 (employment/activity)',
+    choiceList: 'employment_status',
+    notes: 'Extract only respondents where b4 age = youth range.',
+  },
+  {
+    indicator: 'Youth attitude towards agri work',
+    variable: 'att1 att2 att3 (attitudes block)',
+    choiceList: 'Likert list in choices',
+    notes: 'Positive/negative perception scoring.',
+  },
+  {
+    indicator: 'Gender Distribution',
+    variable: 'b3',
+    choiceList: 'gender',
+    notes: 'Male/Female — directly respondent-level.',
+  },
+  {
+    indicator: 'Region Distribution',
+    variable: 'd1',
+    choiceList: 'd1 list in choices',
+    notes: 'Rwanda / Tanzania / Kenya etc. from choices confirms list.',
+  },
+];
+
 interface FarmerInsightsProps {
   data: FarmerData[];
 }
@@ -337,6 +442,47 @@ export function FarmerInsights({ data }: FarmerInsightsProps) {
     <div className="space-y-6">
       {/* KPI row */}
       <InsightsKpiRow kpis={kpiData} variant="farmer" />
+
+      <div className="rounded-lg border bg-muted/40 p-4 space-y-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium">Indicator sources for Farmer insights</p>
+            <p className="text-xs text-muted-foreground">
+              Use these field mappings when aligning the insights tab with the survey dataset.
+            </p>
+          </div>
+          <a
+            className="text-xs font-medium text-primary underline"
+            href="/docs/indicator-mapping.md"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Open full mapping
+          </a>
+        </div>
+        <div className="overflow-auto">
+          <table className="w-full min-w-[640px] text-xs">
+            <thead>
+              <tr className="text-left text-[11px] text-muted-foreground">
+                <th className="py-1 pr-3 font-semibold">Indicator</th>
+                <th className="py-1 pr-3 font-semibold">Best Primary Variable Name</th>
+                <th className="py-1 pr-3 font-semibold">Choice List Reference</th>
+                <th className="py-1 pr-3 font-semibold">Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {farmerIndicatorSources.map((item) => (
+                <tr key={item.indicator} className="border-t text-foreground">
+                  <td className="py-2 pr-3 font-semibold">{item.indicator}</td>
+                  <td className="py-2 pr-3 text-muted-foreground">{item.variable}</td>
+                  <td className="py-2 pr-3 text-muted-foreground">{item.choiceList}</td>
+                  <td className="py-2 pr-3 text-muted-foreground leading-snug">{item.notes}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {/* Production & agronomy */}
       <Collapsible open={productionOpen} onOpenChange={setProductionOpen}>

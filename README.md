@@ -6,6 +6,10 @@
 
 ## How can I edit this code?
 
+### Indicator reference
+
+Key survey indicators and their source variables are summarized in [docs/indicator-mapping.md](docs/indicator-mapping.md). Use this table when validating incoming survey data or aligning dashboard transformations.
+
 There are several ways of editing your application.
 
 **Use Lovable**
