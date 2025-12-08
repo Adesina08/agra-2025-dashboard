@@ -4,13 +4,19 @@ import { KPICard } from "../KPICard";
 import { SubmissionQualityChart } from "../SubmissionQualityChart";
 import { ErrorBreakdown } from "../ErrorBreakdown";
 import { ProductivityRankings } from "../ProductivityRankings";
+import { YouthData } from "@/data/mockData";
+import { SubmissionMap } from "../SubmissionMap";
 
 function formatPercent(value: number | null | undefined, digits = 1) {
   if (value == null) return "—";
   return `${(value * 100).toFixed(digits)}%`;
 }
 
-export function YouthTab() {
+interface YouthTabProps {
+  submissions?: YouthData[];
+}
+
+export function YouthTab({ submissions = [] }: YouthTabProps) {
   const { loading, error, submissionQuality, errorBreakdown, interviewerStats, kpis } = useYouthQcData();
 
   if (loading) return <div>Loading Youth QC…</div>;
@@ -79,6 +85,12 @@ export function YouthTab() {
         <SubmissionQualityChart data={submissionChartData} variant="youth" />
         <ErrorBreakdown data={errorBreakdownData} variant="youth" />
       </div>
+
+      <SubmissionMap
+        submissions={submissions}
+        title="Live Youth Submission Map"
+        variant="youth"
+      />
 
       <ProductivityRankings data={productivityData} variant="youth" />
     </div>

@@ -236,8 +236,8 @@ export function normalizeFarmerRow(row: SheetRow, index: number): FarmerData {
     gender: (gender.charAt(0).toUpperCase() + gender.slice(1)) as FarmerData['gender'],
     ageGroup: ageGroup || 'N/A',
     status: pickValue(row, ['status', 'qc status', 'approval'], 'Pending') as FarmerData['status'],
-    latitude: parseNumber(pickValue(row, ['lat', 'latitude', 'gps_lat'])),
-    longitude: parseNumber(pickValue(row, ['lon', 'longitude', 'gps_lon'])),
+    latitude: parseNumber(pickValue(row, ['lat', 'latitude', 'gps_lat', 'gps-latitude'])),
+    longitude: parseNumber(pickValue(row, ['lon', 'longitude', 'gps_lon', 'gps-longitude'])),
     enumerator: pickValue(row, ['enumerator', 'username', 'users', 'int_name'], 'Unknown'),
 
     // new semantic fields
@@ -280,8 +280,8 @@ export function normalizeEnterpriseRow(row: SheetRow, index: number): Enterprise
     gender: (gender.charAt(0).toUpperCase() + gender.slice(1)) as EnterpriseData['gender'],
     ageGroup: pickValue(row, ['agegroup', 'a3_1', 'years_operating'], 'N/A'),
     status: pickValue(row, ['status', 'qc status', 'approval'], 'Pending') as EnterpriseData['status'],
-    latitude: parseNumber(pickValue(row, ['lat', 'latitude', 'gps_lat'])),
-    longitude: parseNumber(pickValue(row, ['lon', 'longitude', 'gps_lon'])),
+    latitude: parseNumber(pickValue(row, ['lat', 'latitude', 'gps_lat', 'd8-latitude'])),
+    longitude: parseNumber(pickValue(row, ['lon', 'longitude', 'gps_lon', 'd8-longitude'])),
     enumerator: pickValue(row, ['enumerator', 'int_name', 'survey_firm'], 'Unknown'),
     businessType: pickValue(row, ['businessType', 'a4', 'a2', 'sector'], 'N/A'),
     employees: parseNumber(pickValue(row, ['employees', 'b5_q1', 'b5_q2']), 0),

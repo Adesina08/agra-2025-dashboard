@@ -4,13 +4,19 @@ import { KPICard } from "../KPICard";
 import { SubmissionQualityChart } from "../SubmissionQualityChart";
 import { ErrorBreakdown } from "../ErrorBreakdown";
 import { ProductivityRankings } from "../ProductivityRankings";
+import { FarmerData } from "@/data/mockData";
+import { SubmissionMap } from "../SubmissionMap";
 
 function formatPercent(value: number | null | undefined, digits = 1) {
   if (value == null) return "—";
   return `${(value * 100).toFixed(digits)}%`;
 }
 
-export function FarmerTab() {
+interface FarmerTabProps {
+  submissions?: FarmerData[];
+}
+
+export function FarmerTab({ submissions = [] }: FarmerTabProps) {
   const { loading, error, submissionQuality, errorBreakdown, interviewerStats, kpis } = useFarmerQcData();
 
   if (loading) return <div>Loading Farmer QC…</div>;
@@ -79,6 +85,12 @@ export function FarmerTab() {
         <SubmissionQualityChart data={submissionChartData} variant="farmer" />
         <ErrorBreakdown data={errorBreakdownData} variant="farmer" />
       </div>
+
+      <SubmissionMap
+        submissions={submissions}
+        title="Live Farmer Submission Map"
+        variant="farmer"
+      />
 
       <ProductivityRankings data={productivityData} variant="farmer" />
     </div>
