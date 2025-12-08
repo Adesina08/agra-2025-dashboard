@@ -15,14 +15,16 @@ interface DataTableProps<T> {
   title: string;
   variant?: 'farmer' | 'enterprise' | 'youth';
   pageSize?: number;
+  isLoading?: boolean;
 }
 
-export function DataTable<T extends { id: string }>({ 
-  data, 
-  columns, 
-  title, 
+export function DataTable<T extends { id: string }>({
+  data,
+  columns,
+  title,
   variant = 'farmer',
-  pageSize = 10 
+  pageSize = 10,
+  isLoading = false
 }: DataTableProps<T>) {
   const [search, setSearch] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: keyof T; direction: 'asc' | 'desc' } | null>(null);
@@ -89,10 +91,15 @@ export function DataTable<T extends { id: string }>({
   };
 
   return (
-    <div className="minimal-card">
+    <div className="minimal-card relative">
+      {isLoading && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/70 backdrop-blur-sm rounded-lg">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-muted-foreground" />
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
         <h3 className="text-sm text-muted-foreground">{title}</h3>
-        
+
         <div className="flex items-center gap-2">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -141,6 +148,13 @@ export function DataTable<T extends { id: string }>({
             </tr>
           </thead>
           <tbody className="divide-y divide-border/50">
+            {paginatedData.length === 0 && !isLoading && (
+              <tr>
+                <td colSpan={columns.length} className="px-3 py-6 text-center text-sm text-muted-foreground">
+                  No data available. Check your Google Sheet configuration or try again later.
+                </td>
+              </tr>
+            )}
             {paginatedData.map((row) => (
               <tr key={row.id} className="hover:bg-secondary/50 transition-colors">
                 {columns.map(col => (

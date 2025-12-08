@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { GraduationCap, TrendingUp, CheckCircle, Clock, XCircle, Briefcase, ClipboardCheck, Lightbulb } from 'lucide-react';
-import { youthData, fieldLabels, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
+import { YouthData, fieldLabels, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
 import { KPICard } from '../KPICard';
 import { DonutChart } from '../DonutChart';
 import { DataTable } from '../DataTable';
@@ -13,21 +13,27 @@ import { YouthInsights } from '../insights/YouthInsights';
 
 type SubTab = 'qc' | 'insights';
 
-export function YouthTab() {
+interface YouthTabProps {
+  data: YouthData[];
+  isLoading?: boolean;
+}
+
+export function YouthTab({ data, isLoading = false }: YouthTabProps) {
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('qc');
 
   const stats = useMemo(() => {
-    const total = youthData.length;
-    const approved = youthData.filter(y => y.status === 'Approved').length;
-    const pending = youthData.filter(y => y.status === 'Pending').length;
-    const rejected = youthData.filter(y => y.status === 'Rejected').length;
-    const male = youthData.filter(y => y.gender === 'Male').length;
-    const female = youthData.filter(y => y.gender === 'Female').length;
-    const trained = youthData.filter(y => y.trainingCompleted).length;
-    const employed = youthData.filter(y => y.employmentStatus === 'Employed' || y.employmentStatus === 'Self-employed').length;
+    const total = data.length;
+    const safeTotal = total || 1;
+    const approved = data.filter(y => y.status === 'Approved').length;
+    const pending = data.filter(y => y.status === 'Pending').length;
+    const rejected = data.filter(y => y.status === 'Rejected').length;
+    const male = data.filter(y => y.gender === 'Male').length;
+    const female = data.filter(y => y.gender === 'Female').length;
+    const trained = data.filter(y => y.trainingCompleted).length;
+    const employed = data.filter(y => y.employmentStatus === 'Employed' || y.employmentStatus === 'Self-employed').length;
 
-    return { total, approved, pending, rejected, male, female, trained, employed };
-  }, []);
+    return { total, safeTotal, approved, pending, rejected, male, female, trained, employed };
+  }, [data]);
 
   const targetInterviews = 3000;
 
@@ -36,8 +42,8 @@ export function YouthTab() {
     { name: 'Female', value: stats.female, color: '#f472b6' },
   ];
 
-  const interviewerStats = useMemo(() => generateInterviewerStats(youthData), []);
-  const submissionQuality = useMemo(() => generateSubmissionQuality(youthData), []);
+  const interviewerStats = useMemo(() => generateInterviewerStats(data), [data]);
+  const submissionQuality = useMemo(() => generateSubmissionQuality(data), [data]);
 
   const columns = [
     { key: 'id' as const, label: 'ID', sortable: true },
@@ -104,33 +110,33 @@ export function YouthTab() {
             <KPICard
               title="Approved"
               value={stats.approved}
-              subtitle={`${((stats.approved / stats.total) * 100).toFixed(1)}%`}
+              subtitle={`${((stats.approved / stats.safeTotal) * 100).toFixed(1)}%`}
               icon={CheckCircle}
               variant="youth"
             />
             <KPICard
               title="Pending"
               value={stats.pending}
-              subtitle={`${((stats.pending / stats.total) * 100).toFixed(1)}%`}
+              subtitle={`${((stats.pending / stats.safeTotal) * 100).toFixed(1)}%`}
               icon={Clock}
               variant="youth"
             />
             <KPICard
               title="Rejected"
               value={stats.rejected}
-              subtitle={`${((stats.rejected / stats.total) * 100).toFixed(1)}%`}
+              subtitle={`${((stats.rejected / stats.safeTotal) * 100).toFixed(1)}%`}
               icon={XCircle}
               variant="youth"
             />
             <KPICard
               title="Training Completed"
-              value={`${((stats.trained / stats.total) * 100).toFixed(0)}%`}
+              value={`${((stats.trained / stats.safeTotal) * 100).toFixed(0)}%`}
               icon={GraduationCap}
               variant="youth"
             />
             <KPICard
               title="Employment Rate"
-              value={`${((stats.employed / stats.total) * 100).toFixed(0)}%`}
+              value={`${((stats.employed / stats.safeTotal) * 100).toFixed(0)}%`}
               icon={Briefcase}
               variant="youth"
               trend={{ value: 5.2, isPositive: true }}
@@ -167,10 +173,11 @@ export function YouthTab() {
 
           {/* Data Table */}
           <DataTable
-            data={youthData}
+            data={data}
             columns={columns}
             title="Youth Submissions"
             variant="youth"
+            isLoading={isLoading}
           />
         </>
       ) : (
