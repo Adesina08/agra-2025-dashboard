@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Building2, TrendingUp, CheckCircle, Clock, XCircle, DollarSign, ClipboardCheck, Lightbulb } from 'lucide-react';
-import { enterpriseData, fieldLabels, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
+import { EnterpriseData, fieldLabels, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
 import { KPICard } from '../KPICard';
 import { DonutChart } from '../DonutChart';
 import { DataTable } from '../DataTable';
@@ -13,21 +13,27 @@ import { EnterpriseInsights } from '../insights/EnterpriseInsights';
 
 type SubTab = 'qc' | 'insights';
 
-export function EnterpriseTab() {
+interface EnterpriseTabProps {
+  data: EnterpriseData[];
+  isLoading?: boolean;
+}
+
+export function EnterpriseTab({ data, isLoading = false }: EnterpriseTabProps) {
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('qc');
 
   const stats = useMemo(() => {
-    const total = enterpriseData.length;
-    const approved = enterpriseData.filter(e => e.status === 'Approved').length;
-    const pending = enterpriseData.filter(e => e.status === 'Pending').length;
-    const rejected = enterpriseData.filter(e => e.status === 'Rejected').length;
-    const male = enterpriseData.filter(e => e.gender === 'Male').length;
-    const female = enterpriseData.filter(e => e.gender === 'Female').length;
-    const totalRevenue = enterpriseData.reduce((sum, e) => sum + e.annualRevenue, 0);
-    const avgEmployees = enterpriseData.reduce((sum, e) => sum + e.employees, 0) / total;
-    
-    return { total, approved, pending, rejected, male, female, totalRevenue, avgEmployees };
-  }, []);
+    const total = data.length;
+    const safeTotal = total || 1;
+    const approved = data.filter(e => e.status === 'Approved').length;
+    const pending = data.filter(e => e.status === 'Pending').length;
+    const rejected = data.filter(e => e.status === 'Rejected').length;
+    const male = data.filter(e => e.gender === 'Male').length;
+    const female = data.filter(e => e.gender === 'Female').length;
+    const totalRevenue = data.reduce((sum, e) => sum + e.annualRevenue, 0);
+    const avgEmployees = total ? data.reduce((sum, e) => sum + e.employees, 0) / total : 0;
+
+    return { total, safeTotal, approved, pending, rejected, male, female, totalRevenue, avgEmployees };
+  }, [data]);
 
   const targetInterviews = 2200;
 
@@ -36,8 +42,8 @@ export function EnterpriseTab() {
     { name: 'Female Owners', value: stats.female, color: '#ec4899' },
   ];
 
-  const interviewerStats = useMemo(() => generateInterviewerStats(enterpriseData), []);
-  const submissionQuality = useMemo(() => generateSubmissionQuality(enterpriseData), []);
+  const interviewerStats = useMemo(() => generateInterviewerStats(data), [data]);
+  const submissionQuality = useMemo(() => generateSubmissionQuality(data), [data]);
 
   const columns = [
     { key: 'id' as const, label: 'ID', sortable: true },
@@ -100,21 +106,21 @@ export function EnterpriseTab() {
             <KPICard
               title="Approved"
               value={stats.approved}
-              subtitle={`${((stats.approved / stats.total) * 100).toFixed(1)}%`}
+              subtitle={`${((stats.approved / stats.safeTotal) * 100).toFixed(1)}%`}
               icon={CheckCircle}
               variant="enterprise"
             />
             <KPICard
               title="Pending"
               value={stats.pending}
-              subtitle={`${((stats.pending / stats.total) * 100).toFixed(1)}%`}
+              subtitle={`${((stats.pending / stats.safeTotal) * 100).toFixed(1)}%`}
               icon={Clock}
               variant="enterprise"
             />
             <KPICard
               title="Rejected"
               value={stats.rejected}
-              subtitle={`${((stats.rejected / stats.total) * 100).toFixed(1)}%`}
+              subtitle={`${((stats.rejected / stats.safeTotal) * 100).toFixed(1)}%`}
               icon={XCircle}
               variant="enterprise"
             />
@@ -161,10 +167,11 @@ export function EnterpriseTab() {
 
           {/* Data Table */}
           <DataTable
-            data={enterpriseData}
+            data={data}
             columns={columns}
             title="Enterprise Submissions"
             variant="enterprise"
+            isLoading={isLoading}
           />
         </>
       ) : (

@@ -5,6 +5,8 @@ import { FarmerTab } from '@/components/dashboard/tabs/FarmerTab';
 import { EnterpriseTab } from '@/components/dashboard/tabs/EnterpriseTab';
 import { YouthTab } from '@/components/dashboard/tabs/YouthTab';
 import { cn } from '@/lib/utils';
+import { useSurveySheet } from '@/hooks/useSurveySheet';
+import { FarmerData, EnterpriseData, YouthData } from '@/data/mockData';
 
 type TabType = 'farmer' | 'enterprise' | 'youth';
 
@@ -17,6 +19,10 @@ const tabs = [
 const Index = () => {
   const [activeTab, setActiveTab] = useState<TabType>('farmer');
 
+  const farmerQuery = useSurveySheet<FarmerData>('farmer');
+  const enterpriseQuery = useSurveySheet<EnterpriseData>('enterprise');
+  const youthQuery = useSurveySheet<YouthData>('youth');
+
   const activeTabConfig = {
     farmer: 'border-farmer text-farmer',
     enterprise: 'border-enterprise text-enterprise',
@@ -26,7 +32,11 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-[1400px] mx-auto px-6 py-8">
-        <Header />
+        <Header
+          farmer={{ data: farmerQuery.data, isLive: farmerQuery.isLive, refreshedAt: farmerQuery.refreshedAt }}
+          enterprise={{ data: enterpriseQuery.data, isLive: enterpriseQuery.isLive, refreshedAt: enterpriseQuery.refreshedAt }}
+          youth={{ data: youthQuery.data, isLive: youthQuery.isLive, refreshedAt: youthQuery.refreshedAt }}
+        />
 
         {/* Tab Navigation */}
         <div className="flex gap-1 mb-8 border-b border-border">
@@ -54,9 +64,15 @@ const Index = () => {
 
         {/* Tab Content */}
         <div className="pb-12">
-          {activeTab === 'farmer' && <FarmerTab />}
-          {activeTab === 'enterprise' && <EnterpriseTab />}
-          {activeTab === 'youth' && <YouthTab />}
+          {activeTab === 'farmer' && (
+            <FarmerTab data={farmerQuery.data} isLoading={farmerQuery.isLoading} />
+          )}
+          {activeTab === 'enterprise' && (
+            <EnterpriseTab data={enterpriseQuery.data} isLoading={enterpriseQuery.isLoading} />
+          )}
+          {activeTab === 'youth' && (
+            <YouthTab data={youthQuery.data} isLoading={youthQuery.isLoading} />
+          )}
         </div>
       </div>
     </div>

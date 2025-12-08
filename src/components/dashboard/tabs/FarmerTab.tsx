@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Users, TrendingUp, CheckCircle, Clock, XCircle, Wheat, ClipboardCheck, Lightbulb } from 'lucide-react';
-import { farmerData, fieldLabels, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
+import { FarmerData, fieldLabels, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
 import { KPICard } from '../KPICard';
 import { DonutChart } from '../DonutChart';
 import { DataTable } from '../DataTable';
@@ -13,20 +13,27 @@ import { FarmerInsights } from '../insights/FarmerInsights';
 
 type SubTab = 'qc' | 'insights';
 
-export function FarmerTab() {
+interface FarmerTabProps {
+  data: FarmerData[];
+  isLoading?: boolean;
+  isLive?: boolean;
+}
+
+export function FarmerTab({ data, isLoading = false }: FarmerTabProps) {
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('qc');
 
   const stats = useMemo(() => {
-    const total = farmerData.length;
-    const approved = farmerData.filter(f => f.status === 'Approved').length;
-    const pending = farmerData.filter(f => f.status === 'Pending').length;
-    const rejected = farmerData.filter(f => f.status === 'Rejected').length;
-    const male = farmerData.filter(f => f.gender === 'Male').length;
-    const female = farmerData.filter(f => f.gender === 'Female').length;
-    const avgFarmSize = farmerData.reduce((sum, f) => sum + f.farmSize, 0) / total;
-    
-    return { total, approved, pending, rejected, male, female, avgFarmSize };
-  }, []);
+    const total = data.length;
+    const safeTotal = total || 1;
+    const approved = data.filter(f => f.status === 'Approved').length;
+    const pending = data.filter(f => f.status === 'Pending').length;
+    const rejected = data.filter(f => f.status === 'Rejected').length;
+    const male = data.filter(f => f.gender === 'Male').length;
+    const female = data.filter(f => f.gender === 'Female').length;
+    const avgFarmSize = total ? data.reduce((sum, f) => sum + f.farmSize, 0) / total : 0;
+
+    return { total, safeTotal, approved, pending, rejected, male, female, avgFarmSize };
+  }, [data]);
 
   const targetInterviews = 5000;
 
@@ -35,8 +42,8 @@ export function FarmerTab() {
     { name: 'Female', value: stats.female, color: '#a855f7' },
   ];
 
-  const interviewerStats = useMemo(() => generateInterviewerStats(farmerData), []);
-  const submissionQuality = useMemo(() => generateSubmissionQuality(farmerData), []);
+  const interviewerStats = useMemo(() => generateInterviewerStats(data), [data]);
+  const submissionQuality = useMemo(() => generateSubmissionQuality(data), [data]);
 
   const columns = [
     { key: 'id' as const, label: 'ID', sortable: true },
@@ -94,21 +101,21 @@ export function FarmerTab() {
             <KPICard
               title="Approved"
               value={stats.approved}
-              subtitle={`${((stats.approved / stats.total) * 100).toFixed(1)}%`}
+              subtitle={`${((stats.approved / stats.safeTotal) * 100).toFixed(1)}%`}
               icon={CheckCircle}
               variant="farmer"
             />
             <KPICard
               title="Pending"
               value={stats.pending}
-              subtitle={`${((stats.pending / stats.total) * 100).toFixed(1)}%`}
+              subtitle={`${((stats.pending / stats.safeTotal) * 100).toFixed(1)}%`}
               icon={Clock}
               variant="farmer"
             />
             <KPICard
               title="Rejected"
               value={stats.rejected}
-              subtitle={`${((stats.rejected / stats.total) * 100).toFixed(1)}%`}
+              subtitle={`${((stats.rejected / stats.safeTotal) * 100).toFixed(1)}%`}
               icon={XCircle}
               variant="farmer"
             />
@@ -120,7 +127,7 @@ export function FarmerTab() {
             />
             <KPICard
               title="Approval Rate"
-              value={`${((stats.approved / stats.total) * 100).toFixed(0)}%`}
+              value={`${((stats.approved / stats.safeTotal) * 100).toFixed(0)}%`}
               icon={TrendingUp}
               variant="farmer"
               trend={{ value: 3.2, isPositive: true }}
@@ -155,11 +162,12 @@ export function FarmerTab() {
           />
 
           {/* Data Table */}
-          <DataTable
-            data={farmerData}
+      <DataTable
+            data={data}
             columns={columns}
             title="Farmer Submissions"
             variant="farmer"
+            isLoading={isLoading}
           />
         </>
       ) : (

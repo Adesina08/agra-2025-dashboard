@@ -1,26 +1,44 @@
 import { Clock, RefreshCw } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { enterpriseData, farmerData, lastUpdated, youthData } from '@/data/mockData';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { FarmerData, EnterpriseData, YouthData } from '@/data/mockData';
 
-export function Header() {
+type SurveyState<T> = {
+  data: T[];
+  isLive: boolean;
+  refreshedAt?: Date;
+};
+
+interface HeaderProps {
+  farmer: SurveyState<FarmerData>;
+  enterprise: SurveyState<EnterpriseData>;
+  youth: SurveyState<YouthData>;
+}
+
+export function Header({ farmer, enterprise, youth }: HeaderProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const latestSubmissionDate = useMemo(() => {
-    const submissions = [...farmerData, ...enterpriseData, ...youthData];
+    const submissions = [...farmer.data, ...enterprise.data, ...youth.data];
     if (!submissions.length) return null;
 
     return submissions.reduce((latest, current) => {
       const currentDate = new Date(current.submissionDate);
       return currentDate > latest ? currentDate : latest;
     }, new Date(submissions[0].submissionDate));
-  }, []);
+  }, [enterprise.data, farmer.data, youth.data]);
 
   useEffect(() => {
     const interval = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(interval);
   }, []);
+
+  const lastRefreshed = useMemo(() => {
+    const dates = [farmer.refreshedAt, enterprise.refreshedAt, youth.refreshedAt].filter(Boolean) as Date[];
+    if (!dates.length) return null;
+    return dates.reduce((latest, current) => (current > latest ? current : latest));
+  }, [enterprise.refreshedAt, farmer.refreshedAt, youth.refreshedAt]);
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -59,7 +77,7 @@ export function Header() {
           <div className="flex flex-1 flex-col gap-2 text-right sm:flex-row sm:justify-end sm:gap-6">
             <div>
               <p className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">Last Refreshed</p>
-              <p className="text-sm font-semibold text-foreground">{formatDateTime(new Date(lastUpdated))}</p>
+              <p className="text-sm font-semibold text-foreground">{formatDateTime(lastRefreshed)}</p>
             </div>
             <div>
               <p className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">Latest Submission</p>
@@ -80,6 +98,13 @@ export function Header() {
           </div>
         </div>
       </div>
+
+      {(!farmer.isLive || !enterprise.isLive || !youth.isLive) && (
+        <div className="mt-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-amber-200 text-sm">
+          Live Google Sheet data is not fully available. Showing mock data where necessary while waiting for sheet configuration
+          to be provided.
+        </div>
+      )}
     </header>
   );
 }
