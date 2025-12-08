@@ -113,7 +113,7 @@ export function SubmissionMap({
   }, [points]);
 
   useEffect(() => {
-    if (!containerRef.current || !points.length) return;
+    if (!containerRef.current) return;
 
     setMapError(false);
 
@@ -178,16 +178,22 @@ export function SubmissionMap({
         <span>{title}</span>
       </div>
 
-      {points.length === 0 ? (
-        <div className="text-sm text-muted-foreground py-10 text-center">
-          No submission coordinates available yet.
-        </div>
-      ) : mapError ? (
+      {mapError ? (
         <div className="text-sm text-muted-foreground py-10 text-center">
           Map could not be loaded right now.
         </div>
       ) : (
-        <div ref={containerRef} className="h-[380px] rounded-lg border border-border/60" />
+        <div className="relative">
+          <div
+            ref={containerRef}
+            className="h-[380px] rounded-lg border border-border/60"
+          />
+          {points.length === 0 && (
+            <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground bg-background/80">
+              No submission coordinates available yet.
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
