@@ -1,4 +1,4 @@
-import { CheckCircle2, ClipboardCheck, Factory, FlagTriangleRight, PhoneOff, TriangleAlert, Users, XCircle } from "lucide-react";
+import { CheckCircle2, ClipboardCheck, Factory, FlagTriangleRight, TriangleAlert, XCircle } from "lucide-react";
 import { useEnterpriseQcData } from "@/hooks/useSegmentQcData";
 import { KPICard } from "../KPICard";
 import { SubmissionQualityChart } from "../SubmissionQualityChart";
@@ -71,27 +71,6 @@ export function EnterpriseTab() {
           title="Avg Flags / Interview"
           value={kpis.avgFlagsPerInterview.toFixed(2)}
           icon={FlagTriangleRight}
-          variant="enterprise"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <KPICard
-          title="Duplicate Phones"
-          value={formatPercent(kpis.percentDuplicatePhone)}
-          icon={PhoneOff}
-          variant="enterprise"
-        />
-        <KPICard
-          title="LOI Issues"
-          value={formatPercent(kpis.percentLOIIssues)}
-          icon={Users}
-          variant="enterprise"
-        />
-        <KPICard
-          title="Hard Violations"
-          value={formatPercent(kpis.percentHardViolations)}
-          icon={TriangleAlert}
           variant="enterprise"
         />
       </div>
