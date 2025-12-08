@@ -2,6 +2,12 @@ export interface SheetRow {
   [key: string]: string;
 }
 
+interface FetchSheetOptions {
+  sheetId: string;
+  sheetName?: string;
+  sheetGid?: string;
+}
+
 function parseCsvLine(line: string): string[] {
   const result: string[] = [];
   let current = '';
@@ -44,8 +50,12 @@ function parseCsv(text: string): SheetRow[] {
   });
 }
 
-export async function fetchSheetRows(sheetId: string, sheetName: string): Promise<SheetRow[]> {
-  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
+export async function fetchSheetRows({ sheetId, sheetName, sheetGid }: FetchSheetOptions): Promise<SheetRow[]> {
+  const base = `https://docs.google.com/spreadsheets/d/${sheetId}/`;
+  const url = sheetGid
+    ? `${base}export?format=csv&gid=${sheetGid}`
+    : `${base}gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName ?? '')}`;
+
   const response = await fetch(url);
 
   if (!response.ok) {

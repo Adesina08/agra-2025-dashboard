@@ -24,12 +24,16 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
   const mockConfig = mockMap[survey];
 
   const query = useQuery<{ rows: SheetRow[]; refreshedAt: Date }>(
-    ['google-sheet', survey, config.sheetId, config.sheetName],
+    ['google-sheet', survey, config.sheetId, config.sheetName, config.sheetGid],
     async () => {
-      if (!config.sheetId || !config.sheetName) {
+      if (!config.sheetId || !(config.sheetName || config.sheetGid)) {
         throw new Error('Missing Google Sheet configuration');
       }
-      const rows = await fetchSheetRows(config.sheetId, config.sheetName);
+      const rows = await fetchSheetRows({
+        sheetId: config.sheetId,
+        sheetName: config.sheetName,
+        sheetGid: config.sheetGid,
+      });
       return { rows, refreshedAt: new Date() };
     },
     {
