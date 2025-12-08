@@ -1,5 +1,5 @@
 import { ClipboardCheck, CheckCircle2, FlagTriangleRight, TriangleAlert, XCircle } from "lucide-react";
-import { useYouthQcData } from "@/hooks/useSegmentQcData";
+import { type UseSegmentQcDataResult } from "@/hooks/useSegmentQcData";
 import { KPICard } from "../KPICard";
 import { SubmissionQualityChart } from "../SubmissionQualityChart";
 import { ErrorBreakdown } from "../ErrorBreakdown";
@@ -14,10 +14,11 @@ function formatPercent(value: number | null | undefined, digits = 1) {
 
 interface YouthTabProps {
   submissions?: YouthData[];
+  qcData: UseSegmentQcDataResult;
 }
 
-export function YouthTab({ submissions = [] }: YouthTabProps) {
-  const { loading, error, submissionQuality, errorBreakdown, interviewerStats, kpis } = useYouthQcData();
+export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
+  const { loading, error, submissionQuality, errorBreakdown, interviewerStats, kpis } = qcData;
 
   if (loading) return <div>Loading Youth QC…</div>;
   if (error) return <div className="text-red-600">Error: {error}</div>;
@@ -81,7 +82,7 @@ export function YouthTab({ submissions = [] }: YouthTabProps) {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="space-y-6">
         <SubmissionQualityChart data={submissionChartData} variant="youth" />
         <ErrorBreakdown data={errorBreakdownData} variant="youth" />
       </div>

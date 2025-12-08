@@ -1,5 +1,5 @@
 import { CheckCircle2, ClipboardCheck, FlagTriangleRight, TriangleAlert, XCircle } from "lucide-react";
-import { useFarmerQcData } from "@/hooks/useSegmentQcData";
+import { type UseSegmentQcDataResult } from "@/hooks/useSegmentQcData";
 import { KPICard } from "../KPICard";
 import { SubmissionQualityChart } from "../SubmissionQualityChart";
 import { ErrorBreakdown } from "../ErrorBreakdown";
@@ -14,10 +14,11 @@ function formatPercent(value: number | null | undefined, digits = 1) {
 
 interface FarmerTabProps {
   submissions?: FarmerData[];
+  qcData: UseSegmentQcDataResult;
 }
 
-export function FarmerTab({ submissions = [] }: FarmerTabProps) {
-  const { loading, error, submissionQuality, errorBreakdown, interviewerStats, kpis } = useFarmerQcData();
+export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
+  const { loading, error, submissionQuality, errorBreakdown, interviewerStats, kpis } = qcData;
 
   if (loading) return <div>Loading Farmer QC…</div>;
   if (error) return <div className="text-red-600">Error: {error}</div>;
@@ -81,7 +82,7 @@ export function FarmerTab({ submissions = [] }: FarmerTabProps) {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="space-y-6">
         <SubmissionQualityChart data={submissionChartData} variant="farmer" />
         <ErrorBreakdown data={errorBreakdownData} variant="farmer" />
       </div>
