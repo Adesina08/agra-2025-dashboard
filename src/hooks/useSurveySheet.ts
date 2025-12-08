@@ -23,9 +23,9 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
   const config = sheetConfigs[survey];
   const mockConfig = mockMap[survey];
 
-  const query = useQuery<{ rows: SheetRow[]; refreshedAt: Date }>(
-    ['google-sheet', survey, config.sheetId, config.sheetName, config.sheetGid],
-    async () => {
+  const query = useQuery<{ rows: SheetRow[]; refreshedAt: Date }>({
+    queryKey: ['google-sheet', survey, config.sheetId, config.sheetName, config.sheetGid],
+    queryFn: async () => {
       if (!config.sheetId || !(config.sheetName || config.sheetGid)) {
         throw new Error('Missing Google Sheet configuration');
       }
@@ -36,11 +36,9 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
       });
       return { rows, refreshedAt: new Date() };
     },
-    {
-      refetchOnWindowFocus: false,
-      retry: 1,
-    }
-  );
+    refetchOnWindowFocus: false,
+    retry: 1,
+  });
 
   const normalizer = mockConfig.normalizer as (row: SheetRow, index: number) => T;
 
