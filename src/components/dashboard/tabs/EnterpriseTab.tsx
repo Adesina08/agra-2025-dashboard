@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
-import { Building2, TrendingUp, CheckCircle, Clock, XCircle, DollarSign, ClipboardCheck, Lightbulb } from 'lucide-react';
+import { Building2, CheckCircle, Clock, XCircle, DollarSign, ClipboardCheck, Lightbulb } from 'lucide-react';
 import { EnterpriseData, fieldLabels, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
-import { KPICard } from '../KPICard';
 import { DonutChart } from '../DonutChart';
 import { DataTable } from '../DataTable';
 import { StatusBadge } from '../StatusBadge';
@@ -10,6 +9,7 @@ import { ProductivityRankings } from '../ProductivityRankings';
 import { SubmissionQualityChart } from '../SubmissionQualityChart';
 import { ErrorBreakdown } from '../ErrorBreakdown';
 import { EnterpriseInsights } from '../insights/EnterpriseInsights';
+import { MultiKPICard } from '../MultiKPICard';
 
 type SubTab = 'qc' | 'insights';
 
@@ -94,49 +94,43 @@ export function EnterpriseTab({ data, isLoading = false }: EnterpriseTabProps) {
 
       {activeSubTab === 'qc' ? (
         <>
-          {/* KPI Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <KPICard
-              title="Total Enterprises"
-              value={stats.total}
-              icon={Building2}
-              variant="enterprise"
-              trend={{ value: 8.3, isPositive: true }}
-            />
-            <KPICard
-              title="Approved"
-              value={stats.approved}
-              subtitle={`${((stats.approved / stats.safeTotal) * 100).toFixed(1)}%`}
-              icon={CheckCircle}
-              variant="enterprise"
-            />
-            <KPICard
-              title="Pending"
-              value={stats.pending}
-              subtitle={`${((stats.pending / stats.safeTotal) * 100).toFixed(1)}%`}
-              icon={Clock}
-              variant="enterprise"
-            />
-            <KPICard
-              title="Rejected"
-              value={stats.rejected}
-              subtitle={`${((stats.rejected / stats.safeTotal) * 100).toFixed(1)}%`}
-              icon={XCircle}
-              variant="enterprise"
-            />
-            <KPICard
-              title="Total Revenue"
-              value={`$${(stats.totalRevenue / 1000000).toFixed(1)}M`}
-              icon={DollarSign}
-              variant="enterprise"
-            />
-            <KPICard
-              title="Avg Employees"
-              value={stats.avgEmployees.toFixed(0)}
-              icon={TrendingUp}
-              variant="enterprise"
-            />
-          </div>
+          <MultiKPICard
+            title="Enterprise KPIs"
+            variant="enterprise"
+            metrics={[
+              { label: 'Total Enterprises', value: stats.total, icon: Building2 },
+              {
+                label: 'Approved',
+                value: stats.approved,
+                icon: CheckCircle,
+                helperText: `${((stats.approved / stats.safeTotal) * 100).toFixed(1)}%`,
+              },
+              {
+                label: 'Pending',
+                value: stats.pending,
+                icon: Clock,
+                helperText: `${((stats.pending / stats.safeTotal) * 100).toFixed(1)}%`,
+              },
+              {
+                label: 'Rejected',
+                value: stats.rejected,
+                icon: XCircle,
+                helperText: `${((stats.rejected / stats.safeTotal) * 100).toFixed(1)}%`,
+              },
+              {
+                label: 'Total Revenue (USD)',
+                value: `$${(stats.totalRevenue / 1000000).toFixed(1)}M`,
+                icon: DollarSign,
+                helperText: 'Aggregated annual revenue',
+              },
+              {
+                label: 'Avg Employees',
+                value: stats.avgEmployees.toFixed(0),
+                icon: Building2,
+                helperText: 'Across reported enterprises',
+              },
+            ]}
+          />
 
           <ProgressPanels
             achieved={stats.total}
@@ -146,7 +140,7 @@ export function EnterpriseTab({ data, isLoading = false }: EnterpriseTabProps) {
               { label: 'Female', value: stats.female, color: '#ec4899' },
             ]}
             accentColor="#f59e0b"
-            remainderColor="#fb923c"
+            remainderColor="#6366f1"
           />
 
           {/* Productivity Rankings */}

@@ -1,13 +1,13 @@
 import { useState, useMemo } from 'react';
-import { Users, TrendingUp, CheckCircle, Clock, XCircle, Wheat, ClipboardCheck, Lightbulb } from 'lucide-react';
+import { Users, CheckCircle, Clock, XCircle, Wheat, ClipboardCheck, Lightbulb } from 'lucide-react';
 import { FarmerData, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
-import { KPICard } from '../KPICard';
 import { ProgressPanels } from '../ProgressPanels';
 import { ProductivityRankings } from '../ProductivityRankings';
 import { SubmissionQualityChart } from '../SubmissionQualityChart';
 import { ErrorBreakdown } from '../ErrorBreakdown';
 import { FarmerInsights } from '../insights/FarmerInsights';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { MultiKPICard } from '../MultiKPICard';
 
 type SubTab = 'qc' | 'insights';
 
@@ -103,50 +103,37 @@ export function FarmerTab({ data, isLoading = false }: FarmerTabProps) {
 
       {activeSubTab === 'qc' ? (
         <>
-          {/* KPI Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <KPICard
-              title="Total Farmers"
-              value={stats.total}
-              icon={Users}
-              variant="farmer"
-              trend={{ value: 12.5, isPositive: true }}
-            />
-            <KPICard
-              title="Approved"
-              value={stats.approved}
-              subtitle={`${((stats.approved / stats.safeTotal) * 100).toFixed(1)}%`}
-              icon={CheckCircle}
-              variant="farmer"
-            />
-            <KPICard
-              title="Pending"
-              value={stats.pending}
-              subtitle={`${((stats.pending / stats.safeTotal) * 100).toFixed(1)}%`}
-              icon={Clock}
-              variant="farmer"
-            />
-            <KPICard
-              title="Rejected"
-              value={stats.rejected}
-              subtitle={`${((stats.rejected / stats.safeTotal) * 100).toFixed(1)}%`}
-              icon={XCircle}
-              variant="farmer"
-            />
-            <KPICard
-              title="Avg Farm Size"
-              value={`${stats.avgFarmSize.toFixed(1)} Ha`}
-              icon={Wheat}
-              variant="farmer"
-            />
-            <KPICard
-              title="Approval Rate"
-              value={`${((stats.approved / stats.safeTotal) * 100).toFixed(0)}%`}
-              icon={TrendingUp}
-              variant="farmer"
-              trend={{ value: 3.2, isPositive: true }}
-            />
-          </div>
+          <MultiKPICard
+            title="Farmer KPIs"
+            variant="farmer"
+            metrics={[
+              { label: 'Total Farmers', value: stats.total, icon: Users },
+              {
+                label: 'Approved',
+                value: stats.approved,
+                icon: CheckCircle,
+                helperText: `${((stats.approved / stats.safeTotal) * 100).toFixed(1)}%`,
+              },
+              {
+                label: 'Pending',
+                value: stats.pending,
+                icon: Clock,
+                helperText: `${((stats.pending / stats.safeTotal) * 100).toFixed(1)}%`,
+              },
+              {
+                label: 'Rejected',
+                value: stats.rejected,
+                icon: XCircle,
+                helperText: `${((stats.rejected / stats.safeTotal) * 100).toFixed(1)}%`,
+              },
+              {
+                label: 'Avg Farm Size (Ha)',
+                value: `${stats.avgFarmSize.toFixed(1)}`,
+                icon: Wheat,
+                helperText: 'Derived from FM6 area fields',
+              },
+            ]}
+          />
 
           <ProgressPanels
             achieved={stats.total}
@@ -155,7 +142,7 @@ export function FarmerTab({ data, isLoading = false }: FarmerTabProps) {
               { label: 'Male', value: stats.male, color: '#3b82f6' },
               { label: 'Female', value: stats.female, color: '#ec4899' },
             ]}
-            accentColor="#3b82f6"
+            accentColor="#22c55e"
             remainderColor="#0ea5e9"
           />
 

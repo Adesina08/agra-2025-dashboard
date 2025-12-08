@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Trophy, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -14,11 +14,13 @@ interface ProductivityRankingsProps {
   variant?: 'farmer' | 'enterprise' | 'youth';
 }
 
-export function ProductivityRankings({ 
-  data, 
-  title = "User Productivity Rankings",
-  variant = 'farmer' 
+export function ProductivityRankings({
+  data,
+  title = "Interviewers Productivity Rankings",
+  variant = 'farmer'
 }: ProductivityRankingsProps) {
+  const [view, setView] = useState<'top' | 'bottom'>('top');
+
   const variantColors = {
     farmer: 'text-farmer',
     enterprise: 'text-enterprise',
@@ -26,8 +28,12 @@ export function ProductivityRankings({
   };
 
   const sorted = useMemo(() => {
-    return [...data].sort((a, b) => b.approved - a.approved).slice(0, 10);
-  }, [data]);
+    const comparator = view === 'top'
+      ? (a: InterviewerStats, b: InterviewerStats) => b.approved - a.approved
+      : (a: InterviewerStats, b: InterviewerStats) => a.approved - b.approved;
+
+    return [...data].sort(comparator).slice(0, 10);
+  }, [data, view]);
 
   const topPerformer = sorted[0];
   const otherPerformers = sorted.slice(1);
@@ -53,10 +59,26 @@ export function ProductivityRankings({
           </p>
         </div>
         <div className="flex gap-2">
-          <button className="px-3 py-1.5 text-xs font-medium bg-primary/20 text-primary rounded">
+          <button
+            className={cn(
+              'px-3 py-1.5 text-xs font-medium rounded transition-colors',
+              view === 'top'
+                ? 'bg-primary/20 text-primary'
+                : 'text-muted-foreground hover:bg-muted'
+            )}
+            onClick={() => setView('top')}
+          >
             Top 10
           </button>
-          <button className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted rounded transition-colors">
+          <button
+            className={cn(
+              'px-3 py-1.5 text-xs font-medium rounded transition-colors',
+              view === 'bottom'
+                ? 'bg-primary/20 text-primary'
+                : 'text-muted-foreground hover:bg-muted'
+            )}
+            onClick={() => setView('bottom')}
+          >
             Last 10
           </button>
         </div>
@@ -68,7 +90,9 @@ export function ProductivityRankings({
           <div className="bg-muted/30 rounded-lg p-4 border border-border/50">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground uppercase tracking-wide">Top Performer</span>
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                  {view === 'top' ? 'Top Performer' : 'Lowest Performer'}
+                </span>
               </div>
               <span className="text-xs px-2 py-1 rounded bg-green-500/20 text-green-400">
                 Overall approval {overallApproval}%
@@ -117,7 +141,7 @@ export function ProductivityRankings({
         {/* Top 10 Interviewers List */}
         <div>
           <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3">
-            Top 10 Interviewers
+            {view === 'top' ? 'Top 10 Interviewers' : 'Bottom 10 Interviewers'}
           </p>
           <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
             {otherPerformers.map((interviewer, index) => {

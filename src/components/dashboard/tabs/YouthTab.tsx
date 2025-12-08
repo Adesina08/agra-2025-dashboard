@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
-import { GraduationCap, TrendingUp, CheckCircle, Clock, XCircle, Briefcase, ClipboardCheck, Lightbulb } from 'lucide-react';
+import { GraduationCap, CheckCircle, Clock, XCircle, Briefcase, ClipboardCheck, Lightbulb } from 'lucide-react';
 import { YouthData, fieldLabels, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
-import { KPICard } from '../KPICard';
 import { DonutChart } from '../DonutChart';
 import { DataTable } from '../DataTable';
 import { StatusBadge } from '../StatusBadge';
@@ -10,6 +9,7 @@ import { ProductivityRankings } from '../ProductivityRankings';
 import { SubmissionQualityChart } from '../SubmissionQualityChart';
 import { ErrorBreakdown } from '../ErrorBreakdown';
 import { YouthInsights } from '../insights/YouthInsights';
+import { MultiKPICard } from '../MultiKPICard';
 
 type SubTab = 'qc' | 'insights';
 
@@ -98,50 +98,43 @@ export function YouthTab({ data, isLoading = false }: YouthTabProps) {
 
       {activeSubTab === 'qc' ? (
         <>
-          {/* KPI Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <KPICard
-              title="Total Youth"
-              value={stats.total}
-              icon={GraduationCap}
-              variant="youth"
-              trend={{ value: 15.7, isPositive: true }}
-            />
-            <KPICard
-              title="Approved"
-              value={stats.approved}
-              subtitle={`${((stats.approved / stats.safeTotal) * 100).toFixed(1)}%`}
-              icon={CheckCircle}
-              variant="youth"
-            />
-            <KPICard
-              title="Pending"
-              value={stats.pending}
-              subtitle={`${((stats.pending / stats.safeTotal) * 100).toFixed(1)}%`}
-              icon={Clock}
-              variant="youth"
-            />
-            <KPICard
-              title="Rejected"
-              value={stats.rejected}
-              subtitle={`${((stats.rejected / stats.safeTotal) * 100).toFixed(1)}%`}
-              icon={XCircle}
-              variant="youth"
-            />
-            <KPICard
-              title="Training Completed"
-              value={`${((stats.trained / stats.safeTotal) * 100).toFixed(0)}%`}
-              icon={GraduationCap}
-              variant="youth"
-            />
-            <KPICard
-              title="Employment Rate"
-              value={`${((stats.employed / stats.safeTotal) * 100).toFixed(0)}%`}
-              icon={Briefcase}
-              variant="youth"
-              trend={{ value: 5.2, isPositive: true }}
-            />
-          </div>
+          <MultiKPICard
+            title="Youth KPIs"
+            variant="youth"
+            metrics={[
+              { label: 'Total Youth', value: stats.total, icon: GraduationCap },
+              {
+                label: 'Approved',
+                value: stats.approved,
+                icon: CheckCircle,
+                helperText: `${((stats.approved / stats.safeTotal) * 100).toFixed(1)}%`,
+              },
+              {
+                label: 'Pending',
+                value: stats.pending,
+                icon: Clock,
+                helperText: `${((stats.pending / stats.safeTotal) * 100).toFixed(1)}%`,
+              },
+              {
+                label: 'Rejected',
+                value: stats.rejected,
+                icon: XCircle,
+                helperText: `${((stats.rejected / stats.safeTotal) * 100).toFixed(1)}%`,
+              },
+              {
+                label: 'Training Completed',
+                value: `${((stats.trained / stats.safeTotal) * 100).toFixed(0)}%`,
+                icon: GraduationCap,
+                helperText: 'Share of submissions',
+              },
+              {
+                label: 'Employment Rate',
+                value: `${((stats.employed / stats.safeTotal) * 100).toFixed(0)}%`,
+                icon: Briefcase,
+                helperText: 'Employed or self-employed',
+              },
+            ]}
+          />
 
           <ProgressPanels
             achieved={stats.total}
@@ -151,7 +144,7 @@ export function YouthTab({ data, isLoading = false }: YouthTabProps) {
               { label: 'Female', value: stats.female, color: '#ec4899' },
             ]}
             accentColor="#0ea5e9"
-            remainderColor="#38bdf8"
+            remainderColor="#f97316"
           />
 
           {/* Productivity Rankings */}

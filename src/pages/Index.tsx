@@ -75,6 +75,9 @@ const Index = () => {
           )}
         </div>
       </div>
+      <footer className="border-t border-border/70 py-6 text-center text-sm text-muted-foreground">
+        © Inicio Tech 2025
+      </footer>
     </div>
   );
 };

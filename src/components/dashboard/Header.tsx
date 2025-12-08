@@ -101,8 +101,8 @@ export function Header({ farmer, enterprise, youth }: HeaderProps) {
 
       {(!farmer.isLive || !enterprise.isLive || !youth.isLive) && (
         <div className="mt-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-amber-200 text-sm">
-          Live Google Sheet data is not fully available. Showing mock data where necessary while waiting for sheet configuration
-          to be provided.
+          Live Google Sheet data is not fully available. Dashboard values will remain at zero until refreshed data arrives from
+          the configured sheets.
         </div>
       )}
     </header>

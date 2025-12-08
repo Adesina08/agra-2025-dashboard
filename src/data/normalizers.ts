@@ -33,7 +33,7 @@ export function normalizeFarmerRow(row: SheetRow, index: number): FarmerData {
   const country = pickValue(row, ['dccot', 'country', 'dcountry']);
   const region = pickValue(row, ['region', 'db11', 'province']);
   const district = pickValue(row, ['district', 'db10']);
-  const gender = pickValue(row, ['gender', 'sex', 'e5'], 'Unknown');
+  const gender = pickValue(row, ['gender', 'sex', 'e5', 'db7'], 'Unknown');
   const ageGroup = pickValue(row, ['agegroup', 'd6', 'age']);
   const youthInWork = pickValue(row, ['YouthinWork', 'youthinwork']);
 

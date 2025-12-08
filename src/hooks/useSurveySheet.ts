@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { sheetConfigs, SurveyKey } from '@/data/sheetsConfig';
 import { fetchSheetRows, SheetRow } from '@/lib/googleSheets';
-import { enterpriseData, farmerData, YouthData, EnterpriseData, FarmerData, youthData } from '@/data/mockData';
+import { YouthData, EnterpriseData, FarmerData } from '@/data/mockData';
 import { normalizeEnterpriseRow, normalizeFarmerRow, normalizeYouthRow } from '@/data/normalizers';
 
 interface SurveyResult<T> {
@@ -13,15 +13,15 @@ interface SurveyResult<T> {
   refreshedAt?: Date;
 }
 
-const mockMap: Record<SurveyKey, { data: any[]; normalizer: (row: SheetRow, index: number) => any }> = {
-  farmer: { data: farmerData, normalizer: normalizeFarmerRow },
-  enterprise: { data: enterpriseData, normalizer: normalizeEnterpriseRow },
-  youth: { data: youthData, normalizer: normalizeYouthRow },
+const normalizerMap: Record<SurveyKey, (row: SheetRow, index: number) => any> = {
+  farmer: normalizeFarmerRow,
+  enterprise: normalizeEnterpriseRow,
+  youth: normalizeYouthRow,
 };
 
 export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData>(survey: SurveyKey): SurveyResult<T> {
   const config = sheetConfigs[survey];
-  const mockConfig = mockMap[survey];
+  const normalizer = normalizerMap[survey] as (row: SheetRow, index: number) => T;
 
   const query = useQuery<{ rows: SheetRow[]; refreshedAt: Date }>({
     queryKey: ['google-sheet', survey, config.sheetId, config.sheetName, config.sheetGid],
@@ -40,24 +40,7 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
     retry: 1,
   });
 
-  const normalizer = mockConfig.normalizer as (row: SheetRow, index: number) => T;
-
-  // Fallback to mock data if live sheet fails or is empty
-  if (query.isError || !query.data || !query.data.rows.length) {
-    const rawMock = (mockConfig.data as SheetRow[]).map((row) => row);
-    const normalized = rawMock.map((row, idx) => normalizer(row, idx));
-    return {
-      data: normalized,
-      raw: rawMock,
-      isLive: false,
-      isLoading: query.isLoading,
-      error: query.error as Error | null,
-      refreshedAt: query.data?.refreshedAt,
-    };
-  }
-
-  // 🔹 Clean live rows: drop empty rows and any accidental header rows
-  const cleanedRows = query.data.rows.filter((row) => {
+  const cleanedRows = (query.data?.rows ?? []).filter((row, index) => {
     const entries = Object.entries(row);
     const nonEmpty = entries.filter(([, v]) => v !== '' && v != null);
 
@@ -72,17 +55,21 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
     // If *all* non-empty cells equal their column name -> header row, skip it
     if (headerLike.length === nonEmpty.length) return false;
 
+    // Explicitly ignore the first incoming row to prevent header counting
+    if (index === 0) return false;
+
     return true;
   });
 
-  const normalized = cleanedRows.map((row, idx) => normalizer(row, idx));
+  const hasLiveRows = !!cleanedRows.length && !query.isError;
+  const normalized = hasLiveRows ? cleanedRows.map((row, idx) => normalizer(row, idx)) : [];
 
   return {
     data: normalized,
-    raw: cleanedRows,
-    isLive: true,
+    raw: hasLiveRows ? cleanedRows : [],
+    isLive: hasLiveRows,
     isLoading: query.isLoading,
-    error: null,
-    refreshedAt: query.data.refreshedAt,
+    error: query.error as Error | null,
+    refreshedAt: query.data?.refreshedAt,
   };
 }
