@@ -1,5 +1,6 @@
 import { CheckCircle2, ClipboardCheck, Factory, FlagTriangleRight, TriangleAlert, XCircle } from "lucide-react";
-import { useEnterpriseQcData } from "@/hooks/useSegmentQcData";
+import { type UseSegmentQcDataResult } from "@/hooks/useSegmentQcData";
+import { EnterpriseData } from "@/data/mockData";
 import { KPICard } from "../KPICard";
 import { SubmissionQualityChart } from "../SubmissionQualityChart";
 import { ErrorBreakdown } from "../ErrorBreakdown";
@@ -10,8 +11,13 @@ function formatPercent(value: number | null | undefined, digits = 1) {
   return `${(value * 100).toFixed(digits)}%`;
 }
 
-export function EnterpriseTab() {
-  const { loading, error, submissionQuality, errorBreakdown, interviewerStats, kpis } = useEnterpriseQcData();
+interface EnterpriseTabProps {
+  submissions?: EnterpriseData[];
+  qcData: UseSegmentQcDataResult;
+}
+
+export function EnterpriseTab({ qcData }: EnterpriseTabProps) {
+  const { loading, error, submissionQuality, errorBreakdown, interviewerStats, kpis } = qcData;
 
   if (loading) return <div>Loading Enterprise QC…</div>;
   if (error) return <div className="text-red-600">Error: {error}</div>;
@@ -75,7 +81,7 @@ export function EnterpriseTab() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="space-y-6">
         <SubmissionQualityChart data={submissionChartData} variant="enterprise" />
         <ErrorBreakdown data={errorBreakdownData} variant="enterprise" />
       </div>

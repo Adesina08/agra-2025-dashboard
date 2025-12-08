@@ -26,6 +26,12 @@ export function ProductivityRankings({
     youth: 'text-youth',
   };
 
+  const headerTone = {
+    farmer: 'bg-farmer/10 border-farmer/30 text-farmer',
+    enterprise: 'bg-enterprise/10 border-enterprise/30 text-enterprise',
+    youth: 'bg-youth/10 border-youth/30 text-youth',
+  };
+
   const rankedList = useMemo(() => {
     const ordered = [...data].sort((a, b) => b.approved - a.approved);
     if (view === 'last') {
@@ -51,20 +57,20 @@ export function ProductivityRankings({
 
   return (
     <div className="minimal-card">
-      <div className="flex items-center justify-between mb-6">
+      <div className={cn('flex items-center justify-between mb-6 rounded-lg px-4 py-3 border', headerTone[variant])}>
         <div>
-          <h3 className="text-sm font-medium text-foreground">{title}</h3>
-          <p className="text-xs text-muted-foreground mt-1">
+          <h3 className="text-sm font-semibold">{title}</h3>
+          <p className="text-xs opacity-80 mt-1">
             Track interviewer performance and highlight key performers
           </p>
         </div>
         <div className="flex gap-2">
           <button
             className={cn(
-              'px-3 py-1.5 text-xs font-medium rounded transition-colors',
+              'px-3 py-1.5 text-xs font-semibold rounded transition-colors',
               view === 'top'
-                ? 'bg-primary/20 text-primary'
-                : 'text-muted-foreground hover:bg-muted'
+                ? 'bg-background/80 text-foreground shadow-sm'
+                : 'text-foreground/80 hover:bg-background/60'
             )}
             onClick={() => setView('top')}
           >
@@ -72,10 +78,10 @@ export function ProductivityRankings({
           </button>
           <button
             className={cn(
-              'px-3 py-1.5 text-xs font-medium rounded transition-colors',
+              'px-3 py-1.5 text-xs font-semibold rounded transition-colors',
               view === 'last'
-                ? 'bg-primary/20 text-primary'
-                : 'text-muted-foreground hover:bg-muted'
+                ? 'bg-background/80 text-foreground shadow-sm'
+                : 'text-foreground/80 hover:bg-background/60'
             )}
             onClick={() => setView('last')}
           >
