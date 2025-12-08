@@ -1,4 +1,4 @@
-import { ClipboardCheck, CheckCircle2, FlagTriangleRight, PhoneOff, TriangleAlert, Users, XCircle } from "lucide-react";
+import { ClipboardCheck, CheckCircle2, FlagTriangleRight, TriangleAlert, XCircle } from "lucide-react";
 import { useYouthQcData } from "@/hooks/useSegmentQcData";
 import { KPICard } from "../KPICard";
 import { SubmissionQualityChart } from "../SubmissionQualityChart";
@@ -71,34 +71,6 @@ export function YouthTab() {
           title="Avg Flags / Interview"
           value={kpis.avgFlagsPerInterview.toFixed(2)}
           icon={FlagTriangleRight}
-          variant="youth"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard
-          title="Duplicate Phones"
-          value={formatPercent(kpis.percentDuplicatePhone)}
-          icon={PhoneOff}
-          variant="youth"
-        />
-        <KPICard
-          title="LOI Issues"
-          value={formatPercent(kpis.percentLOIIssues)}
-          icon={Users}
-          variant="youth"
-        />
-        <KPICard
-          title="Hard Violations"
-          value={formatPercent(kpis.percentHardViolations)}
-          icon={TriangleAlert}
-          variant="youth"
-        />
-        <KPICard
-          title="Age Outside 18–35"
-          value={kpis.ageOutsideYouthCount ?? "—"}
-          subtitle={formatPercent(kpis.ageOutsideYouthPercent)}
-          icon={ClipboardCheck}
           variant="youth"
         />
       </div>

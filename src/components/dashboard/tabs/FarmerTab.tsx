@@ -1,4 +1,4 @@
-import { CheckCircle2, ClipboardCheck, FlagTriangleRight, PhoneOff, TriangleAlert, Users, XCircle } from "lucide-react";
+import { CheckCircle2, ClipboardCheck, FlagTriangleRight, TriangleAlert, XCircle } from "lucide-react";
 import { useFarmerQcData } from "@/hooks/useSegmentQcData";
 import { KPICard } from "../KPICard";
 import { SubmissionQualityChart } from "../SubmissionQualityChart";
@@ -71,27 +71,6 @@ export function FarmerTab() {
           title="Avg Flags / Interview"
           value={kpis.avgFlagsPerInterview.toFixed(2)}
           icon={FlagTriangleRight}
-          variant="farmer"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <KPICard
-          title="Duplicate Phones"
-          value={formatPercent(kpis.percentDuplicatePhone)}
-          icon={PhoneOff}
-          variant="farmer"
-        />
-        <KPICard
-          title="LOI Issues"
-          value={formatPercent(kpis.percentLOIIssues)}
-          icon={Users}
-          variant="farmer"
-        />
-        <KPICard
-          title="Hard Violations"
-          value={formatPercent(kpis.percentHardViolations)}
-          icon={TriangleAlert}
           variant="farmer"
         />
       </div>
