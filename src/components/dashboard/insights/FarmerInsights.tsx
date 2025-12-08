@@ -36,6 +36,7 @@ function mode<T>(arr: T[]): T | null {
 export function FarmerInsights({ data }: FarmerInsightsProps) {
   const [productionOpen, setProductionOpen] = useState(true);
   const [profileOpen, setProfileOpen] = useState(true);
+  const [climateOpen, setClimateOpen] = useState(true);
 
   const totalFarmers = data.length;
 
@@ -45,7 +46,8 @@ export function FarmerInsights({ data }: FarmerInsightsProps) {
   }, [data]);
 
   const topCrop = useMemo(() => {
-    const m = mode(data.map((f) => f.cropType || 'N/A'));
+    const primaryCrops = data.map((f) => f.cropsCultivated?.[0] || f.cropType || 'N/A');
+    const m = mode(primaryCrops);
     return m || 'N/A';
   }, [data]);
 
@@ -53,6 +55,15 @@ export function FarmerInsights({ data }: FarmerInsightsProps) {
     if (!data.length) return 0;
     const female = data.filter((f) => f.gender === 'Female').length;
     return (female / data.length) * 100;
+  }, [data]);
+
+  const youthShare = useMemo(() => {
+    if (!data.length) return 0;
+    const youthCount = data.filter((f) => {
+      const classification = (f.youthInWork || '').toLowerCase();
+      return classification && classification !== 'non-youth';
+    }).length;
+    return (youthCount / data.length) * 100;
   }, [data]);
 
   const kpiData = [
@@ -73,6 +84,10 @@ export function FarmerInsights({ data }: FarmerInsightsProps) {
       title: '% Female Farmers',
       value: `${femaleShare.toFixed(1)}%`,
     },
+    {
+      title: '% Youth (in work)',
+      value: `${youthShare.toFixed(1)}%`,
+    },
   ];
 
   // 🔹 Crops cultivated (count of farmers by crop)
@@ -80,8 +95,11 @@ export function FarmerInsights({ data }: FarmerInsightsProps) {
     () => {
       const map = new Map<string, number>();
       data.forEach((f) => {
-        const crop = (f.cropType || 'N/A').trim() || 'N/A';
-        map.set(crop, (map.get(crop) || 0) + 1);
+        const crops = f.cropsCultivated?.length ? f.cropsCultivated : [f.cropType || 'N/A'];
+        crops.forEach((crop) => {
+          const cleanCrop = (crop || 'N/A').trim() || 'N/A';
+          map.set(cleanCrop, (map.get(cleanCrop) || 0) + 1);
+        });
       });
       return Array.from(map.entries())
         .map(([crop, households]) => ({ crop, households }))
@@ -123,6 +141,56 @@ export function FarmerInsights({ data }: FarmerInsightsProps) {
         { label: 'Male', value: male },
         { label: 'Female', value: female },
         { label: 'Other / Unknown', value: other },
+      ];
+    },
+    [data]
+  );
+
+  // 🔹 Rainfall perception (e28)
+  const rainfallPerception = useMemo(
+    () => {
+      const map = new Map<string, number>();
+      data.forEach((f) => {
+        if (f.rainfallAmount) {
+          map.set(f.rainfallAmount, (map.get(f.rainfallAmount) || 0) + 1);
+        }
+      });
+      return Array.from(map.entries()).map(([label, value]) => ({ label, value }));
+    },
+    [data]
+  );
+
+  // 🔹 Rainfall spread (e32)
+  const rainfallSpread = useMemo(
+    () => {
+      const map = new Map<string, number>();
+      data.forEach((f) => {
+        if (f.rainfallSpread) {
+          map.set(f.rainfallSpread, (map.get(f.rainfallSpread) || 0) + 1);
+        }
+      });
+      return Array.from(map.entries()).map(([label, value]) => ({ label, value }));
+    },
+    [data]
+  );
+
+  // 🔹 Shock exposure
+  const shockExposure = useMemo(
+    () => {
+      let heavySevere = 0;
+      let heavyMild = 0;
+      let drySpellYes = 0;
+
+      data.forEach((f) => {
+        if (f.heavyRainDamage === 'Severe') heavySevere++;
+        if (f.heavyRainDamage === 'Mild') heavyMild++;
+        if (f.drySpell) drySpellYes++;
+      });
+
+      return [
+        { type: 'Heavy rain – severe damage', value: heavySevere },
+        { type: 'Heavy rain – mild damage', value: heavyMild },
+        { type: 'Dry spell after germination', value: drySpellYes },
       ];
     },
     [data]
@@ -249,6 +317,84 @@ export function FarmerInsights({ data }: FarmerInsightsProps) {
                   />
                   <Scatter data={scatterFarmYield} fill="hsl(var(--primary))" />
                 </ScatterChart>
+              </ResponsiveContainer>
+            </ChartCard>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* Climate & Shocks */}
+      <Collapsible open={climateOpen} onOpenChange={setClimateOpen}>
+        <CollapsibleTrigger className="flex w-full items-center justify-between py-2 text-sm font-medium">
+          <span>Climate & Shocks</span>
+          <ChevronDown
+            className={`h-4 w-4 transition-transform ${
+              climateOpen ? 'rotate-180' : ''
+            }`}
+          />
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="grid md:grid-cols-2 gap-4">
+            <ChartCard title="Rainfall Perception" subtitle="Distribution of rainfall amount vs average">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={rainfallPerception}>
+                  <XAxis
+                    dataKey="label"
+                    tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }}
+                    angle={-35}
+                    textAnchor="end"
+                    height={60}
+                  />
+                  <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      color: 'hsl(var(--foreground))',
+                    }}
+                  />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="hsl(var(--primary))" />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
+
+            <ChartCard title="Rainfall Spread" subtitle="How rainfall was distributed through the season">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={rainfallSpread}>
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }} />
+                  <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      color: 'hsl(var(--foreground))',
+                    }}
+                  />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="hsl(var(--primary))" />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
+
+            <ChartCard title="Shock Exposure" subtitle="Weather-related shocks reported">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={shockExposure}>
+                  <XAxis
+                    dataKey="type"
+                    tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }}
+                    angle={-20}
+                    textAnchor="end"
+                    height={60}
+                  />
+                  <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      color: 'hsl(var(--foreground))',
+                    }}
+                  />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="hsl(var(--primary))" />
+                </BarChart>
               </ResponsiveContainer>
             </ChartCard>
           </div>
