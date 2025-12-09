@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { CheckCircle2, ClipboardCheck, Factory, FlagTriangleRight, TriangleAlert, XCircle } from "lucide-react";
 import { type UseSegmentQcDataResult } from "@/hooks/useSegmentQcData";
 import { EnterpriseData } from "@/data/mockData";
@@ -19,6 +20,16 @@ interface EnterpriseTabProps {
 
 export function EnterpriseTab({ qcData }: EnterpriseTabProps) {
   const { loading, error, submissionQuality, errorBreakdown, interviewerStats, kpis } = qcData;
+
+  const flagNameByCode = useMemo(() => {
+    const map: Record<string, string> = {};
+    (errorBreakdown ?? []).forEach((item) => {
+      if (item.kpiCode) {
+        map[item.kpiCode] = item.errorType || KPI_BY_CODE[item.kpiCode]?.flagName || item.kpiCode;
+      }
+    });
+    return map;
+  }, [errorBreakdown]);
 
   if (loading) return <div>Loading Enterprise QC…</div>;
   if (error) return <div className="text-red-600">Error: {error}</div>;
@@ -87,7 +98,11 @@ export function EnterpriseTab({ qcData }: EnterpriseTabProps) {
       </div>
 
       <div className="space-y-6">
-        <SubmissionQualityChart data={submissionChartData} variant="enterprise" />
+        <SubmissionQualityChart
+          data={submissionChartData}
+          variant="enterprise"
+          flagNames={flagNameByCode}
+        />
         <ErrorBreakdown data={errorBreakdownData} variant="enterprise" />
       </div>
 

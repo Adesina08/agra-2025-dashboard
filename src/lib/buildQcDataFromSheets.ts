@@ -84,7 +84,7 @@ export function buildQcDataFromSheets(
   const idxPctInterviews = summaryHeader.indexOf("% Interviews");
 
   const errorBreakdown: ErrorBreakdownItem[] = summaryRows
-    .filter((row) => parseNumber(row[idxCount]) > 0)
+    .filter((row) => (row[idxKPI] || row[idxFlagName]) && row.length > 0)
     .map((row) => ({
       kpiCode: row[idxKPI] || "",
       errorType: row[idxFlagName] || "",

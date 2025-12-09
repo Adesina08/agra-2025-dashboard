@@ -15,6 +15,7 @@ interface SubmissionQualityChartProps {
   data: InterviewerQuality[];
   title?: string;
   variant?: Variant;
+  flagNames?: Record<string, string>;
 }
 
 const flagColumnsForVariant: Record<Variant, string[]> = {
@@ -27,42 +28,72 @@ export function SubmissionQualityChart({
   data,
   title = 'Submission Quality Overview',
   variant = 'farmer',
+  flagNames,
 }: SubmissionQualityChartProps) {
   const [view, setView] = useState<'chart' | 'table'>('chart');
 
   const sortedData = useMemo(() => {
-    return [...data]
-      .sort((a, b) => (b.approved + b.notApproved) - (a.approved + a.notApproved))
-      .slice(0, 10);
+    return [...data].sort((a, b) => (b.approved + b.notApproved) - (a.approved + a.notApproved));
   }, [data]);
 
-  const handleExport = () => {
-    const csvContent = [
-      [
-        'Interviewer',
-        'Approved',
-        'Not Approved',
-        'Total',
-        'Approval Rate',
-        ...flagColumnsForVariant[variant],
-      ].join(','),
-      ...sortedData.map((d) =>
-        [
-          d.name,
-          d.approved,
-          d.notApproved,
-          d.approved + d.notApproved,
-          ((d.approved / (d.approved + d.notApproved)) * 100).toFixed(1) + '%',
-          ...flagColumnsForVariant[variant].map((kpi) => d.flagsByKpi?.[kpi] ?? 0),
-        ].join(',')
-      ),
-    ].join('\n');
+  const flagColumns = useMemo(() => {
+    const defaultCodes = flagColumnsForVariant[variant] ?? [];
+    const foundCodes = Array.from(
+      new Set(
+        data.flatMap((row) =>
+          Object.keys(row.flagsByKpi ?? {}).filter((code) => code && typeof code === 'string')
+        )
+      )
+    );
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const orderedCodes = [
+      ...defaultCodes,
+      ...foundCodes.filter((code) => !defaultCodes.includes(code)),
+    ];
+
+    return orderedCodes.map((code) => ({ code, label: flagNames?.[code] ?? code }));
+  }, [data, flagNames, variant]);
+
+  const escapeCell = (value: string | number) =>
+    String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  const handleExport = () => {
+    const headers = [
+      'Interviewer',
+      'Approved',
+      'Not Approved',
+      'Total',
+      'Approval Rate',
+      ...flagColumns.map((column) => column.label),
+    ];
+
+    const rows = sortedData.map((d) => [
+      d.name,
+      d.approved,
+      d.notApproved,
+      d.approved + d.notApproved,
+      `${((d.approved / (d.approved + d.notApproved)) * 100).toFixed(1)}%`,
+      ...flagColumns.map((column) => d.flagsByKpi?.[column.code] ?? 0),
+    ]);
+
+    const tableHtml = `
+      <table>
+        <thead>
+          <tr>${headers.map((h) => `<th>${escapeCell(h)}</th>`).join('')}</tr>
+        </thead>
+        <tbody>
+          ${rows
+            .map((row) => `<tr>${row.map((cell) => `<td>${escapeCell(cell)}</td>`).join('')}</tr>`)
+            .join('')}
+        </tbody>
+      </table>
+    `;
+
+    const blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `submission_quality_${variant}.csv`;
+    a.download = `submission_quality_${variant}.xls`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -200,12 +231,12 @@ export function SubmissionQualityChart({
                 <th className="text-right py-3 px-2 text-xs text-muted-foreground font-medium uppercase">Not Approved</th>
                 <th className="text-right py-3 px-2 text-xs text-muted-foreground font-medium uppercase">Total</th>
                 <th className="text-right py-3 px-2 text-xs text-muted-foreground font-medium uppercase">Rate</th>
-                {flagColumnsForVariant[variant].map((kpi) => (
+                {flagColumns.map((column) => (
                   <th
-                    key={kpi}
+                    key={column.code}
                     className="text-right py-3 px-2 text-xs text-muted-foreground font-medium uppercase whitespace-nowrap"
                   >
-                    {kpi}
+                    {column.label}
                   </th>
                 ))}
               </tr>
@@ -221,9 +252,9 @@ export function SubmissionQualityChart({
                     <td className="py-3 px-2 text-right text-red-400">{row.notApproved}</td>
                     <td className="py-3 px-2 text-right text-foreground">{total}</td>
                     <td className="py-3 px-2 text-right text-foreground">{rate}%</td>
-                    {flagColumnsForVariant[variant].map((kpi) => (
-                      <td key={kpi} className="py-3 px-2 text-right text-foreground">
-                        {row.flagsByKpi?.[kpi] ?? 0}
+                    {flagColumns.map((column) => (
+                      <td key={column.code} className="py-3 px-2 text-right text-foreground">
+                        {row.flagsByKpi?.[column.code] ?? 0}
                       </td>
                     ))}
                   </tr>

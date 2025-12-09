@@ -61,11 +61,13 @@ export function ErrorBreakdown({
       >
         <div className="flex items-center gap-2">
           <AlertTriangle className="w-4 h-4" />
-          <span className="font-semibold">
-            {title ?? 'Error Breakdown'}
-          </span>
+          <div className="flex flex-col">
+            <span className="font-semibold leading-tight">
+              {title ?? 'Error Breakdown'}
+            </span>
+            <span className="text-xs opacity-80">Identify the most common data-quality flags</span>
+          </div>
         </div>
-        <div className="text-xs opacity-80">Identify the most common data-quality flags</div>
       </div>
 
       <div className="overflow-x-auto">
