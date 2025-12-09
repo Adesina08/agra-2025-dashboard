@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Trophy, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { headerTone, Variant } from './variantStyles';
 
 interface InterviewerStats {
   name: string;
@@ -11,7 +12,7 @@ interface InterviewerStats {
 interface ProductivityRankingsProps {
   data: InterviewerStats[];
   title?: string;
-  variant?: 'farmer' | 'enterprise' | 'youth';
+  variant?: Variant;
 }
 
 export function ProductivityRankings({
@@ -24,12 +25,6 @@ export function ProductivityRankings({
     farmer: 'text-farmer',
     enterprise: 'text-enterprise',
     youth: 'text-youth',
-  };
-
-  const headerTone = {
-    farmer: 'bg-farmer/10 border-farmer/30 text-farmer',
-    enterprise: 'bg-enterprise/10 border-enterprise/30 text-enterprise',
-    youth: 'bg-youth/10 border-youth/30 text-youth',
   };
 
   const rankedList = useMemo(() => {
@@ -57,7 +52,12 @@ export function ProductivityRankings({
 
   return (
     <div className="minimal-card">
-      <div className={cn('flex items-center justify-between mb-6 rounded-lg px-4 py-3 border', headerTone[variant])}>
+      <div
+        className={cn(
+          'flex items-center justify-between gap-3 mb-6 rounded-xl px-4 py-3 border text-sm',
+          headerTone[variant]
+        )}
+      >
         <div>
           <h3 className="text-sm font-semibold">{title}</h3>
           <p className="text-xs opacity-80 mt-1">

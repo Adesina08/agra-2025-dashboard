@@ -2,8 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { MapPin } from "lucide-react";
 import { Submission } from "@/data/mockData";
 import { cn } from "@/lib/utils";
-
-type Variant = "farmer" | "enterprise" | "youth";
+import { headerTone, Variant } from "./variantStyles";
 
 type LeafletBounds = unknown;
 type LeafletMap = {
@@ -36,12 +35,6 @@ const variantColors: Record<Variant, string> = {
   farmer: "#22c55e",
   enterprise: "#f59e0b",
   youth: "#06b6d4",
-};
-
-const headerTone: Record<Variant, string> = {
-  farmer: 'bg-farmer/10 border-farmer/30 text-farmer',
-  enterprise: 'bg-enterprise/10 border-enterprise/30 text-enterprise',
-  youth: 'bg-youth/10 border-youth/30 text-youth',
 };
 
 const LEAFLET_CSS = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
@@ -141,29 +134,57 @@ export function SubmissionMap({
 
         points.forEach((submission) => {
           const approvalColor = statusPill(submission.status as string);
+          const submittedOn = new Date(submission.submissionDate).toLocaleString('en-GB', {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+          });
+
           const marker = L.circleMarker([submission.latitude, submission.longitude], {
             radius: 7,
             color: variantColors[variant],
             weight: 2,
             fillColor: variantColors[variant],
             fillOpacity: 0.85,
-          })
-            .bindTooltip(
-              `<div class="submission-tooltip">
-                <div class="tooltip-title">${submission.region}</div>
-                <div class="tooltip-sub">${submission.district}</div>
-                <div class="tooltip-row">
-                  <span class="tooltip-label">Enumerator</span>
-                  <span>${submission.enumerator}</span>
-                </div>
-                <div class="tooltip-row">
-                  <span class="tooltip-label">Status</span>
-                  <span class="tooltip-pill" style="background:${approvalColor}1a;color:${approvalColor};border:1px solid ${approvalColor}40;">${submission.status}</span>
-                </div>
-              </div>`,
-              { direction: "top", opacity: 0.95, className: 'submission-tooltip-wrapper' }
-            )
-            .addTo(map);
+          }).bindTooltip(
+            `
+      <div class="submission-tooltip">
+        <div class="tooltip-title">${submission.region}</div>
+        <div class="tooltip-sub">${submission.district}</div>
+
+        <div class="tooltip-row">
+          <span class="tooltip-label">Enumerator</span>
+          <span>${submission.enumerator}</span>
+        </div>
+
+        <div class="tooltip-row">
+          <span class="tooltip-label">Profile</span>
+          <span>${submission.gender} • ${submission.ageGroup}</span>
+        </div>
+
+        <div class="tooltip-row">
+          <span class="tooltip-label">Status</span>
+          <span class="tooltip-pill" style="
+            border-color:${approvalColor};
+            color:${approvalColor};
+            background-color:${approvalColor}1a;
+          ">
+            ${submission.status}
+          </span>
+        </div>
+
+        <div class="tooltip-row">
+          <span class="tooltip-label">Submitted</span>
+          <span>${submittedOn}</span>
+        </div>
+      </div>
+    `,
+            {
+              className: 'submission-tooltip-wrapper',
+              direction: 'top',
+              opacity: 0.98,
+              offset: [0, -10],
+            }
+          );
 
           (marker as any).on('mouseover', () => marker.setStyle({ radius: 9, weight: 3 }));
           (marker as any).on('mouseout', () => marker.setStyle({ radius: 7, weight: 2 }));
@@ -195,9 +216,16 @@ export function SubmissionMap({
     return '#f59e0b';
   };
 
+  const mapHeightClass = variant === 'youth' ? 'h-[460px]' : 'h-[380px]';
+
   return (
     <div className="minimal-card h-full">
-      <div className={cn('flex items-center gap-2 mb-3 text-sm rounded-lg px-4 py-3 border', headerTone[variant])}>
+      <div
+        className={cn(
+          'flex items-center gap-2 mb-3 text-sm rounded-lg px-4 py-3 border',
+          headerTone[variant]
+        )}
+      >
         <MapPin className="h-4 w-4" />
         <span className="font-semibold">{title}</span>
       </div>
@@ -210,7 +238,7 @@ export function SubmissionMap({
         <div className="relative">
           <div
             ref={containerRef}
-            className="h-[380px] rounded-lg border border-border/60"
+            className={cn('rounded-lg border border-border/60', mapHeightClass)}
           />
           {points.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground bg-background/80">

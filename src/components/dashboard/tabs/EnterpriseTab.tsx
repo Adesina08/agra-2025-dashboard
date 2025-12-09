@@ -5,6 +5,7 @@ import { KPICard } from "../KPICard";
 import { SubmissionQualityChart } from "../SubmissionQualityChart";
 import { ErrorBreakdown } from "../ErrorBreakdown";
 import { ProductivityRankings } from "../ProductivityRankings";
+import { KPI_BY_CODE } from "@/data/kpiDefinitions";
 
 function formatPercent(value: number | null | undefined, digits = 1) {
   if (value == null) return "—";
@@ -29,6 +30,7 @@ export function EnterpriseTab({ qcData }: EnterpriseTabProps) {
     name: i.enumeratorId,
     approved: i.approvedInterviews,
     notApproved: i.failedInterviews,
+    flagsByKpi: i.flagsByKpi,
   }));
 
   const productivityData = interviewerStats.map((i) => ({
@@ -37,11 +39,14 @@ export function EnterpriseTab({ qcData }: EnterpriseTabProps) {
     approved: i.approvedInterviews,
   }));
 
-  const errorBreakdownData = errorBreakdown.map((e) => ({
-    errorType: e.errorType,
-    relatedVariables: `${e.type} • ${e.category} • ${e.kpiCode}`,
-    count: e.count,
-  }));
+  const errorBreakdownData = errorBreakdown.map((e) => {
+    const kpi = KPI_BY_CODE[e.kpiCode];
+    return {
+      errorType: `${e.kpiCode} • ${e.errorType}`,
+      relatedVariables: kpi?.variables ?? '—',
+      count: e.count,
+    };
+  });
 
   return (
     <div className="space-y-6 animate-fade-in">

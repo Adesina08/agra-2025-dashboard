@@ -95,8 +95,30 @@ const Index = () => {
     downloadCsv(`${activeTab}_all_data.csv`, rows);
   };
 
-  const isApprovedStatus = (status: unknown) =>
-    typeof status === 'string' && status.trim().toLowerCase() === 'approved';
+  const APPROVED_LABELS = [
+    'approved',
+    'clean',
+    'qc approved',
+    '1 - approved',
+  ];
+
+  const NOT_APPROVED_LABELS = [
+    'not approved',
+    'rejected',
+    'failed',
+    '2 - not approved',
+  ];
+
+  const normalizeStatus = (status: unknown) =>
+    typeof status === 'string' ? status.trim().toLowerCase() : '';
+
+  const isApprovedStatus = (status: unknown) => {
+    const s = normalizeStatus(status);
+    if (!s) return false;
+    if (APPROVED_LABELS.includes(s)) return true;
+    if (NOT_APPROVED_LABELS.includes(s)) return false;
+    return s.includes('approved') && !s.includes('not');
+  };
 
   const exportApprovedRows = () => {
     const rows = (activeSheetQuery.raw as SheetRow[]) ?? [];

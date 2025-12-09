@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { AlertTriangle, ArrowDown, ArrowUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { headerTone, Variant } from './variantStyles';
 
 interface ErrorType {
   errorType: string;
@@ -11,7 +12,7 @@ interface ErrorType {
 interface ErrorBreakdownProps {
   data: ErrorType[];
   title?: string;
-  variant?: 'farmer' | 'enterprise' | 'youth';
+  variant?: Variant;
 }
 
 export function ErrorBreakdown({
@@ -50,22 +51,21 @@ export function ErrorBreakdown({
       : <ArrowDown className="w-3 h-3 inline ml-1" />;
   };
 
-  const headerTone = {
-    farmer: 'bg-farmer/10 border-farmer/30 text-farmer',
-    enterprise: 'bg-enterprise/10 border-enterprise/30 text-enterprise',
-    youth: 'bg-youth/10 border-youth/30 text-youth',
-  };
-
   return (
-    <div className="minimal-card">
-      <div className={cn('flex items-center gap-3 mb-4 rounded-lg px-4 py-3 border', headerTone[variant])}>
-        <AlertTriangle className="w-4 h-4" />
-        <div>
-          <h3 className="text-sm font-semibold">{title}</h3>
-          <p className="text-xs opacity-80 mt-0.5">
-            Identify the most common data-quality flags
-          </p>
+    <div className="minimal-card h-full">
+      <div
+        className={cn(
+          'flex items-center justify-between gap-2 mb-4 rounded-xl px-4 py-3 border text-sm',
+          headerTone[variant]
+        )}
+      >
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4" />
+          <span className="font-semibold">
+            {title ?? 'Error Breakdown'}
+          </span>
         </div>
+        <div className="text-xs opacity-80">Identify the most common data-quality flags</div>
       </div>
 
       <div className="overflow-x-auto">
