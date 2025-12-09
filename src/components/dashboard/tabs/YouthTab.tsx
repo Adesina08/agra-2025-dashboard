@@ -170,17 +170,29 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
 
   const errorBreakdownData = useMemo(() => {
     const entries = Object.entries(filteredFlagTotals);
-    if (!entries.length) return [];
+    if (entries.length) {
+      return entries.map(([kpiCode, count]) => {
+        const kpi = KPI_BY_CODE[kpiCode];
+        return {
+          errorType: `${kpiCode} • ${kpi?.flagName ?? "Flag"}`,
+          relatedVariables: kpi?.variables ?? "—",
+          count,
+        };
+      });
+    }
 
-    return entries.map(([kpiCode, count]) => {
+    if (!errorBreakdown?.length) return [];
+
+    return errorBreakdown.map((item) => {
+      const kpiCode = item.kpiCode || "";
       const kpi = KPI_BY_CODE[kpiCode];
       return {
-        errorType: `${kpiCode} • ${kpi?.flagName ?? "Flag"}`,
+        errorType: `${kpiCode ? `${kpiCode} • ` : ""}${item.errorType || kpiCode || "Flag"}`,
         relatedVariables: kpi?.variables ?? "—",
-        count,
+        count: item.count ?? 0,
       };
     });
-  }, [filteredFlagTotals]);
+  }, [errorBreakdown, filteredFlagTotals]);
 
   if (loading && !hasData) return <div>Loading Youth QC…</div>;
   if (error) return <div className="text-red-600">Error: {error}</div>;
