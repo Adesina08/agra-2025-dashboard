@@ -132,6 +132,8 @@ export function SubmissionMap({
             '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         }).addTo(map);
 
+        if (!map) return;
+
         points.forEach((submission) => {
           const approvalColor = statusPill(submission.status as string);
           const submittedOn = new Date(submission.submissionDate).toLocaleString('en-GB', {
@@ -177,7 +179,7 @@ export function SubmissionMap({
           <span>${submittedOn}</span>
         </div>
       </div>
-    `,
+            `,
             {
               className: 'submission-tooltip-wrapper',
               direction: 'top',
@@ -189,6 +191,7 @@ export function SubmissionMap({
           (marker as any).on('mouseover', () => marker.setStyle({ radius: 9, weight: 3 }));
           (marker as any).on('mouseout', () => marker.setStyle({ radius: 7, weight: 2 }));
 
+          marker.addTo(map);
           markers.push(marker);
         });
 
