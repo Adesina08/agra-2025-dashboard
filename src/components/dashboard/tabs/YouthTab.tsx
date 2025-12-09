@@ -98,22 +98,21 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
         />
       </div>
 
-      <div className="space-y-6">
-        <SubmissionQualityChart
-          data={submissionChartData}
-          variant="youth"
-          flagNames={flagNameByCode}
-        />
-        <ErrorBreakdown data={errorBreakdownData} variant="youth" />
-      </div>
-
       <SubmissionMap
         submissions={submissions}
         title="Live Youth Submission Map"
         variant="youth"
       />
 
+      <SubmissionQualityChart
+        data={submissionChartData}
+        variant="youth"
+        flagNames={flagNameByCode}
+      />
+
       <ProductivityRankings data={productivityData} variant="youth" />
+
+      <ErrorBreakdown data={errorBreakdownData} variant="youth" />
     </div>
   );
 }

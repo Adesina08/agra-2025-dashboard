@@ -7,6 +7,7 @@ import { SubmissionQualityChart } from "../SubmissionQualityChart";
 import { ErrorBreakdown } from "../ErrorBreakdown";
 import { ProductivityRankings } from "../ProductivityRankings";
 import { KPI_BY_CODE } from "@/data/kpiDefinitions";
+import { SubmissionMap } from "../SubmissionMap";
 
 function formatPercent(value: number | null | undefined, digits = 1) {
   if (value == null) return "—";
@@ -18,7 +19,7 @@ interface EnterpriseTabProps {
   qcData: UseSegmentQcDataResult;
 }
 
-export function EnterpriseTab({ qcData }: EnterpriseTabProps) {
+export function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) {
   const { loading, error, submissionQuality, errorBreakdown, interviewerStats, kpis } = qcData;
 
   const flagNameByCode = useMemo(() => {
@@ -97,16 +98,21 @@ export function EnterpriseTab({ qcData }: EnterpriseTabProps) {
         />
       </div>
 
-      <div className="space-y-6">
-        <SubmissionQualityChart
-          data={submissionChartData}
-          variant="enterprise"
-          flagNames={flagNameByCode}
-        />
-        <ErrorBreakdown data={errorBreakdownData} variant="enterprise" />
-      </div>
+      <SubmissionMap
+        submissions={submissions}
+        title="Live Enterprise Submission Map"
+        variant="enterprise"
+      />
+
+      <SubmissionQualityChart
+        data={submissionChartData}
+        variant="enterprise"
+        flagNames={flagNameByCode}
+      />
 
       <ProductivityRankings data={productivityData} variant="enterprise" />
+
+      <ErrorBreakdown data={errorBreakdownData} variant="enterprise" />
     </div>
   );
 }

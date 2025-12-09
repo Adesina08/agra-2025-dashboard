@@ -15,13 +15,13 @@ import { toast } from '@/components/ui/use-toast';
 type TabType = 'farmer' | 'enterprise' | 'youth';
 
 const tabs = [
+  { id: 'youth' as const, label: 'Youth', icon: GraduationCap, color: 'youth' },
   { id: 'farmer' as const, label: 'Farmer', icon: Sprout, color: 'farmer' },
   { id: 'enterprise' as const, label: 'Enterprise', icon: Building2, color: 'enterprise' },
-  { id: 'youth' as const, label: 'Youth', icon: GraduationCap, color: 'youth' },
 ];
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState<TabType>('farmer');
+  const [activeTab, setActiveTab] = useState<TabType>('youth');
 
   const farmerQuery = useSurveySheet<FarmerData>('farmer');
   const enterpriseQuery = useSurveySheet<EnterpriseData>('enterprise');
