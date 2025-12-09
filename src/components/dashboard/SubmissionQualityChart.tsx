@@ -231,9 +231,9 @@ export function SubmissionQualityChart({
           </div>
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-auto">
           <div className="overflow-y-auto" style={{ maxHeight: tableViewportHeight }}>
-            <table className="w-full text-sm min-w-max">
+            <table className="w-full text-sm min-w-[960px]">
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-left py-3 px-2 text-xs text-muted-foreground font-medium uppercase">Interviewer</th>

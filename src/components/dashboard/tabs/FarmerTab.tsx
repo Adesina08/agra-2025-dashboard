@@ -24,16 +24,6 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
   const { loading, error, submissionQuality, errorBreakdown, interviewerStats, kpis } = qcData;
   const [countryFilter, setCountryFilter] = useState<string>("all");
 
-  const flagNameByCode = useMemo(() => {
-    const map: Record<string, string> = {};
-    (errorBreakdown ?? []).forEach((item) => {
-      if (item.kpiCode) {
-        map[item.kpiCode] = item.errorType || KPI_BY_CODE[item.kpiCode]?.flagName || item.kpiCode;
-      }
-    });
-    return map;
-  }, [errorBreakdown]);
-
   const hasData = !!(submissionQuality && errorBreakdown && interviewerStats && kpis);
   const safeInterviewerStats = useMemo(() => interviewerStats ?? [], [interviewerStats]);
   const safeKpis = useMemo(
@@ -54,27 +44,15 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
       } as const),
     [kpis]
   );
-  const safeSubmissionQuality = useMemo(
-    () =>
-      submissionQuality ??
-      ({
-        totalInterviews: 0,
-        approved: 0,
-        notApproved: 0,
-        approvalRate: 0,
-        avgFlagsPerInterview: 0,
-        totalFlags: 0,
-        hardFlags: 0,
-        softFlags: 0,
-      } as const),
-    [submissionQuality]
-  );
 
   const availableCountries = useMemo(() => {
     const unique = new Set(
       submissions
         .map((submission) => submission.country?.trim())
-        .filter((country): country is string => !!country)
+        .filter(
+          (country): country is string =>
+            !!country && !country.toLowerCase().startsWith("unknown")
+        )
     );
     return Array.from(unique).sort((a, b) => a.localeCompare(b));
   }, [submissions]);
@@ -95,11 +73,39 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
     return safeInterviewerStats.filter((stat) => enumeratorsInCountry.has(stat.enumeratorId));
   }, [countryFilter, filteredSubmissions, safeInterviewerStats]);
 
+  const filteredFlagTotals = useMemo(() => {
+    const totals: Record<string, number> = {};
+    filteredInterviewerStats.forEach((stat) => {
+      Object.entries(stat.flagsByKpi ?? {}).forEach(([kpiCode, count]) => {
+        totals[kpiCode] = (totals[kpiCode] || 0) + count;
+      });
+    });
+    return totals;
+  }, [filteredInterviewerStats]);
+
+  const flagNameByCode = useMemo(() => {
+    const map: Record<string, string> = {};
+    (errorBreakdown ?? []).forEach((item) => {
+      if (item.kpiCode) {
+        map[item.kpiCode] = item.errorType || KPI_BY_CODE[item.kpiCode]?.flagName || item.kpiCode;
+      }
+    });
+    Object.keys(filteredFlagTotals).forEach((code) => {
+      map[code] = map[code] || KPI_BY_CODE[code]?.flagName || code;
+    });
+    return map;
+  }, [errorBreakdown, filteredFlagTotals]);
+
   const derivedKpis = useMemo(() => {
     const approvedFromSubmissions = filteredSubmissions.filter(
       (submission) => submission.status?.toLowerCase() === "approved"
     ).length;
     const notApprovedFromSubmissions = filteredSubmissions.length - approvedFromSubmissions;
+
+    const totalFlagsFromFlags = Object.values(filteredFlagTotals).reduce(
+      (sum, value) => sum + value,
+      0
+    );
 
     const totalsFromStats = filteredInterviewerStats.reduce(
       (acc, stat) => {
@@ -117,10 +123,10 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
     const notApproved =
       totalsFromStats.failed || notApprovedFromSubmissions || safeKpis.notApproved;
     const approvalRate = totalInterviews ? approved / totalInterviews : safeKpis.approvalRate;
-    const totalFlags = totalsFromStats.totalFlags || safeKpis.totalFlags;
+    const totalFlags = totalFlagsFromFlags || totalsFromStats.totalFlags || safeKpis.totalFlags;
     const avgFlagsPerInterview =
       totalsFromStats.totalSubmissions > 0
-        ? totalsFromStats.totalFlags / totalsFromStats.totalSubmissions
+        ? totalFlags / totalsFromStats.totalSubmissions
         : safeKpis.avgFlagsPerInterview;
 
     return {
@@ -131,7 +137,7 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
       totalFlags,
       avgFlagsPerInterview,
     };
-  }, [filteredInterviewerStats, filteredSubmissions, safeKpis]);
+  }, [filteredFlagTotals, filteredInterviewerStats, filteredSubmissions, safeKpis]);
 
   const submissionChartData = filteredInterviewerStats.map((i) => ({
     name: i.enumeratorId,
@@ -146,14 +152,36 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
     approved: i.approvedInterviews,
   }));
 
-  const errorBreakdownData = (errorBreakdown ?? []).map((e) => {
-    const kpi = KPI_BY_CODE[e.kpiCode];
-    return {
-      errorType: `${e.kpiCode} • ${e.errorType}`,
-      relatedVariables: kpi?.variables ?? '—',
-      count: e.count,
-    };
-  });
+  const flagCountsByType = useMemo(
+    () =>
+      Object.entries(filteredFlagTotals).reduce(
+        (acc, [kpiCode, count]) => {
+          const type = KPI_BY_CODE[kpiCode]?.type?.toUpperCase();
+          if (type === "HARD") {
+            acc.hard += count;
+          } else {
+            acc.soft += count;
+          }
+          return acc;
+        },
+        { hard: 0, soft: 0 }
+      ),
+    [filteredFlagTotals]
+  );
+
+  const errorBreakdownData = useMemo(() => {
+    const entries = Object.entries(filteredFlagTotals);
+    if (!entries.length) return [];
+
+    return entries.map(([kpiCode, count]) => {
+      const kpi = KPI_BY_CODE[kpiCode];
+      return {
+        errorType: `${kpiCode} • ${kpi?.flagName ?? "Flag"}`,
+        relatedVariables: kpi?.variables ?? "—",
+        count,
+      };
+    });
+  }, [filteredFlagTotals]);
 
   if (loading && !hasData) return <div>Loading Farmer QC…</div>;
   if (error) return <div className="text-red-600">Error: {error}</div>;
@@ -195,7 +223,7 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
           title="Total Flags"
           value={derivedKpis.totalFlags}
           icon={TriangleAlert}
-          subtitle={`${safeSubmissionQuality.hardFlags.toLocaleString()} hard / ${safeSubmissionQuality.softFlags.toLocaleString()} soft`}
+          subtitle={`${flagCountsByType.hard.toLocaleString()} hard / ${flagCountsByType.soft.toLocaleString()} soft`}
           variant="farmer"
         />
         <KPICard
