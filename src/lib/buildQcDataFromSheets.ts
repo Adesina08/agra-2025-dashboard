@@ -27,6 +27,7 @@ export interface InterviewerStats {
   failedInterviews: number;
   totalFlags: number;
   flagsPerInterview: number;
+  flagsByKpi?: Record<string, number>;
 }
 
 export interface KpiCards {
@@ -149,8 +150,10 @@ export function buildQcDataFromSheets(
   const idxDSurveyType = detailHeader.indexOf("SurveyType");
   const idxDEnumId = detailHeader.indexOf("EnumeratorID");
   const idxDApproval = detailHeader.indexOf("Approval");
+  const idxDKpi = detailHeader.indexOf("KPI");
 
   const failedByEnumerator: Record<string, number> = {};
+  const flagsByEnumerator: Record<string, Record<string, number>> = {};
   for (const row of detailRows) {
     // If SurveyType column exists, filter; otherwise assume this detail sheet is only for that segment
     const surveyType =
@@ -161,9 +164,15 @@ export function buildQcDataFromSheets(
     if (approval !== "Not Approved") continue;
 
     const id = row[idxDEnumId] || "";
+    const kpiCode = idxDKpi >= 0 ? row[idxDKpi] || "" : "";
     if (!id) continue;
 
     failedByEnumerator[id] = (failedByEnumerator[id] || 0) + 1;
+
+    if (kpiCode) {
+      const perEnum = (flagsByEnumerator[id] ||= {});
+      perEnum[kpiCode] = (perEnum[kpiCode] || 0) + 1;
+    }
   }
 
   const interviewerStats: InterviewerStats[] = enumRows
@@ -180,6 +189,8 @@ export function buildQcDataFromSheets(
       const flagsPerInterview =
         totalSubmissions > 0 ? totalFlags / totalSubmissions : 0;
 
+      const kpiCounts = flagsByEnumerator[enumeratorId] ?? {};
+
       return {
         enumeratorId,
         totalSubmissions,
@@ -187,6 +198,7 @@ export function buildQcDataFromSheets(
         failedInterviews,
         totalFlags,
         flagsPerInterview,
+        flagsByKpi: kpiCounts,
       };
     });
 

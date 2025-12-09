@@ -1,32 +1,34 @@
 import { useState, useMemo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { headerTone, tabToneActive, tabToneInactive, Variant } from './variantStyles';
 
 interface InterviewerQuality {
   name: string;
   approved: number;
   notApproved: number;
+  flagsByKpi?: Record<string, number>;
 }
 
 interface SubmissionQualityChartProps {
   data: InterviewerQuality[];
   title?: string;
-  variant?: 'farmer' | 'enterprise' | 'youth';
+  variant?: Variant;
 }
+
+const flagColumnsForVariant: Record<Variant, string[]> = {
+  farmer: ['KPI006', 'KPI007', 'KPI008', 'KPI009'],
+  enterprise: ['KPI006', 'KPI008', 'KPI007', 'KPI026', 'KPI027'],
+  youth: ['KPI006', 'KPI008', 'KPI010'],
+};
 
 export function SubmissionQualityChart({
   data,
-  title = "Submission Quality Overview",
-  variant = 'farmer'
+  title = 'Submission Quality Overview',
+  variant = 'farmer',
 }: SubmissionQualityChartProps) {
   const [view, setView] = useState<'chart' | 'table'>('chart');
-
-  const headerTone = {
-    farmer: 'bg-farmer/10 border-farmer/30 text-farmer',
-    enterprise: 'bg-enterprise/10 border-enterprise/30 text-enterprise',
-    youth: 'bg-youth/10 border-youth/30 text-youth',
-  };
 
   const sortedData = useMemo(() => {
     return [...data]
@@ -36,14 +38,24 @@ export function SubmissionQualityChart({
 
   const handleExport = () => {
     const csvContent = [
-      ['Interviewer', 'Approved', 'Not Approved', 'Total', 'Approval Rate'].join(','),
-      ...sortedData.map(d => [
-        d.name,
-        d.approved,
-        d.notApproved,
-        d.approved + d.notApproved,
-        ((d.approved / (d.approved + d.notApproved)) * 100).toFixed(1) + '%'
-      ].join(','))
+      [
+        'Interviewer',
+        'Approved',
+        'Not Approved',
+        'Total',
+        'Approval Rate',
+        ...flagColumnsForVariant[variant],
+      ].join(','),
+      ...sortedData.map((d) =>
+        [
+          d.name,
+          d.approved,
+          d.notApproved,
+          d.approved + d.notApproved,
+          ((d.approved / (d.approved + d.notApproved)) * 100).toFixed(1) + '%',
+          ...flagColumnsForVariant[variant].map((kpi) => d.flagsByKpi?.[kpi] ?? 0),
+        ].join(',')
+      ),
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -81,47 +93,45 @@ export function SubmissionQualityChart({
   };
 
   return (
-    <div className="minimal-card">
-      <div className={cn('flex items-center justify-between mb-4 rounded-lg px-4 py-3 border', headerTone[variant])}>
-        <div>
-          <h3 className="text-sm font-semibold">{title}</h3>
-          <p className="text-xs opacity-80 mt-1">
-            Monitor interviewer throughput and approvals
-          </p>
+    <div className="minimal-card h-full">
+      <div
+        className={cn(
+          'flex items-center justify-between gap-3 mb-4 rounded-xl px-4 py-3 border text-sm',
+          headerTone[variant]
+        )}
+      >
+        <div className="flex flex-col gap-1">
+          <span className="text-xs uppercase tracking-wide opacity-80">
+            Submission quality – {variant.charAt(0).toUpperCase() + variant.slice(1)}
+          </span>
+          <span className="text-sm font-semibold">{title}</span>
         </div>
-        <button
-          onClick={handleExport}
-          className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded bg-background/80 text-foreground hover:bg-background/60 transition-colors shadow-sm"
-        >
-          <Download className="w-3 h-3" />
-          Export table
-        </button>
-      </div>
 
-      {/* Toggle */}
-      <div className="flex mb-4 bg-muted/30 rounded-lg p-1 border border-border/50">
-        <button
-          onClick={() => setView('chart')}
-          className={cn(
-            'flex-1 py-2 text-xs font-medium rounded transition-all',
-            view === 'chart' 
-              ? 'bg-primary text-primary-foreground' 
-              : 'text-muted-foreground hover:text-foreground'
-          )}
-        >
-          Chart
-        </button>
-        <button
-          onClick={() => setView('table')}
-          className={cn(
-            'flex-1 py-2 text-xs font-medium rounded transition-all',
-            view === 'table' 
-              ? 'bg-primary text-primary-foreground' 
-              : 'text-muted-foreground hover:text-foreground'
-          )}
-        >
-          Table
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="inline-flex items-center rounded-full bg-background/40 p-1 border border-border/40">
+            {(['chart', 'table'] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setView(mode)}
+                className={cn(
+                  'px-3 py-1 text-xs font-medium rounded-full border transition-colors',
+                  view === mode ? tabToneActive[variant] : tabToneInactive
+                )}
+              >
+                {mode === 'chart' ? 'Chart view' : 'Table view'}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded bg-background/60 text-foreground hover:bg-background/40 transition-colors shadow-sm border border-border/60"
+          >
+            <Download className="w-3 h-3" />
+            Export table
+          </button>
+        </div>
       </div>
 
       {view === 'chart' ? (
@@ -190,6 +200,14 @@ export function SubmissionQualityChart({
                 <th className="text-right py-3 px-2 text-xs text-muted-foreground font-medium uppercase">Not Approved</th>
                 <th className="text-right py-3 px-2 text-xs text-muted-foreground font-medium uppercase">Total</th>
                 <th className="text-right py-3 px-2 text-xs text-muted-foreground font-medium uppercase">Rate</th>
+                {flagColumnsForVariant[variant].map((kpi) => (
+                  <th
+                    key={kpi}
+                    className="text-right py-3 px-2 text-xs text-muted-foreground font-medium uppercase whitespace-nowrap"
+                  >
+                    {kpi}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -203,6 +221,11 @@ export function SubmissionQualityChart({
                     <td className="py-3 px-2 text-right text-red-400">{row.notApproved}</td>
                     <td className="py-3 px-2 text-right text-foreground">{total}</td>
                     <td className="py-3 px-2 text-right text-foreground">{rate}%</td>
+                    {flagColumnsForVariant[variant].map((kpi) => (
+                      <td key={kpi} className="py-3 px-2 text-right text-foreground">
+                        {row.flagsByKpi?.[kpi] ?? 0}
+                      </td>
+                    ))}
                   </tr>
                 );
               })}
