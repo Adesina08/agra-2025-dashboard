@@ -7,6 +7,7 @@ import { ProductivityRankings } from "../ProductivityRankings";
 import { FarmerData } from "@/data/mockData";
 import { SubmissionMap } from "../SubmissionMap";
 import { KPI_BY_CODE } from "@/data/kpiDefinitions";
+import { QuotaTracker } from "../QuotaTracker";
 
 function formatPercent(value: number | null | undefined, digits = 1) {
   if (value == null) return "—";
@@ -49,8 +50,17 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
     };
   });
 
+  const countryLabel = submissions[0]?.country ?? "All countries";
+  const firstCountry = submissions[0]?.country;
+
   return (
     <div className="space-y-6 animate-fade-in">
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>
+          Country: <span className="font-semibold text-foreground">{countryLabel}</span>
+        </span>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         <KPICard
           title="Total Interviews"
@@ -87,18 +97,28 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
         />
       </div>
 
-      <div className="space-y-6">
-        <SubmissionQualityChart data={submissionChartData} variant="farmer" />
-        <ErrorBreakdown data={errorBreakdownData} variant="farmer" />
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2 space-y-6">
+          <QuotaTracker
+            variant="farmer"
+            program="farmer"
+            country={firstCountry}
+            data={submissions}
+          />
+          <SubmissionQualityChart data={submissionChartData} variant="farmer" />
+          <ErrorBreakdown data={errorBreakdownData} variant="farmer" />
+        </div>
+
+        <div className="space-y-6">
+          <SubmissionMap
+            submissions={submissions}
+            title="Live Farmer Submission Map"
+            variant="farmer"
+          />
+
+          <ProductivityRankings data={productivityData} variant="farmer" />
+        </div>
       </div>
-
-      <SubmissionMap
-        submissions={submissions}
-        title="Live Farmer Submission Map"
-        variant="farmer"
-      />
-
-      <ProductivityRankings data={productivityData} variant="farmer" />
     </div>
   );
 }

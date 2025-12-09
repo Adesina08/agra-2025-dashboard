@@ -292,26 +292,31 @@ export function normalizeEnterpriseRow(row: SheetRow, index: number): Enterprise
 
 export function normalizeYouthRow(row: SheetRow, index: number): YouthData {
   const submissionDate = normalizeSubmissionDate(row);
-  const region = pickValue(row, ['region']);
-  const district = pickValue(row, ['district']);
-  const gender = pickValue(row, ['gender', 'sex', 'sex_id'], 'Unknown');
+  const country = pickValue(row, ['country', 'a1_cal', 'countryid']);
+  const region = pickValue(row, ['region', 'province']);
+  const district = pickValue(row, ['district', 'db0_q']);
+  const gender = pickValue(row, ['gender', 'sex', 'sex_id', 'a7'], 'Unknown');
+
+  const programLabel = pickValue(row, ['OBS6_label_1', 'obs6_label_1']).trim();
 
   return {
     id: pickValue(row, ['id', 'caseid', 'case_id'], `youth-${index + 1}`),
     youthName: pickValue(row, ['youthName', 'name'], 'Unknown youth'),
     submissionDate,
+    country: country || undefined,
     region: region || 'Unknown region',
     district: district || 'Unknown district',
     gender: (gender.charAt(0).toUpperCase() + gender.slice(1)) as YouthData['gender'],
     ageGroup: pickValue(row, ['agegroup', 'age'], 'N/A'),
     status: pickValue(row, ['status', 'qc status', 'approval'], 'Pending') as YouthData['status'],
-    latitude: parseNumber(pickValue(row, ['lat', 'latitude', 'gps_lat'])),
-    longitude: parseNumber(pickValue(row, ['lon', 'longitude', 'gps_lon'])),
+    latitude: parseNumber(pickValue(row, ['lat', 'latitude', 'gps_lat', 'D8-Latitude', 'd8-latitude'])),
+    longitude: parseNumber(pickValue(row, ['lon', 'longitude', 'gps_lon', 'D8-Longitude', 'd8-longitude'])),
     enumerator: pickValue(row, ['enumerator', 'users', 'partner_id', 'int_name'], 'Unknown'),
     educationLevel: pickValue(row, ['educationLevel', 'education', 'education_level'], 'N/A'),
     trainingCompleted:
       pickValue(row, ['trainingCompleted', 'training_status', 'trainingcompleted'], 'false').toString().toLowerCase() === 'true',
     employmentStatus: pickValue(row, ['employmentStatus', 'employment_status'], 'N/A'),
     businessIdea: pickValue(row, ['businessIdea', 'service', 'chain'], 'N/A'),
+    programLabel: programLabel || undefined,
   };
 }
