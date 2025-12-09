@@ -236,8 +236,8 @@ export function normalizeFarmerRow(row: SheetRow, index: number): FarmerData {
     gender: (gender.charAt(0).toUpperCase() + gender.slice(1)) as FarmerData['gender'],
     ageGroup: ageGroup || 'N/A',
     status: pickValue(row, ['status', 'qc status', 'approval'], 'Pending') as FarmerData['status'],
-    latitude: parseNumber(pickValue(row, ['lat', 'latitude', 'gps_lat', 'gps-latitude'])),
-    longitude: parseNumber(pickValue(row, ['lon', 'longitude', 'gps_lon', 'gps-longitude'])),
+    latitude: parseNumber(pickValue(row, ['gps-Latitude'])),
+    longitude: parseNumber(pickValue(row, ['gps-Longitude'])),
     enumerator: pickValue(row, ['enumerator', 'username', 'users', 'int_name'], 'Unknown'),
 
     // new semantic fields
@@ -309,8 +309,8 @@ export function normalizeYouthRow(row: SheetRow, index: number): YouthData {
     gender: (gender.charAt(0).toUpperCase() + gender.slice(1)) as YouthData['gender'],
     ageGroup: pickValue(row, ['agegroup', 'age'], 'N/A'),
     status: pickValue(row, ['status', 'qc status', 'approval'], 'Pending') as YouthData['status'],
-    latitude: parseNumber(pickValue(row, ['lat', 'latitude', 'gps_lat', 'd8-latitude'])),
-    longitude: parseNumber(pickValue(row, ['lon', 'longitude', 'gps_lon', 'd8-longitude'])),
+    latitude: parseNumber(pickValue(row, ['D8-Latitude'])),
+    longitude: parseNumber(pickValue(row, ['D8-Longitude'])),
     enumerator: pickValue(row, ['enumerator', 'users', 'partner_id', 'int_name'], 'Unknown'),
     educationLevel: pickValue(row, ['educationLevel', 'education', 'education_level'], 'N/A'),
     trainingCompleted:
