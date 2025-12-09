@@ -133,14 +133,14 @@ export function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) 
     };
   }, [filteredInterviewerStats, filteredSubmissions, safeKpis]);
 
-  const submissionChartData = filteredInterviewerStats.map((i) => ({
+  const submissionChartData = safeInterviewerStats.map((i) => ({
     name: i.enumeratorId,
     approved: i.approvedInterviews,
     notApproved: i.failedInterviews,
     flagsByKpi: i.flagsByKpi,
   }));
 
-  const productivityData = filteredInterviewerStats.map((i) => ({
+  const productivityData = safeInterviewerStats.map((i) => ({
     name: i.enumeratorId,
     totalInterviews: i.totalSubmissions,
     approved: i.approvedInterviews,
@@ -207,7 +207,7 @@ export function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) 
       </div>
 
       <SubmissionMap
-        submissions={filteredSubmissions}
+        submissions={submissions}
         title="Live Enterprise Submission Map"
         variant="enterprise"
       />
