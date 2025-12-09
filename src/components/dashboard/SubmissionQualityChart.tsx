@@ -36,6 +36,13 @@ export function SubmissionQualityChart({
     return [...data].sort((a, b) => (b.approved + b.notApproved) - (a.approved + a.notApproved));
   }, [data]);
 
+  const visibleChartRows = Math.min(sortedData.length || 1, 10);
+  const chartViewportHeight = Math.max(visibleChartRows * 40, 320);
+  const chartFullHeight = Math.max(sortedData.length * 40, chartViewportHeight);
+
+  const visibleTableRows = Math.min(sortedData.length || 1, 10);
+  const tableViewportHeight = Math.max(visibleTableRows * 44, 360);
+
   const flagColumns = useMemo(() => {
     const defaultCodes = flagColumnsForVariant[variant] ?? [];
     const foundCodes = Array.from(
@@ -170,45 +177,47 @@ export function SubmissionQualityChart({
           <p className="text-xs text-muted-foreground text-center mb-4">
             Submission status by interviewer
           </p>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart 
-                data={sortedData} 
-                layout="vertical" 
-                margin={{ left: 10, right: 20, top: 10, bottom: 10 }}
-                barGap={0}
-              >
-                <XAxis
-                  type="number"
-                  tick={{ fill: 'hsl(var(--foreground))', fontSize: 10 }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  type="category"
-                  dataKey="name"
-                  tick={{ fill: 'hsl(var(--foreground))', fontSize: 10 }}
-                  axisLine={false}
-                  tickLine={false}
-                  width={100}
-                />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
-                <Bar
-                  dataKey="approved"
-                  stackId="a"
-                  fill="hsl(var(--primary))"
-                  radius={[0, 0, 0, 0]}
-                  name="Approved"
-                />
-                <Bar
-                  dataKey="notApproved"
-                  stackId="a"
-                  fill="hsl(var(--destructive))"
-                  radius={[0, 4, 4, 0]}
-                  name="Not Approved"
-                />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="overflow-y-auto" style={{ maxHeight: chartViewportHeight }}>
+            <div style={{ height: chartFullHeight, minHeight: 240 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={sortedData}
+                  layout="vertical"
+                  margin={{ left: 10, right: 20, top: 10, bottom: 10 }}
+                  barGap={0}
+                >
+                  <XAxis
+                    type="number"
+                    tick={{ fill: 'hsl(var(--foreground))', fontSize: 10 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    tick={{ fill: 'hsl(var(--foreground))', fontSize: 10 }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={100}
+                  />
+                  <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
+                  <Bar
+                    dataKey="approved"
+                    stackId="a"
+                    fill="hsl(var(--primary))"
+                    radius={[0, 0, 0, 0]}
+                    name="Approved"
+                  />
+                  <Bar
+                    dataKey="notApproved"
+                    stackId="a"
+                    fill="hsl(var(--destructive))"
+                    radius={[0, 4, 4, 0]}
+                    name="Not Approved"
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
           <div className="flex justify-center gap-6 mt-2">
             <div className="flex items-center gap-2 text-xs">
@@ -223,45 +232,47 @@ export function SubmissionQualityChart({
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left py-3 px-2 text-xs text-muted-foreground font-medium uppercase">Interviewer</th>
-                <th className="text-right py-3 px-2 text-xs text-muted-foreground font-medium uppercase">Approved</th>
-                <th className="text-right py-3 px-2 text-xs text-muted-foreground font-medium uppercase">Not Approved</th>
-                <th className="text-right py-3 px-2 text-xs text-muted-foreground font-medium uppercase">Total</th>
-                <th className="text-right py-3 px-2 text-xs text-muted-foreground font-medium uppercase">Rate</th>
-                {flagColumns.map((column) => (
-                  <th
-                    key={column.code}
-                    className="text-right py-3 px-2 text-xs text-muted-foreground font-medium uppercase whitespace-nowrap"
-                  >
-                    {column.label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {sortedData.map((row) => {
-                const total = row.approved + row.notApproved;
-                const rate = ((row.approved / total) * 100).toFixed(1);
-                return (
-                  <tr key={row.name} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-                    <td className="py-3 px-2 text-foreground">{row.name}</td>
-                    <td className="py-3 px-2 text-right text-green-400">{row.approved}</td>
-                    <td className="py-3 px-2 text-right text-red-400">{row.notApproved}</td>
-                    <td className="py-3 px-2 text-right text-foreground">{total}</td>
-                    <td className="py-3 px-2 text-right text-foreground">{rate}%</td>
-                    {flagColumns.map((column) => (
-                      <td key={column.code} className="py-3 px-2 text-right text-foreground">
-                        {row.flagsByKpi?.[column.code] ?? 0}
-                      </td>
-                    ))}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="overflow-y-auto" style={{ maxHeight: tableViewportHeight }}>
+            <table className="w-full text-sm min-w-max">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 px-2 text-xs text-muted-foreground font-medium uppercase">Interviewer</th>
+                  <th className="text-right py-3 px-2 text-xs text-muted-foreground font-medium uppercase">Approved</th>
+                  <th className="text-right py-3 px-2 text-xs text-muted-foreground font-medium uppercase">Not Approved</th>
+                  <th className="text-right py-3 px-2 text-xs text-muted-foreground font-medium uppercase">Total</th>
+                  <th className="text-right py-3 px-2 text-xs text-muted-foreground font-medium uppercase">Rate</th>
+                  {flagColumns.map((column) => (
+                    <th
+                      key={column.code}
+                      className="text-right py-3 px-2 text-xs text-muted-foreground font-medium uppercase whitespace-nowrap"
+                    >
+                      {column.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {sortedData.map((row) => {
+                  const total = row.approved + row.notApproved;
+                  const rate = ((row.approved / total) * 100).toFixed(1);
+                  return (
+                    <tr key={row.name} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
+                      <td className="py-3 px-2 text-foreground">{row.name}</td>
+                      <td className="py-3 px-2 text-right text-green-400">{row.approved}</td>
+                      <td className="py-3 px-2 text-right text-red-400">{row.notApproved}</td>
+                      <td className="py-3 px-2 text-right text-foreground">{total}</td>
+                      <td className="py-3 px-2 text-right text-foreground">{rate}%</td>
+                      {flagColumns.map((column) => (
+                        <td key={column.code} className="py-3 px-2 text-right text-foreground whitespace-nowrap">
+                          {row.flagsByKpi?.[column.code] ?? 0}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

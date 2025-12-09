@@ -305,8 +305,8 @@ export function normalizeYouthRow(row: SheetRow, index: number): YouthData {
     gender: (gender.charAt(0).toUpperCase() + gender.slice(1)) as YouthData['gender'],
     ageGroup: pickValue(row, ['agegroup', 'age'], 'N/A'),
     status: pickValue(row, ['status', 'qc status', 'approval'], 'Pending') as YouthData['status'],
-    latitude: parseNumber(pickValue(row, ['lat', 'latitude', 'gps_lat'])),
-    longitude: parseNumber(pickValue(row, ['lon', 'longitude', 'gps_lon'])),
+    latitude: parseNumber(pickValue(row, ['lat', 'latitude', 'gps_lat', 'd8-latitude'])),
+    longitude: parseNumber(pickValue(row, ['lon', 'longitude', 'gps_lon', 'd8-longitude'])),
     enumerator: pickValue(row, ['enumerator', 'users', 'partner_id', 'int_name'], 'Unknown'),
     educationLevel: pickValue(row, ['educationLevel', 'education', 'education_level'], 'N/A'),
     trainingCompleted:

@@ -98,22 +98,21 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
         />
       </div>
 
-      <div className="space-y-6">
-        <SubmissionQualityChart
-          data={submissionChartData}
-          variant="farmer"
-          flagNames={flagNameByCode}
-        />
-        <ErrorBreakdown data={errorBreakdownData} variant="farmer" />
-      </div>
-
       <SubmissionMap
         submissions={submissions}
         title="Live Farmer Submission Map"
         variant="farmer"
       />
 
+      <SubmissionQualityChart
+        data={submissionChartData}
+        variant="farmer"
+        flagNames={flagNameByCode}
+      />
+
       <ProductivityRankings data={productivityData} variant="farmer" />
+
+      <ErrorBreakdown data={errorBreakdownData} variant="farmer" />
     </div>
   );
 }
