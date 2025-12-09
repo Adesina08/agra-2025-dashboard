@@ -55,13 +55,21 @@ const Index = () => {
     }
   }, [activeTab, enterpriseQc, farmerQc, youthQc]);
 
-  const escapeValue = (value: unknown) => {
+  const activeSegmentKey = activeTab;
+  const exportSheetRows = (activeSheetQuery.raw as SheetRow[]) ?? [];
+  const exportNormalizedRows = (activeSheetQuery.data as SheetRow[]) ?? [];
+
+  const escapeHtml = (value: unknown) => {
     if (value === null || value === undefined) return '';
     const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
-    return /[",\n]/.test(stringValue) ? `"${stringValue.replace(/"/g, '""')}"` : stringValue;
+    return stringValue
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   };
 
-  const downloadCsv = (filename: string, rows: Record<string, unknown>[]) => {
+  const downloadExcel = (filename: string, rows: Record<string, unknown>[]) => {
     if (!rows.length) {
       toast({
         title: 'No data available',
@@ -72,27 +80,38 @@ const Index = () => {
     }
 
     const headers = Array.from(new Set(rows.flatMap((row) => Object.keys(row))));
-    const csv = [headers.join(',')]
-      .concat(rows.map((row) => headers.map((header) => escapeValue(row[header])).join(',')))
-      .join('\n');
+    const body = rows
+      .map(
+        (row) =>
+          `<tr>${headers.map((header) => `<td>${escapeHtml(row[header])}</td>`).join('')}</tr>`
+      )
+      .join('');
 
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const tableHtml = `
+      <table>
+        <thead>
+          <tr>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join('')}</tr>
+        </thead>
+        <tbody>${body}</tbody>
+      </table>
+    `;
+
+    const blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = filename;
+    anchor.download = filename.endsWith('.xls') ? filename : `${filename}.xls`;
     anchor.click();
     URL.revokeObjectURL(url);
 
     toast({
       title: 'Export started',
-      description: `${filename} is being downloaded.`,
+      description: `${anchor.download} is being downloaded.`,
     });
   };
 
   const exportAllRows = () => {
-    const rows = (activeSheetQuery.raw as SheetRow[]) ?? [];
-    downloadCsv(`${activeTab}_all_data.csv`, rows);
+    downloadExcel(`${activeSegmentKey}_all_data.xls`, exportSheetRows);
   };
 
   const APPROVED_LABELS = [
@@ -120,18 +139,32 @@ const Index = () => {
     return s.includes('approved') && !s.includes('not');
   };
 
+  const getApprovalStatusFromRow = (row: SheetRow, normalizedStatus?: string) => {
+    const entries = Object.entries(row);
+    const qcStatus = entries.find(([key]) => key.trim().toLowerCase() === 'qc approval status');
+    if (qcStatus) return qcStatus[1];
+
+    const approvalFallback = entries.find(([key]) => key.trim().toLowerCase().includes('approval'));
+    if (approvalFallback) return approvalFallback[1];
+
+    return normalizedStatus;
+  };
+
+  const filterRowsByApproval = (approved: boolean) =>
+    exportSheetRows.filter((row, index) => {
+      const status = getApprovalStatusFromRow(row, exportNormalizedRows[index]?.status);
+      const isApproved = isApprovedStatus(status);
+      return approved ? isApproved : !isApproved;
+    });
+
   const exportApprovedRows = () => {
-    const rows = (activeSheetQuery.raw as SheetRow[]) ?? [];
-    const normalized = activeSheetQuery.data ?? [];
-    const filtered = rows.filter((_, index) => isApprovedStatus(normalized[index]?.status));
-    downloadCsv(`${activeTab}_approved_data.csv`, filtered);
+    const filtered = filterRowsByApproval(true);
+    downloadExcel(`${activeSegmentKey}_approved_data.xls`, filtered);
   };
 
   const exportNotApprovedRows = () => {
-    const rows = (activeSheetQuery.raw as SheetRow[]) ?? [];
-    const normalized = activeSheetQuery.data ?? [];
-    const filtered = rows.filter((_, index) => !isApprovedStatus(normalized[index]?.status));
-    downloadCsv(`${activeTab}_not_approved_data.csv`, filtered);
+    const filtered = filterRowsByApproval(false);
+    downloadExcel(`${activeSegmentKey}_not_approved_data.xls`, filtered);
   };
 
   const exportErrorFlags = () => {
@@ -153,7 +186,7 @@ const Index = () => {
       '% of Interviews': `${(item.percentOfInterviews * 100).toFixed(2)}%`,
     }));
 
-    downloadCsv(`${activeTab}_error_flags.csv`, rows);
+    downloadExcel(`${activeSegmentKey}_error_flags.xls`, rows);
   };
 
   const activeTabConfig = {
@@ -211,7 +244,7 @@ const Index = () => {
             <div className="flex flex-col gap-1">
               <p className="text-sm text-muted-foreground uppercase tracking-wide">Exports</p>
               <h2 className="text-lg font-semibold">{activeTabLabel} dashboard data</h2>
-              <p className="text-sm text-muted-foreground">Download everything in the Google Sheet or target specific approval states and QC flags.</p>
+              <p className="text-sm text-muted-foreground">Download everything in the Google Sheet or target specific approval states and QC flags for the selected dashboard.</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">

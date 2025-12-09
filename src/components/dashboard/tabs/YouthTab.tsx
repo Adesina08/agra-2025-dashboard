@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { ClipboardCheck, CheckCircle2, FlagTriangleRight, TriangleAlert, XCircle } from "lucide-react";
 import { type UseSegmentQcDataResult } from "@/hooks/useSegmentQcData";
 import { KPICard } from "../KPICard";
@@ -20,6 +21,16 @@ interface YouthTabProps {
 
 export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
   const { loading, error, submissionQuality, errorBreakdown, interviewerStats, kpis } = qcData;
+
+  const flagNameByCode = useMemo(() => {
+    const map: Record<string, string> = {};
+    (errorBreakdown ?? []).forEach((item) => {
+      if (item.kpiCode) {
+        map[item.kpiCode] = item.errorType || KPI_BY_CODE[item.kpiCode]?.flagName || item.kpiCode;
+      }
+    });
+    return map;
+  }, [errorBreakdown]);
 
   if (loading) return <div>Loading Youth QC…</div>;
   if (error) return <div className="text-red-600">Error: {error}</div>;
@@ -88,7 +99,11 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
       </div>
 
       <div className="space-y-6">
-        <SubmissionQualityChart data={submissionChartData} variant="youth" />
+        <SubmissionQualityChart
+          data={submissionChartData}
+          variant="youth"
+          flagNames={flagNameByCode}
+        />
         <ErrorBreakdown data={errorBreakdownData} variant="youth" />
       </div>
 
