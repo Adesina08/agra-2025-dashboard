@@ -169,6 +169,11 @@ export function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) 
     [filteredFlagTotals]
   );
 
+  const flagSubtitle =
+    flagCountsByType.hard + flagCountsByType.soft > 0
+      ? `${flagCountsByType.hard.toLocaleString()} hard / ${flagCountsByType.soft.toLocaleString()} soft`
+      : undefined;
+
   const errorBreakdownData = useMemo(() => {
     const entries = Object.entries(filteredFlagTotals);
     if (entries.length) {
@@ -235,7 +240,7 @@ export function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) 
           title="Total Flags"
           value={derivedKpis.totalFlags}
           icon={TriangleAlert}
-          subtitle={`${flagCountsByType.hard.toLocaleString()} hard / ${flagCountsByType.soft.toLocaleString()} soft`}
+          subtitle={flagSubtitle}
           variant="enterprise"
         />
         <KPICard
