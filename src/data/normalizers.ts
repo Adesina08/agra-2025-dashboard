@@ -267,6 +267,7 @@ export function normalizeFarmerRow(row: SheetRow, index: number): FarmerData {
 
 export function normalizeEnterpriseRow(row: SheetRow, index: number): EnterpriseData {
   const submissionDate = normalizeSubmissionDate(row);
+  const country = pickValue(row, ['A1_cal', 'country']);
   const region = pickValue(row, ['region', 'db1_q', 'province']);
   const district = pickValue(row, ['district', 'db0_q']);
   const gender = pickValue(row, ['gender', 'sex', 'a7'], 'Unknown');
@@ -275,6 +276,7 @@ export function normalizeEnterpriseRow(row: SheetRow, index: number): Enterprise
     id: pickValue(row, ['id', 'caseid', 'case_id', 'id_num'], `enterprise-${index + 1}`),
     enterpriseName: pickValue(row, ['enterpriseName', 'db8_q', 'db8_1', 'a2', 'name'], 'Unknown enterprise'),
     submissionDate,
+    country: country || 'Unknown country',
     region: region || 'Unknown region',
     district: district || 'Unknown district',
     gender: (gender.charAt(0).toUpperCase() + gender.slice(1)) as EnterpriseData['gender'],
@@ -292,6 +294,7 @@ export function normalizeEnterpriseRow(row: SheetRow, index: number): Enterprise
 
 export function normalizeYouthRow(row: SheetRow, index: number): YouthData {
   const submissionDate = normalizeSubmissionDate(row);
+  const country = pickValue(row, ['country']);
   const region = pickValue(row, ['region']);
   const district = pickValue(row, ['district']);
   const gender = pickValue(row, ['gender', 'sex', 'sex_id'], 'Unknown');
@@ -300,6 +303,7 @@ export function normalizeYouthRow(row: SheetRow, index: number): YouthData {
     id: pickValue(row, ['id', 'caseid', 'case_id'], `youth-${index + 1}`),
     youthName: pickValue(row, ['youthName', 'name'], 'Unknown youth'),
     submissionDate,
+    country: country || 'Unknown country',
     region: region || 'Unknown region',
     district: district || 'Unknown district',
     gender: (gender.charAt(0).toUpperCase() + gender.slice(1)) as YouthData['gender'],
