@@ -197,7 +197,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <div className="max-w-[1400px] mx-auto px-6 py-8 flex-1 w-full">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8 flex-1 w-full">
         <Header
           farmer={{ data: farmerQuery.data, isLive: farmerQuery.isLive, refreshedAt: farmerQuery.refreshedAt }}
           enterprise={{ data: enterpriseQuery.data, isLive: enterpriseQuery.isLive, refreshedAt: enterpriseQuery.refreshedAt }}

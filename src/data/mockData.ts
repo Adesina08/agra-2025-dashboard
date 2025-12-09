@@ -3,6 +3,7 @@
 
 export interface Submission {
   id: string;
+  country?: string;
   submissionDate: string;
   region: string;
   district: string;
