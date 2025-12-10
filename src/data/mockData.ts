@@ -55,6 +55,7 @@ export interface YouthData extends Submission {
   trainingCompleted: boolean;
   employmentStatus: string;
   businessIdea: string;
+  w1?: string;
   country?: string;
   vulnerable?: boolean;
   workFocus?: string;

@@ -38,28 +38,48 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
 
   const hasData = !!(submissionQuality && errorBreakdown && interviewerStats && kpis);
   const safeInterviewerStats = useMemo(() => interviewerStats ?? [], [interviewerStats]);
-  const safeKpis = useMemo(
-    () =>
-      kpis ??
-      ({
+  const safeKpis = useMemo(() => {
+    if (!kpis) {
+      return {
         totalInterviews: 0,
         approved: 0,
         notApproved: 0,
         approvalRate: 0,
         totalFlags: 0,
         avgFlagsPerInterview: 0,
-        percentDuplicatePhone: null,
-        percentLOIIssues: null,
-        percentHardViolations: null,
-        ageOutsideYouthCount: null,
-        ageOutsideYouthPercent: null,
-      } as const),
-    [kpis]
-  );
+        percentDuplicatePhone: 0,
+        percentLOIIssues: 0,
+        percentHardViolations: 0,
+        ageOutsideYouthCount: 0,
+        ageOutsideYouthPercent: 0,
+      } as const;
+    }
+
+    return {
+      totalInterviews: kpis.totalInterviews ?? 0,
+      approved: kpis.approved ?? 0,
+      notApproved: kpis.notApproved ?? 0,
+      approvalRate: kpis.approvalRate ?? 0,
+      totalFlags: kpis.totalFlags ?? 0,
+      avgFlagsPerInterview: kpis.avgFlagsPerInterview ?? 0,
+      percentDuplicatePhone: kpis.percentDuplicatePhone ?? 0,
+      percentLOIIssues: kpis.percentLOIIssues ?? 0,
+      percentHardViolations: kpis.percentHardViolations ?? 0,
+      ageOutsideYouthCount: kpis.ageOutsideYouthCount ?? 0,
+      ageOutsideYouthPercent: kpis.ageOutsideYouthPercent ?? 0,
+    } as const;
+  }, [kpis]);
+  const getSubmissionCountry = (submission: YouthData) => {
+    const rawCountry = (submission as Record<string, unknown>).w1;
+    return typeof rawCountry === "string" && rawCountry.trim()
+      ? rawCountry
+      : submission.country;
+  };
+
   const availableCountries = useMemo(() => {
     const unique = new Set(
       submissions
-        .map((submission) => submission.country?.trim())
+        .map((submission) => getSubmissionCountry(submission)?.trim())
         .filter(
           (country): country is string =>
             !!country && !country.toLowerCase().startsWith("unknown")
@@ -73,9 +93,10 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
 
   const filteredSubmissions = useMemo(() => {
     if (countryFilter === "all") return submissions;
-    return submissions.filter(
-      (submission) => submission.country?.toLowerCase() === countryFilter.toLowerCase()
-    );
+    return submissions.filter((submission) => {
+      const country = getSubmissionCountry(submission);
+      return country?.toLowerCase() === countryFilter.toLowerCase();
+    });
   }, [countryFilter, submissions]);
 
   const filteredInterviewerStats = useMemo(() => {
@@ -111,10 +132,19 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
   }, [errorBreakdown, filteredFlagTotals]);
 
   const derivedKpis = useMemo(() => {
+    const getApprovalStatus = (submission: YouthData) => {
+      const rawStatus = (submission as Record<string, unknown>)["QC Approval Status"];
+      return typeof rawStatus === "string" && rawStatus.trim()
+        ? rawStatus
+        : submission.status;
+    };
+
     const approvedFromSubmissions = filteredSubmissions.filter(
-      (submission) => submission.status?.toLowerCase() === "approved"
+      (submission) => getApprovalStatus(submission)?.toLowerCase() === "approved"
     ).length;
-    const notApprovedFromSubmissions = filteredSubmissions.length - approvedFromSubmissions;
+    const notApprovedFromSubmissions = filteredSubmissions.filter(
+      (submission) => getApprovalStatus(submission)?.toLowerCase() === "not approved"
+    ).length;
 
     const totalFlagsFromFlags = Object.values(filteredFlagTotals).reduce(
       (sum, value) => sum + value,
@@ -132,16 +162,42 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
       { totalSubmissions: 0, approved: 0, failed: 0, totalFlags: 0 }
     );
 
-    const totalInterviews = totalsFromStats.totalSubmissions || filteredSubmissions.length || safeKpis.totalInterviews;
-    const approved = totalsFromStats.approved || approvedFromSubmissions || safeKpis.approved;
-    const notApproved =
-      totalsFromStats.failed || notApprovedFromSubmissions || safeKpis.notApproved;
-    const approvalRate = totalInterviews ? approved / totalInterviews : safeKpis.approvalRate;
-    const totalFlags = totalFlagsFromFlags || totalsFromStats.totalFlags || safeKpis.totalFlags;
-    const avgFlagsPerInterview =
-      totalsFromStats.totalSubmissions > 0
-        ? totalFlags / totalsFromStats.totalSubmissions
-        : safeKpis.avgFlagsPerInterview;
+    const hasInterviewerStats = filteredInterviewerStats.length > 0;
+    const hasSubmissionData = filteredSubmissions.length > 0;
+    const hasFlagData = Object.keys(filteredFlagTotals).length > 0;
+    const noFilteredData =
+      countryFilter !== "all" && !hasInterviewerStats && !hasSubmissionData && !hasFlagData;
+
+    const totalInterviews = hasInterviewerStats
+      ? totalsFromStats.totalSubmissions
+      : hasSubmissionData
+        ? filteredSubmissions.length
+        : noFilteredData
+          ? 0
+          : safeKpis.totalInterviews;
+    const approved = hasInterviewerStats
+      ? totalsFromStats.approved
+      : hasSubmissionData
+        ? approvedFromSubmissions
+        : noFilteredData
+          ? 0
+          : safeKpis.approved;
+    const notApproved = hasInterviewerStats
+      ? totalsFromStats.failed
+      : hasSubmissionData
+        ? notApprovedFromSubmissions
+        : noFilteredData
+          ? 0
+          : safeKpis.notApproved;
+    const approvalRate = totalInterviews ? approved / totalInterviews : 0;
+    const totalFlags = hasFlagData
+      ? totalFlagsFromFlags
+      : hasInterviewerStats
+        ? totalsFromStats.totalFlags
+        : noFilteredData
+          ? 0
+          : safeKpis.totalFlags;
+    const avgFlagsPerInterview = totalInterviews ? totalFlags / totalInterviews : 0;
 
     return {
       totalInterviews,
@@ -151,7 +207,7 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
       totalFlags,
       avgFlagsPerInterview,
     };
-  }, [filteredFlagTotals, filteredInterviewerStats, filteredSubmissions, safeKpis]);
+  }, [countryFilter, filteredFlagTotals, filteredInterviewerStats, filteredSubmissions, safeKpis]);
 
   const submissionChartData = safeInterviewerStats.map((i) => ({
     name: i.enumeratorId,

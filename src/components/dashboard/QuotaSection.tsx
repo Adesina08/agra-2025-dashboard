@@ -19,6 +19,13 @@ interface QuotaSectionProps {
   controls?: React.ReactNode;
 }
 
+const getSubmissionCountry = (submission: SubmissionLike) => {
+  const rawCountry = (submission as Record<string, unknown>).w1;
+  return typeof rawCountry === "string" && rawCountry.trim()
+    ? rawCountry
+    : submission.country;
+};
+
 const countryLabel = (country: string) => country || "All Countries";
 
 const youthAgeGroups = ["15-35", "15-25", "18-25", "26-35", "Youth"];
@@ -254,7 +261,7 @@ export function QuotaSection({
   const filteredSubmissions = useMemo(() => {
     if (isTotalFilter) return submissions;
     return submissions.filter(
-      (submission) => submission.country?.toLowerCase() === selectedCountry.toLowerCase()
+      (submission) => getSubmissionCountry(submission)?.toLowerCase() === selectedCountry.toLowerCase()
     );
   }, [isTotalFilter, selectedCountry, submissions]);
 
