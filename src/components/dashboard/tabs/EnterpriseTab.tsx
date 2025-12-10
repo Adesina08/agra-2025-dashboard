@@ -147,7 +147,7 @@ export function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) 
     flagsByKpi: i.flagsByKpi,
   }));
 
-  const productivityData = filteredInterviewerStats.map((i) => ({
+  const productivityData = safeInterviewerStats.map((i) => ({
     name: i.enumeratorId,
     totalInterviews: i.totalSubmissions,
     approved: i.approvedInterviews,

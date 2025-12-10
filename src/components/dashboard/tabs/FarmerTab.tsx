@@ -149,7 +149,7 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
     flagsByKpi: i.flagsByKpi,
   }));
 
-  const productivityData = filteredInterviewerStats.map((i) => ({
+  const productivityData = safeInterviewerStats.map((i) => ({
     name: i.enumeratorId,
     totalInterviews: i.totalSubmissions,
     approved: i.approvedInterviews,

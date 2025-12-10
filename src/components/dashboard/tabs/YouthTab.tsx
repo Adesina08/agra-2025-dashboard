@@ -148,7 +148,7 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
     flagsByKpi: i.flagsByKpi,
   }));
 
-  const productivityData = filteredInterviewerStats.map((i) => ({
+  const productivityData = safeInterviewerStats.map((i) => ({
     name: i.enumeratorId,
     totalInterviews: i.totalSubmissions,
     approved: i.approvedInterviews,
