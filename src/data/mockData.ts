@@ -55,6 +55,10 @@ export interface YouthData extends Submission {
   trainingCompleted: boolean;
   employmentStatus: string;
   businessIdea: string;
+  country?: string;
+  vulnerable?: boolean;
+  workFocus?: string;
+  outreachActivities?: string[];
 }
 
 // Field mappings (NAME -> LABEL)
@@ -122,6 +126,51 @@ const cropTypes = ['Maize', 'Wheat', 'Rice', 'Beans', 'Coffee', 'Tea', 'Sugarcan
 const businessTypes = ['Agro-dealer', 'Food Processing', 'Transport', 'Storage', 'Retail', 'Export'];
 const educationLevels = ['Primary', 'Secondary', 'Diploma', 'Bachelor', 'Masters'];
 const employmentStatuses = ['Employed', 'Self-employed', 'Unemployed', 'Student'];
+const youthCountries = ['Tanzania', 'Rwanda', 'Mozambique', 'Malawi', 'Ghana'];
+const youthWorkFocuses = ['onFarm', 'agriService', 'agriBusiness', 'trade', 'extension', 'training'];
+const youthOutreachActivities = [
+  'extensionEvent',
+  'onFarmCsaTraining',
+  'entrepreneurshipTraining',
+  'mentorshipSupport',
+  'accessToFinance',
+  'grainAggregation',
+  'internship',
+  'marketing',
+  'seedsDistribution',
+  'training',
+  'trainingInternship',
+  'agroDealerTraining',
+  'incubationBds',
+  'marketLinkages',
+  'agriBusinessOutreach',
+  'caaOrientation',
+  'salesIncrease',
+  'fieldExchangeDemo',
+  'others',
+];
+
+const youthLocations: Record<string, { region: string; districts: string[] }[]> = {
+  Tanzania: [
+    { region: 'Kigoma Region', districts: ['Uvinza', 'Kibondo', 'Mpimbwe'] },
+    { region: 'Katavi Region', districts: ['Nsimbo', 'MPANDA', 'Total'] },
+  ],
+  Rwanda: [
+    { region: 'Eastern Region', districts: ['Bugesera', 'Gatsibo', 'Kayonza', 'Rwamagana'] },
+  ],
+  Mozambique: [
+    { region: 'Nampula Region', districts: ['Ribáuè', 'Meconta'] },
+    { region: 'Sofala Region', districts: ['Gorongosa', 'Nhamatanda'] },
+  ],
+  Malawi: [
+    { region: 'Central Region', districts: ['Lilongwe', 'Kasungu', 'Dowa'] },
+    { region: 'Southern Region', districts: ['Zomba'] },
+  ],
+  Ghana: [
+    { region: 'Northern Region', districts: ['Sagnarigu', 'Yendi', 'Mion', 'Tamale', 'Total'] },
+    { region: 'Upper East Region', districts: ['Talensi', 'Bongo', 'Nabdam'] },
+  ],
+};
 
 function randomDate(start: Date, end: Date): string {
   const date = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
@@ -140,12 +189,12 @@ const enumeratorNames = {
   youth: ['Felix M.', 'Hannah K.', 'Isaac O.', 'Julia W.', 'Kevin N.', 'Linda P.', 'Mike Q.', 'Nancy R.', 'Oscar S.', 'Paula T.'],
 };
 
-function generateFarmerData(count: number): FarmerData[] {
-  const data: FarmerData[] = [];
-  
-  for (let i = 0; i < count; i++) {
-    const region = regions[Math.floor(Math.random() * regions.length)];
-    const districtList = districts[region as keyof typeof districts] || ['Unknown'];
+  function generateFarmerData(count: number): FarmerData[] {
+    const data: FarmerData[] = [];
+
+    for (let i = 0; i < count; i++) {
+      const region = regions[Math.floor(Math.random() * regions.length)];
+      const districtList = districts[region as keyof typeof districts] || ['Unknown'];
     const cropCount = Math.max(1, Math.floor(Math.random() * 3));
     const cropSelection = Array.from({ length: cropCount }, () =>
       cropTypes[Math.floor(Math.random() * cropTypes.length)]
@@ -254,6 +303,10 @@ function generateYouthData(count: number): YouthData[] {
       trainingCompleted: Math.random() > 0.4,
       employmentStatus: employmentStatuses[Math.floor(Math.random() * employmentStatuses.length)],
       businessIdea: businessIdeas[Math.floor(Math.random() * businessIdeas.length)],
+      country,
+      vulnerable: Math.random() > 0.7,
+      workFocus: youthWorkFocuses[Math.floor(Math.random() * youthWorkFocuses.length)],
+      outreachActivities: youthOutreachActivities.filter(() => Math.random() > 0.7),
     });
   }
   return data;
