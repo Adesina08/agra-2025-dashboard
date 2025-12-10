@@ -265,8 +265,8 @@ export function QuotaSection({
   }
 
   return (
-    <div className="space-y-4">
-      <div className={cn("rounded-xl px-4 py-3 border", headerTone[variant])}>
+    <div className="minimal-card overflow-hidden">
+      <div className={cn("border-b px-4 py-3", headerTone[variant])}>
         <div className="flex flex-col gap-1">
           <span className="text-xs uppercase tracking-wide opacity-80">Quota tracking</span>
           <span className="text-sm font-semibold">{title}</span>
@@ -277,99 +277,96 @@ export function QuotaSection({
         {controls ? <div className="mt-3 flex flex-wrap gap-2">{controls}</div> : null}
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
-        <div className="minimal-card overflow-hidden">
-          <div className="border-b border-border/60 bg-muted/10 px-4 py-3 text-sm font-semibold">
-            {countryLabel(isTotalFilter ? "All Countries (Total)" : selectedCountry)}
-          </div>
-          <div className="overflow-auto">
-            <table className="w-full text-sm border-collapse">
-              <thead>
-                <tr>
-                  <th
-                    className="border border-border/60 bg-muted/10 px-3 py-2 text-left text-xs font-semibold uppercase text-muted-foreground"
-                    rowSpan={2}
-                  >
-                    Region
-                  </th>
-                  <th
-                    className="border border-border/60 bg-muted/10 px-3 py-2 text-left text-xs font-semibold uppercase text-muted-foreground"
-                    rowSpan={2}
-                  >
-                    District
-                  </th>
-                  {activeConfig.metrics.map((metric) => (
-                    <th
-                      key={metric.key}
-                      className="border border-border/60 bg-muted/10 px-2 py-2 text-center text-xs font-semibold uppercase text-muted-foreground"
-                      colSpan={3}
-                    >
-                      {metric.label}
-                    </th>
-                  ))}
-                </tr>
-                <tr>
-                  {activeConfig.metrics.map((metric) => (
-                    <Fragment key={`${metric.key}-header`}>
-                      <th
-                        className="border border-border/60 bg-background px-2 py-1 text-center text-[11px] font-medium uppercase text-muted-foreground"
-                      >
-                        Target
-                      </th>
-                      <th
-                        className="border border-border/60 bg-background px-2 py-1 text-center text-[11px] font-medium uppercase text-muted-foreground"
-                      >
-                        Achieved
-                      </th>
-                      <th
-                        className="border border-border/60 bg-background px-2 py-1 text-center text-[11px] font-medium uppercase text-muted-foreground"
-                      >
-                        Balance
-                      </th>
-                    </Fragment>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {activeConfig.rows.map((row) => (
-                  <tr key={`${row.region}-${row.district ?? "overall"}`} className="odd:bg-muted/5">
-                    <td className="border border-border/60 px-3 py-2 text-foreground text-sm font-medium">
-                      {row.region}
-                    </td>
-                    <td className="border border-border/60 px-3 py-2 text-foreground text-sm">
-                      {row.district ?? "—"}
-                    </td>
-                    {activeConfig.metrics.map((metric) => {
-                      const targetValue = row.targets[metric.key] ?? 0;
-                      const achievedValue = countAchieved(
-                        filteredSubmissions,
-                        row,
-                        metric.key,
-                        isTotalFilter ? undefined : selectedCountry,
-                        isTotalFilter
-                      );
-                      const balance = Math.max(targetValue - achievedValue, 0);
+      <div className="border-b border-border/60 bg-muted/10 px-4 py-3 text-sm font-semibold">
+        {countryLabel(isTotalFilter ? "All Countries (Total)" : selectedCountry)}
+      </div>
 
-                      return (
-                        <Fragment key={`${row.region}-${row.district ?? "overall"}-${metric.key}`}>
-                          <td className="border border-border/60 px-2 py-2 text-center text-foreground">
-                            {targetValue.toLocaleString()}
-                          </td>
-                          <td className="border border-border/60 px-2 py-2 text-center text-primary font-semibold">
-                            {achievedValue.toLocaleString()}
-                          </td>
-                          <td className="border border-border/60 px-2 py-2 text-center text-foreground">
-                            {balance.toLocaleString()}
-                          </td>
-                        </Fragment>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+      <div className="overflow-auto">
+        <table className="w-full text-sm border-collapse">
+          <thead>
+            <tr>
+              <th
+                className="border border-border/60 bg-muted/10 px-3 py-2 text-left text-xs font-semibold uppercase text-muted-foreground"
+                rowSpan={2}
+              >
+                Region
+              </th>
+              <th
+                className="border border-border/60 bg-muted/10 px-3 py-2 text-left text-xs font-semibold uppercase text-muted-foreground"
+                rowSpan={2}
+              >
+                District
+              </th>
+              {activeConfig.metrics.map((metric) => (
+                <th
+                  key={metric.key}
+                  className="border border-border/60 bg-muted/10 px-2 py-2 text-center text-xs font-semibold uppercase text-muted-foreground"
+                  colSpan={3}
+                >
+                  {metric.label}
+                </th>
+              ))}
+            </tr>
+            <tr>
+              {activeConfig.metrics.map((metric) => (
+                <Fragment key={`${metric.key}-header`}>
+                  <th
+                    className="border border-border/60 bg-background px-2 py-1 text-center text-[11px] font-medium uppercase text-muted-foreground"
+                  >
+                    Target
+                  </th>
+                  <th
+                    className="border border-border/60 bg-background px-2 py-1 text-center text-[11px] font-medium uppercase text-muted-foreground"
+                  >
+                    Achieved
+                  </th>
+                  <th
+                    className="border border-border/60 bg-background px-2 py-1 text-center text-[11px] font-medium uppercase text-muted-foreground"
+                  >
+                    Balance
+                  </th>
+                </Fragment>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {activeConfig.rows.map((row) => (
+              <tr key={`${row.region}-${row.district ?? "overall"}`} className="odd:bg-muted/5">
+                <td className="border border-border/60 px-3 py-2 text-foreground text-sm font-medium">
+                  {row.region}
+                </td>
+                <td className="border border-border/60 px-3 py-2 text-foreground text-sm">
+                  {row.district ?? "—"}
+                </td>
+                {activeConfig.metrics.map((metric) => {
+                  const targetValue = row.targets[metric.key] ?? 0;
+                  const achievedValue = countAchieved(
+                    filteredSubmissions,
+                    row,
+                    metric.key,
+                    isTotalFilter ? undefined : selectedCountry,
+                    isTotalFilter
+                  );
+                  const balance = Math.max(targetValue - achievedValue, 0);
+
+                  return (
+                    <Fragment key={`${row.region}-${row.district ?? "overall"}-${metric.key}`}>
+                      <td className="border border-border/60 px-2 py-2 text-center text-foreground">
+                        {targetValue.toLocaleString()}
+                      </td>
+                      <td className="border border-border/60 px-2 py-2 text-center text-primary font-semibold">
+                        {achievedValue.toLocaleString()}
+                      </td>
+                      <td className="border border-border/60 px-2 py-2 text-center text-foreground">
+                        {balance.toLocaleString()}
+                      </td>
+                    </Fragment>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
