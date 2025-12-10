@@ -63,6 +63,13 @@ export function normalizeYouthRow(row: SheetRow, index: number): YouthData {
   const region = pickValue(row, ['region']);
   const district = pickValue(row, ['district']);
   const gender = pickValue(row, ['gender', 'sex', 'sex_id'], 'Unknown');
+  const work = pickValue(row, ['work']);
+  const genderCode = pickValue(row, ['D4', 'd4', 'gender_code']);
+  const ageValue = pickValue(row, ['D3', 'd3', 'age']);
+  const cropType = pickValue(row, ['DB19', 'db19']);
+  const disability = pickValue(row, ['disability', 'disability_status']);
+  const e12 = pickValue(row, ['E12', 'e12']);
+  const rs3 = pickValue(row, ['RS3', 'rs3']);
 
   // CRITICAL: "QC Approval Status" MUST be first in the list
   const rawStatus = pickValue(row, [
@@ -97,6 +104,13 @@ export function normalizeYouthRow(row: SheetRow, index: number): YouthData {
     trainingCompleted: pickValue(row, ['service'], '').toLowerCase().includes('training'),
     employmentStatus: pickValue(row, ['employmentStatus', 'employment_status'], 'N/A'),
     businessIdea: pickValue(row, ['businessIdea', 'service', 'chain'], 'N/A'),
+    work,
+    D4: genderCode,
+    D3: ageValue,
+    DB19: cropType,
+    disability,
+    E12: e12,
+    RS3: rs3,
   };
 }
 
@@ -108,6 +122,14 @@ export function normalizeFarmerRow(row: SheetRow, index: number): FarmerData {
   const district = pickValue(row, ['district', 'db10']);
   const gender = pickValue(row, ['gender', 'sex', 'e5'], 'Unknown');
   const ageGroup = pickValue(row, ['agegroup', 'd6', 'age']);
+  const rawWork = pickValue(row, ['work']);
+  const genderCode = pickValue(row, ['D10', 'd10']);
+  const ageValue = pickValue(row, ['d6', 'D6', 'age']);
+  const cropType = pickValue(row, ['DB19', 'db19']);
+  const vulnerability = pickValue(row, ['DB8', 'db8']);
+  const db10District = pickValue(row, ['db10']);
+  const db11Region = pickValue(row, ['db11']);
+  const disability = pickValue(row, ['disability', 'disability_status']);
 
   const fm2Raw = pickValue(row, ['fm2'], '').trim();
   const cropCodes = fm2Raw ? fm2Raw.split(/\s+/) : [];
@@ -157,6 +179,14 @@ export function normalizeFarmerRow(row: SheetRow, index: number): FarmerData {
     cropsCultivated,
     isYouth: (ageGroup || '').includes('18') || (ageGroup || '').includes('35'),
     youthAttitudeScore: undefined,
+    work: rawWork,
+    D10: genderCode,
+    d6: ageValue,
+    DB19: cropType,
+    DB8: vulnerability,
+    db10: db10District,
+    db11: db11Region,
+    disability,
   };
 }
 
