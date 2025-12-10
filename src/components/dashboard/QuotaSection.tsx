@@ -21,10 +21,25 @@ interface QuotaSectionProps {
 }
 
 const getSubmissionCountry = (submission: SubmissionLike) => {
-  const rawCountry = (submission as Record<string, unknown>).w1;
-  return typeof rawCountry === "string" && rawCountry.trim()
-    ? rawCountry
-    : submission.country;
+  const record = submission as Record<string, unknown>;
+
+  // Farmer: prefer dccot
+  if (typeof record.dccot === "string" && record.dccot.trim()) {
+    return record.dccot as string;
+  }
+
+  // Enterprise: prefer A1_cal
+  if (typeof record.A1_cal === "string" && record.A1_cal.trim()) {
+    return record.A1_cal as string;
+  }
+
+  // Youth: prefer w1
+  if (typeof record.w1 === "string" && record.w1.trim()) {
+    return record.w1 as string;
+  }
+
+  // Fallback
+  return (submission as any).country ?? "";
 };
 
 const countryLabel = (country: string) => country || "All Countries";
