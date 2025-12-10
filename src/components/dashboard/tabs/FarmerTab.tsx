@@ -6,7 +6,7 @@ import { SubmissionQualityChart } from "../SubmissionQualityChart";
 import { ErrorBreakdown } from "../ErrorBreakdown";
 import { ProductivityRankings } from "../ProductivityRankings";
 import { FarmerData } from "@/data/mockData";
-import { SubmissionMap } from "../SubmissionMap";
+import { SubmissionMap } from "../SubmissionMap"; // NEW IMPORT
 import { KPI_BY_CODE } from "@/data/kpiDefinitions";
 import { CountryFilter } from "../CountryFilter";
 
@@ -251,8 +251,17 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
         />
       </div>
 
-      <SubmissionMap
-        submissions={filteredSubmissions}
+      {/* NEW: Real Map with Markers - Updates with country filter */}
+      <SubmissionMap 
+        submissions={filteredSubmissions.map(s => ({
+          latitude: s.latitude ?? 0,
+          longitude: s.longitude ?? 0,
+          region: s.region,
+          district: s.district,
+          status: s.status,
+          id: s.id,
+          enumerator: s.enumerator,
+        }))}
         title="Live Farmer Submission Map"
         variant="farmer"
       />
