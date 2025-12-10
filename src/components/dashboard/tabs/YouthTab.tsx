@@ -9,6 +9,8 @@ import { YouthData } from "@/data/mockData";
 import { SubmissionMap } from "../SubmissionMap"; // NEW IMPORT
 import { KPI_BY_CODE } from "@/data/kpiDefinitions";
 import { CountryFilter } from "../CountryFilter";
+import { youthQuotaConfig } from "@/data/quotaData";
+import { QuotaSection } from "../QuotaSection";
 
 function formatPercent(value: number | null | undefined, digits = 1) {
   if (value == null) return "—";
@@ -53,6 +55,7 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
             !!country && !country.toLowerCase().startsWith("unknown")
         )
     );
+    Object.keys(youthQuotaConfig.countries).forEach((country) => unique.add(country));
     return Array.from(unique).sort((a, b) => a.localeCompare(b));
   }, [submissions]);
 
@@ -138,7 +141,7 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
     };
   }, [filteredFlagTotals, filteredInterviewerStats, filteredSubmissions, safeKpis]);
 
-  const submissionChartData = filteredInterviewerStats.map((i) => ({
+  const submissionChartData = safeInterviewerStats.map((i) => ({
     name: i.enumeratorId,
     approved: i.approvedInterviews,
     notApproved: i.failedInterviews,
@@ -250,8 +253,16 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
         />
       </div>
 
+      <QuotaSection
+        variant="youth"
+        submissions={submissions}
+        selectedCountry={countryFilter}
+        config={youthQuotaConfig}
+        title="Youth quota status"
+      />
+
       {/* NEW: Real Map with Markers - Updates with country filter */}
-      <SubmissionMap 
+      <SubmissionMap
         submissions={filteredSubmissions.map(s => ({
           latitude: s.latitude ?? 0,
           longitude: s.longitude ?? 0,

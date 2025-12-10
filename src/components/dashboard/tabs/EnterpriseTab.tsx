@@ -9,6 +9,8 @@ import { ProductivityRankings } from "../ProductivityRankings";
 import { KPI_BY_CODE } from "@/data/kpiDefinitions";
 import { SubmissionMap } from "../SubmissionMap"; // NEW IMPORT
 import { CountryFilter } from "../CountryFilter";
+import { enterpriseQuotaConfig } from "@/data/quotaData";
+import { QuotaSection } from "../QuotaSection";
 
 function formatPercent(value: number | null | undefined, digits = 1) {
   if (value == null) return "—";
@@ -54,6 +56,8 @@ export function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) 
             !!country && !country.toLowerCase().startsWith("unknown")
         )
     );
+
+    Object.keys(enterpriseQuotaConfig.countries).forEach((country) => unique.add(country));
     return Array.from(unique).sort((a, b) => a.localeCompare(b));
   }, [submissions]);
 
@@ -139,7 +143,7 @@ export function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) 
     };
   }, [filteredFlagTotals, filteredInterviewerStats, filteredSubmissions, safeKpis]);
 
-  const submissionChartData = filteredInterviewerStats.map((i) => ({
+  const submissionChartData = safeInterviewerStats.map((i) => ({
     name: i.enumeratorId,
     approved: i.approvedInterviews,
     notApproved: i.failedInterviews,
@@ -250,6 +254,14 @@ export function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) 
           variant="enterprise"
         />
       </div>
+
+      <QuotaSection
+        variant="enterprise"
+        submissions={submissions}
+        selectedCountry={countryFilter}
+        config={enterpriseQuotaConfig}
+        title="Enterprise quota status"
+      />
 
       {/* NEW: Real Map with Markers - Updates with country filter */}
       <SubmissionMap 
