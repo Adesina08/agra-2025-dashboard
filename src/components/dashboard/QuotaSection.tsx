@@ -17,6 +17,7 @@ interface QuotaSectionProps {
   config: SegmentQuotaConfig;
   title?: string;
   controls?: React.ReactNode;
+  workFocus?: "Youth in Work" | "Outreach";
 }
 
 const getSubmissionCountry = (submission: SubmissionLike) => {
@@ -30,7 +31,12 @@ const countryLabel = (country: string) => country || "All Countries";
 
 const youthAgeGroups = ["15-35", "15-25", "18-25", "26-35", "Youth"];
 
-const isYouthAge = (ageGroup?: string) => {
+const toLower = (value: unknown) => (value ?? "").toString().trim().toLowerCase();
+
+const isYouthAge = (age: number) => age >= 18 && age <= 35;
+const isAdultAge = (age: number) => age > 35;
+
+const isYouthAgeGroupLabel = (ageGroup?: string) => {
   if (!ageGroup) return false;
   const normalized = ageGroup.toLowerCase();
   if (youthAgeGroups.some((match) => normalized.includes(match.toLowerCase()))) return true;
@@ -48,172 +54,359 @@ const cropIncludes = (cropType: string | undefined, needles: string[]) => {
   return needles.some((needle) => normalized.includes(needle));
 };
 
-const metricEvaluators: Record<QuotaMetricKey, (submission: SubmissionLike) => number> = {
-  male: (submission) => (submission.gender?.toLowerCase() === "male" ? 1 : 0),
-  female: (submission) => (submission.gender?.toLowerCase() === "female" ? 1 : 0),
-  adult: (submission) => (!isYouthAge(submission.ageGroup) ? 1 : 0),
-  youth: (submission) => (isYouthAge((submission as FarmerData | YouthData).ageGroup) ? 1 : 0),
-  riceSoyabean: (submission) =>
-    cropIncludes((submission as FarmerData).cropType, ["rice", "soya", "soyabean", "soybean"]) ? 1 : 0,
-  maize: (submission) => (cropIncludes((submission as FarmerData).cropType, ["maize"]) ? 1 : 0),
-  soyaBean: (submission) => (cropIncludes((submission as FarmerData).cropType, ["soya", "soy"]) ? 1 : 0),
-  groundnut: (submission) => (cropIncludes((submission as FarmerData).cropType, ["groundnut"]) ? 1 : 0),
-  otherCrops: (submission) => {
-    const crop = (submission as FarmerData).cropType?.toLowerCase();
-    if (!crop) return 0;
-    if (cropIncludes(crop, ["maize", "soya", "soy", "groundnut", "rice"])) return 0;
-    return 1;
-  },
-  vulnerable: (submission) => (((submission as FarmerData) as any).vulnerable ? 1 : 0),
-  total: () => 1,
-  totalSampleYouth: (submission) => (isYouthAge((submission as FarmerData | YouthData).ageGroup) ? 1 : 0),
-  totalSampleCrop2: (submission) => (cropIncludes((submission as FarmerData).cropType, ["rice"]) ? 1 : 0),
-  totalSampleCrop3: (submission) => (cropIncludes((submission as FarmerData).cropType, ["soya", "soy"]) ? 1 : 0),
-  chili: (submission) => (cropIncludes((submission as FarmerData).cropType, ["chili", "chilli"]) ? 1 : 0),
-  vegetable: (submission) => (cropIncludes((submission as FarmerData).cropType, ["vegetable"]) ? 1 : 0),
-  poultry: (submission) => (cropIncludes((submission as FarmerData).cropType, ["poultry"]) ? 1 : 0),
-  onFarm: (submission) => (((submission as YouthData).workFocus || "").toLowerCase() === "onfarm" ? 1 : 0),
-  agriService: (submission) => (((submission as YouthData).workFocus || "").toLowerCase() === "agriservice" ? 1 : 0),
-  agriBusiness: (submission) => (((submission as YouthData).workFocus || "").toLowerCase() === "agribusiness" ? 1 : 0),
-  trade: (submission) => (((submission as YouthData).workFocus || "").toLowerCase() === "trade" ? 1 : 0),
-  extension: (submission) => (((submission as YouthData).workFocus || "").toLowerCase() === "extension" ? 1 : 0),
-  training: (submission) => (((submission as YouthData).workFocus || "").toLowerCase() === "training" ? 1 : 0),
-  accessToFinance: (submission) =>
-    Array.isArray((submission as YouthData).outreachActivities)
-      ? ((submission as YouthData).outreachActivities || []).includes("accessToFinance")
-        ? 1
-        : 0
-      : 0,
-  agroDealerTraining: (submission) =>
-    Array.isArray((submission as YouthData).outreachActivities)
-      ? ((submission as YouthData).outreachActivities || []).includes("agroDealerTraining")
-        ? 1
-        : 0
-      : 0,
-  incubationBds: (submission) =>
-    Array.isArray((submission as YouthData).outreachActivities)
-      ? ((submission as YouthData).outreachActivities || []).includes("incubationBds")
-        ? 1
-        : 0
-      : 0,
-  marketLinkages: (submission) =>
-    Array.isArray((submission as YouthData).outreachActivities)
-      ? ((submission as YouthData).outreachActivities || []).includes("marketLinkages")
-        ? 1
-        : 0
-      : 0,
-  trainingInternship: (submission) =>
-    Array.isArray((submission as YouthData).outreachActivities)
-      ? ((submission as YouthData).outreachActivities || []).includes("trainingInternship")
-        ? 1
-        : 0
-      : 0,
-  internship: (submission) =>
-    Array.isArray((submission as YouthData).outreachActivities)
-      ? ((submission as YouthData).outreachActivities || []).includes("internship")
-        ? 1
-        : 0
-      : 0,
-  extensionEvent: (submission) =>
-    Array.isArray((submission as YouthData).outreachActivities)
-      ? ((submission as YouthData).outreachActivities || []).includes("extensionEvent")
-        ? 1
-        : 0
-      : 0,
-  onFarmCsaTraining: (submission) =>
-    Array.isArray((submission as YouthData).outreachActivities)
-      ? ((submission as YouthData).outreachActivities || []).includes("onFarmCsaTraining")
-        ? 1
-        : 0
-      : 0,
-  entrepreneurshipTraining: (submission) =>
-    Array.isArray((submission as YouthData).outreachActivities)
-      ? ((submission as YouthData).outreachActivities || []).includes("entrepreneurshipTraining")
-        ? 1
-        : 0
-      : 0,
-  mentorshipSupport: (submission) =>
-    Array.isArray((submission as YouthData).outreachActivities)
-      ? ((submission as YouthData).outreachActivities || []).includes("mentorshipSupport")
-        ? 1
-        : 0
-      : 0,
-  grainAggregation: (submission) =>
-    Array.isArray((submission as YouthData).outreachActivities)
-      ? ((submission as YouthData).outreachActivities || []).includes("grainAggregation")
-        ? 1
-        : 0
-      : 0,
-  marketing: (submission) =>
-    Array.isArray((submission as YouthData).outreachActivities)
-      ? ((submission as YouthData).outreachActivities || []).includes("marketing")
-        ? 1
-        : 0
-      : 0,
-  seedsDistribution: (submission) =>
-    Array.isArray((submission as YouthData).outreachActivities)
-      ? ((submission as YouthData).outreachActivities || []).includes("seedsDistribution")
-        ? 1
-        : 0
-      : 0,
-  agriBusinessOutreach: (submission) =>
-    Array.isArray((submission as YouthData).outreachActivities)
-      ? ((submission as YouthData).outreachActivities || []).includes("agriBusinessOutreach")
-        ? 1
-        : 0
-      : 0,
-  caaOrientation: (submission) =>
-    Array.isArray((submission as YouthData).outreachActivities)
-      ? ((submission as YouthData).outreachActivities || []).includes("caaOrientation")
-        ? 1
-        : 0
-      : 0,
-  salesIncrease: (submission) =>
-    Array.isArray((submission as YouthData).outreachActivities)
-      ? ((submission as YouthData).outreachActivities || []).includes("salesIncrease")
-        ? 1
-        : 0
-      : 0,
-  fieldExchangeDemo: (submission) =>
-    Array.isArray((submission as YouthData).outreachActivities)
-      ? ((submission as YouthData).outreachActivities || []).includes("fieldExchangeDemo")
-        ? 1
-        : 0
-      : 0,
-  others: (submission) =>
-    Array.isArray((submission as YouthData).outreachActivities)
-      ? ((submission as YouthData).outreachActivities || []).includes("others")
-        ? 1
-        : 0
-      : 0,
+type YouthQuotaRow = QuotaRow & {
+  country?: string;
+  workFocus?: "Youth in Work" | "Outreach";
+  cropType?: string;
+  ageGroup?: "Youth" | "Adult";
 };
 
-function countAchieved(
-  submissions: SubmissionLike[],
-  row: QuotaRow,
+type FarmerQuotaRow = QuotaRow & {
+  country?: string;
+  workFocus?: "Youth in Work" | "Outreach";
+  cropType?: string;
+  ageGroup?: "Youth" | "Adult";
+};
+
+type WorkCategoryCounts = {
+  onFarm: number;
+  agriServices: number;
+  agriBusiness: number;
+  trade: number;
+};
+
+const initWorkCategoryCounts = (): WorkCategoryCounts => ({
+  onFarm: 0,
+  agriServices: 0,
+  agriBusiness: 0,
+  trade: 0,
+});
+
+const matchesAgeGroup = (submission: YouthData | FarmerData, row: YouthQuotaRow | FarmerQuotaRow) => {
+  if (!row.ageGroup) return true;
+
+  const ageNum = Number((submission as YouthData).D3 ?? (submission as FarmerData).d6);
+  if (Number.isNaN(ageNum)) return false;
+
+  if (row.ageGroup === "Youth") return isYouthAge(ageNum);
+  if (row.ageGroup === "Adult") return isAdultAge(ageNum);
+
+  return true;
+};
+
+const matchesWorkFocus = (
+  submission: YouthData | FarmerData,
+  row: YouthQuotaRow | FarmerQuotaRow
+) => {
+  if (!row.workFocus) return true;
+
+  const workVal = toLower((submission as YouthData).work);
+
+  if (row.workFocus === "Youth in Work") {
+    return workVal === "yes";
+  }
+
+  if (row.workFocus === "Outreach") {
+    return workVal === "no";
+  }
+
+  return true;
+};
+
+const matchesCropType = (submission: YouthData | FarmerData, row: YouthQuotaRow | FarmerQuotaRow) => {
+  if (!row.cropType) return true;
+  const crop = toLower((submission as YouthData).DB19 ?? (submission as FarmerData).DB19);
+  return crop === toLower(row.cropType);
+};
+
+const isYouthSubmissionVulnerable = (submission: YouthData, row: YouthQuotaRow) => {
+  if (row.workFocus === "Outreach") {
+    return toLower(submission.disability) === "yes";
+  }
+
+  if (row.workFocus === "Youth in Work") {
+    const e12Num = Number(submission.E12);
+    if (Number.isNaN(e12Num)) return false;
+    return e12Num !== 7 && e12Num !== 8;
+  }
+
+  return false;
+};
+
+const addWorkCategory = (submission: YouthData, counts: WorkCategoryCounts) => {
+  const val = toLower(submission.RS3);
+
+  if (!val) return;
+
+  if (val === "on-farm" || val === "on farm") {
+    counts.onFarm += 1;
+  } else if (val === "agri-services" || val === "agri services") {
+    counts.agriServices += 1;
+  } else if (val === "agri-business" || val === "agribusiness" || val === "agri business") {
+    counts.agriBusiness += 1;
+  } else if (val === "trade") {
+    counts.trade += 1;
+  }
+};
+
+const matchesYouthRow = (submission: YouthData, row: YouthQuotaRow, countryFilter: string) => {
+  const submissionCountry = getSubmissionCountry(submission);
+
+  if (countryFilter.toLowerCase() !== "all") {
+    if (toLower(submissionCountry) !== toLower(countryFilter)) return false;
+  }
+
+  if (row.country && toLower(row.country) !== toLower(submissionCountry || "")) {
+    return false;
+  }
+
+  if (toLower(row.region) !== toLower(submission.region)) return false;
+  if (toLower(row.district ?? "") !== toLower(submission.district)) return false;
+
+  if (!matchesWorkFocus(submission, row)) return false;
+  if (!matchesAgeGroup(submission, row)) return false;
+  if (!matchesCropType(submission, row)) return false;
+
+  return true;
+};
+
+const outreachActivityMetrics: QuotaMetricKey[] = [
+  "accessToFinance",
+  "agroDealerTraining",
+  "incubationBds",
+  "marketLinkages",
+  "trainingInternship",
+  "internship",
+  "extensionEvent",
+  "onFarmCsaTraining",
+  "entrepreneurshipTraining",
+  "mentorshipSupport",
+  "grainAggregation",
+  "marketing",
+  "seedsDistribution",
+  "agriBusinessOutreach",
+  "caaOrientation",
+  "salesIncrease",
+  "fieldExchangeDemo",
+  "others",
+  "extension",
+  "training",
+];
+
+const evaluateYouthMetric = (
   metric: QuotaMetricKey,
-  country?: string,
-  ignoreLocation = false
-) {
-  return submissions.reduce((sum, submission) => {
-    const matchesCountry = country
-      ? submission.country?.toLowerCase() === country.toLowerCase()
-      : true;
-    if (!matchesCountry) return sum;
+  submission: YouthData,
+  row: YouthQuotaRow
+) => {
+  const genderCode = Number(submission.D4);
+  const ageNum = Number(submission.D3);
 
-    const matchesRegion = ignoreLocation || row.region
-      ? submission.region?.toLowerCase() === row.region.toLowerCase()
-      : true;
-    const matchesDistrict = ignoreLocation || row.district
-      ? submission.district?.toLowerCase() === row.district.toLowerCase()
-      : true;
+  switch (metric) {
+    case "male":
+      return genderCode === 1
+        ? 1
+        : toLower(submission.gender) === "male"
+          ? 1
+          : 0;
+    case "female":
+      return genderCode === 2
+        ? 1
+        : toLower(submission.gender) === "female"
+          ? 1
+          : 0;
+    case "youth":
+      return Number.isFinite(ageNum) ? (isYouthAge(ageNum) ? 1 : 0) : isYouthAgeGroupLabel(submission.ageGroup) ? 1 : 0;
+    case "adult":
+      return Number.isFinite(ageNum) ? (isAdultAge(ageNum) ? 1 : 0) : isYouthAgeGroupLabel(submission.ageGroup) ? 0 : 1;
+    case "vulnerable":
+      return isYouthSubmissionVulnerable(submission, row) ? 1 : 0;
+    case "onFarm":
+    case "agriService":
+    case "agriBusiness":
+    case "trade":
+      return 0; // handled separately via work category counts
+    case "total":
+      return 1;
+    default: {
+      if (outreachActivityMetrics.includes(metric)) {
+        const activities = Array.isArray(submission.outreachActivities) ? submission.outreachActivities.map(toLower) : [];
+        return activities.includes(toLower(metric));
+      }
 
-    if (!matchesRegion || !matchesDistrict) return sum;
+      return 0;
+    }
+  }
+};
 
-    const evaluator = metricEvaluators[metric];
-    return evaluator ? sum + evaluator(submission) : sum;
-  }, 0);
-}
+const matchesFarmerRow = (submission: FarmerData, row: FarmerQuotaRow, countryFilter: string) => {
+  const submissionCountry = getSubmissionCountry(submission);
+
+  if (countryFilter.toLowerCase() !== "all") {
+    if (toLower(submissionCountry) !== toLower(countryFilter)) return false;
+  }
+
+  if (row.country && toLower(row.country) !== toLower(submissionCountry || "")) return false;
+
+  const regionValue = submission.db11 || submission.region;
+  const districtValue = submission.db10 || submission.district;
+
+  if (toLower(row.region) !== toLower(regionValue)) return false;
+  if (toLower(row.district ?? "") !== toLower(districtValue)) return false;
+
+  if (!matchesWorkFocus(submission, row)) return false;
+  if (!matchesAgeGroup(submission, row)) return false;
+  if (!matchesCropType(submission, row)) return false;
+
+  return true;
+};
+
+const isFarmerSubmissionVulnerable = (submission: FarmerData, row: FarmerQuotaRow) => {
+  if (row.workFocus === "Outreach") {
+    return toLower(submission.disability) === "yes";
+  }
+
+  const value = submission.DB8;
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+
+  const normalized = toLower(value);
+  return normalized === "yes" || normalized === "y" || normalized === "1";
+};
+
+const evaluateFarmerMetric = (metric: QuotaMetricKey, submission: FarmerData, row: FarmerQuotaRow) => {
+  const genderCode = Number(submission.D10);
+  const ageNum = Number(submission.d6);
+  const crop = toLower(submission.DB19 ?? submission.cropType);
+
+  switch (metric) {
+    case "male":
+      return genderCode === 1
+        ? 1
+        : toLower(submission.gender) === "male"
+          ? 1
+          : 0;
+    case "female":
+      return genderCode === 2
+        ? 1
+        : toLower(submission.gender) === "female"
+          ? 1
+          : 0;
+    case "adult":
+      return Number.isFinite(ageNum) ? (isAdultAge(ageNum) ? 1 : 0) : isYouthAgeGroupLabel(submission.ageGroup) ? 0 : 1;
+    case "youth":
+    case "totalSampleYouth":
+      return Number.isFinite(ageNum)
+        ? isYouthAge(ageNum)
+          ? 1
+          : 0
+        : isYouthAgeGroupLabel(submission.ageGroup)
+          ? 1
+          : 0;
+    case "maize":
+      return cropIncludes(crop, ["maize"]) ? 1 : 0;
+    case "soyaBean":
+      return cropIncludes(crop, ["soya", "soy"]) ? 1 : 0;
+    case "riceSoyabean":
+      return cropIncludes(crop, ["rice", "soya", "soyabean", "soybean", "soy"]) ? 1 : 0;
+    case "groundnut":
+      return cropIncludes(crop, ["groundnut", "groundnuts"]) ? 1 : 0;
+    case "otherCrops":
+      return crop && cropIncludes(crop, ["maize", "soya", "soy", "groundnut", "rice"]) ? 0 : crop ? 1 : 0;
+    case "totalSampleCrop2":
+      return cropIncludes(crop, ["rice"]) ? 1 : 0;
+    case "totalSampleCrop3":
+      return cropIncludes(crop, ["soya", "soy"]) ? 1 : 0;
+    case "chili":
+      return cropIncludes(crop, ["chili", "chilli"]) ? 1 : 0;
+    case "vegetable":
+      return cropIncludes(crop, ["vegetable"]) ? 1 : 0;
+    case "poultry":
+      return cropIncludes(crop, ["poultry"]) ? 1 : 0;
+    case "vulnerable":
+      return isFarmerSubmissionVulnerable(submission, row) ? 1 : 0;
+    case "total":
+      return 1;
+    default:
+      return 0;
+  }
+};
+
+const buildRowKey = (row: QuotaRow) => `${toLower(row.region)}|${toLower(row.district ?? "")}`;
+
+const computeYouthQuotaAchieved = (
+  quotaRows: YouthQuotaRow[],
+  submissions: YouthData[],
+  countryFilter: string,
+  metrics: QuotaMetricKey[],
+  workFocus?: "Youth in Work" | "Outreach"
+) => {
+  const results = new Map<string, Partial<Record<QuotaMetricKey, number>>>();
+
+  quotaRows.forEach((row) => {
+    const rowWithFocus: YouthQuotaRow = {
+      ...row,
+      country: row.country ?? (countryFilter === "all" ? undefined : countryFilter),
+      workFocus: row.workFocus ?? workFocus,
+    };
+
+    const matching = submissions.filter((submission) => matchesYouthRow(submission, rowWithFocus, countryFilter));
+    const workCounts = initWorkCategoryCounts();
+    const metricTotals: Partial<Record<QuotaMetricKey, number>> = {};
+
+    matching.forEach((submission) => {
+      if (rowWithFocus.workFocus === "Youth in Work") {
+        addWorkCategory(submission, workCounts);
+      }
+
+      metrics.forEach((metric) => {
+        const increment = evaluateYouthMetric(metric, submission, rowWithFocus);
+        metricTotals[metric] = (metricTotals[metric] || 0) + increment;
+      });
+    });
+
+    // Inject work category rollups after iterating so they reflect unique counts
+    metricTotals.onFarm = workCounts.onFarm;
+    metricTotals.agriService = workCounts.agriServices;
+    metricTotals.agriBusiness = workCounts.agriBusiness;
+    metricTotals.trade = workCounts.trade;
+
+    results.set(buildRowKey(rowWithFocus), metricTotals);
+  });
+
+  return results;
+};
+
+const computeFarmerQuotaAchieved = (
+  quotaRows: FarmerQuotaRow[],
+  submissions: FarmerData[],
+  countryFilter: string,
+  metrics: QuotaMetricKey[],
+  workFocus?: "Youth in Work" | "Outreach"
+) => {
+  const results = new Map<string, Partial<Record<QuotaMetricKey, number>>>();
+
+  quotaRows.forEach((row) => {
+    const rowWithFocus: FarmerQuotaRow = {
+      ...row,
+      country: row.country ?? (countryFilter === "all" ? undefined : countryFilter),
+      workFocus: row.workFocus ?? workFocus,
+    };
+
+    const matching = submissions.filter((submission) => matchesFarmerRow(submission, rowWithFocus, countryFilter));
+    const metricTotals: Partial<Record<QuotaMetricKey, number>> = {};
+
+    matching.forEach((submission) => {
+      metrics.forEach((metric) => {
+        const increment = evaluateFarmerMetric(metric, submission, rowWithFocus);
+        metricTotals[metric] = (metricTotals[metric] || 0) + increment;
+      });
+    });
+
+    results.set(buildRowKey(rowWithFocus), metricTotals);
+  });
+
+  return results;
+};
 
 export function QuotaSection({
   variant,
@@ -222,13 +415,10 @@ export function QuotaSection({
   config,
   title = "Quota Progress",
   controls,
+  workFocus,
 }: QuotaSectionProps) {
   const countryKeys = Object.keys(config.countries);
   const isTotalFilter = selectedCountry === "all";
-
-  if (isTotalFilter) {
-    return null;
-  }
 
   const allMetrics = useMemo(() => {
     const metricMap = new Map<QuotaMetricKey, QuotaMetric>();
@@ -258,9 +448,13 @@ export function QuotaSection({
     };
   }, [config.countries, countryKeys]);
 
-  const activeConfig = isTotalFilter
-    ? { metrics: allMetrics, rows: [aggregatedRow] }
-    : config.countries[selectedCountry];
+  const activeConfig = useMemo(
+    () =>
+      isTotalFilter
+        ? { metrics: allMetrics, rows: [aggregatedRow] }
+        : config.countries[selectedCountry],
+    [aggregatedRow, allMetrics, config.countries, isTotalFilter, selectedCountry]
+  );
 
   const filteredSubmissions = useMemo(() => {
     if (isTotalFilter) return submissions;
@@ -268,6 +462,38 @@ export function QuotaSection({
       (submission) => getSubmissionCountry(submission)?.toLowerCase() === selectedCountry.toLowerCase()
     );
   }, [isTotalFilter, selectedCountry, submissions]);
+
+  const achievedByRow = useMemo(() => {
+    if (!activeConfig) return null;
+
+    const metrics = activeConfig.metrics.map((metric) => metric.key);
+
+    if (variant === "youth") {
+      return computeYouthQuotaAchieved(
+        activeConfig.rows as YouthQuotaRow[],
+        filteredSubmissions as YouthData[],
+        selectedCountry,
+        metrics,
+        workFocus
+      );
+    }
+
+    if (variant === "farmer") {
+      return computeFarmerQuotaAchieved(
+        activeConfig.rows as FarmerQuotaRow[],
+        filteredSubmissions as FarmerData[],
+        selectedCountry,
+        metrics,
+        workFocus
+      );
+    }
+
+    return null;
+  }, [activeConfig, filteredSubmissions, selectedCountry, variant, workFocus]);
+
+  if (isTotalFilter) {
+    return null;
+  }
 
   if (!activeConfig) {
     return (
@@ -351,13 +577,7 @@ export function QuotaSection({
                 </td>
                 {activeConfig.metrics.map((metric) => {
                   const targetValue = row.targets[metric.key] ?? 0;
-                  const achievedValue = countAchieved(
-                    filteredSubmissions,
-                    row,
-                    metric.key,
-                    isTotalFilter ? undefined : selectedCountry,
-                    isTotalFilter
-                  );
+                  const achievedValue = achievedByRow?.get(buildRowKey(row))?.[metric.key] ?? 0;
                   const balance = Math.max(targetValue - achievedValue, 0);
 
                   return (

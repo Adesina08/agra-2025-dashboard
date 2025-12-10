@@ -39,6 +39,15 @@ export interface FarmerData extends Submission {
   extensionChannels?: string[];
   isYouth?: boolean;
   youthAttitudeScore?: number;
+  // Raw survey columns (for quota calculations)
+  work?: string;
+  D10?: number | string;
+  d6?: number | string;
+  DB19?: string;
+  DB8?: string | number | boolean;
+  db10?: string;
+  db11?: string;
+  disability?: string;
 }
 
 export interface EnterpriseData extends Submission {
@@ -60,6 +69,14 @@ export interface YouthData extends Submission {
   vulnerable?: boolean;
   workFocus?: string;
   outreachActivities?: string[];
+  // Raw survey columns (for quota calculations)
+  work?: string;
+  D4?: number | string;
+  D3?: number | string;
+  DB19?: string;
+  disability?: string;
+  E12?: number | string;
+  RS3?: string;
 }
 
 // Field mappings (NAME -> LABEL)

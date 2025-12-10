@@ -335,6 +335,7 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
         selectedCountry={countryFilter}
         config={quotaTabs.find((tab) => tab.key === quotaView)?.config ?? youthInWorkQuotaConfig}
         title="Youth quota status"
+        workFocus={quotaView === "work" ? "Youth in Work" : "Outreach"}
         controls={
           <div className="flex flex-wrap gap-2">
             {quotaTabs.map((tab) => (
