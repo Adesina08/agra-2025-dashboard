@@ -432,13 +432,3 @@ export const youthQuotaConfig: SegmentQuotaConfig = {
     Tanzania: { metrics: sharedQuotaMetrics, rows: [starterRows("Tanzania", 330)] },
   },
 };
-
-export const enterpriseQuotaConfig: SegmentQuotaConfig = {
-  countries: {
-    Ghana: { metrics: sharedQuotaMetrics, rows: [starterRows("Ghana", 250)] },
-    Malawi: { metrics: sharedQuotaMetrics, rows: [starterRows("Malawi", 230)] },
-    Mozambique: { metrics: sharedQuotaMetrics, rows: [starterRows("Mozambique", 210)] },
-    Rwanda: { metrics: sharedQuotaMetrics, rows: [starterRows("Rwanda", 240)] },
-    Tanzania: { metrics: sharedQuotaMetrics, rows: [starterRows("Tanzania", 260)] },
-  },
-};

@@ -70,7 +70,8 @@ function countAchieved(
   submissions: SubmissionLike[],
   row: QuotaRow,
   metric: QuotaMetricKey,
-  country?: string
+  country?: string,
+  ignoreLocation = false
 ) {
   return submissions.reduce((sum, submission) => {
     const matchesCountry = country
@@ -78,10 +79,10 @@ function countAchieved(
       : true;
     if (!matchesCountry) return sum;
 
-    const matchesRegion = row.region
+    const matchesRegion = ignoreLocation || row.region
       ? submission.region?.toLowerCase() === row.region.toLowerCase()
       : true;
-    const matchesDistrict = row.district
+    const matchesDistrict = ignoreLocation || row.district
       ? submission.district?.toLowerCase() === row.district.toLowerCase()
       : true;
 
@@ -100,13 +101,48 @@ export function QuotaSection({
   title = "Quota Progress",
 }: QuotaSectionProps) {
   const countryKeys = Object.keys(config.countries);
+  const isTotalFilter = selectedCountry === "all";
 
-  const countriesToShow = useMemo(() => {
-    if (selectedCountry === "all") return countryKeys;
-    return countryKeys.includes(selectedCountry) ? [selectedCountry] : [];
-  }, [countryKeys, selectedCountry]);
+  const allMetrics = useMemo(() => {
+    const metricMap = new Map<QuotaMetricKey, QuotaMetric>();
+    countryKeys.forEach((country) => {
+      config.countries[country]?.metrics.forEach((metric) => {
+        if (!metricMap.has(metric.key)) metricMap.set(metric.key, metric);
+      });
+    });
+    return Array.from(metricMap.values());
+  }, [config.countries, countryKeys]);
 
-  if (!countriesToShow.length) {
+  const aggregatedRow = useMemo<QuotaRow>(() => {
+    const totals: Partial<Record<QuotaMetricKey, number>> = {};
+    countryKeys.forEach((country) => {
+      config.countries[country]?.rows.forEach((row) => {
+        Object.entries(row.targets).forEach(([key, value]) => {
+          const metricKey = key as QuotaMetricKey;
+          totals[metricKey] = (totals[metricKey] || 0) + (value || 0);
+        });
+      });
+    });
+
+    return {
+      region: "All Regions",
+      district: "Total",
+      targets: totals,
+    };
+  }, [config.countries, countryKeys]);
+
+  const activeConfig = isTotalFilter
+    ? { metrics: allMetrics, rows: [aggregatedRow] }
+    : config.countries[selectedCountry];
+
+  const filteredSubmissions = useMemo(() => {
+    if (isTotalFilter) return submissions;
+    return submissions.filter(
+      (submission) => submission.country?.toLowerCase() === selectedCountry.toLowerCase()
+    );
+  }, [isTotalFilter, selectedCountry, submissions]);
+
+  if (!activeConfig) {
     return (
       <div className="minimal-card text-sm text-muted-foreground">No quota data found for this country.</div>
     );
@@ -125,107 +161,98 @@ export function QuotaSection({
       </div>
 
       <div className="grid grid-cols-1 gap-4">
-        {countriesToShow.map((country) => {
-          const countryConfig = config.countries[country];
-          const headers = countryConfig?.metrics ?? [];
-          const countrySubmissions = submissions.filter(
-            (submission) => submission.country?.toLowerCase() === country.toLowerCase()
-          );
+        <div className="minimal-card overflow-hidden">
+          <div className="border-b border-border/60 bg-muted/10 px-4 py-3 text-sm font-semibold">
+            {countryLabel(isTotalFilter ? "All Countries (Total)" : selectedCountry)}
+          </div>
+          <div className="overflow-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr>
+                  <th
+                    className="border border-border/60 bg-muted/10 px-3 py-2 text-left text-xs font-semibold uppercase text-muted-foreground"
+                    rowSpan={2}
+                  >
+                    Region
+                  </th>
+                  <th
+                    className="border border-border/60 bg-muted/10 px-3 py-2 text-left text-xs font-semibold uppercase text-muted-foreground"
+                    rowSpan={2}
+                  >
+                    District
+                  </th>
+                  {activeConfig.metrics.map((metric) => (
+                    <th
+                      key={metric.key}
+                      className="border border-border/60 bg-muted/10 px-2 py-2 text-center text-xs font-semibold uppercase text-muted-foreground"
+                      colSpan={3}
+                    >
+                      {metric.label}
+                    </th>
+                  ))}
+                </tr>
+                <tr>
+                  {activeConfig.metrics.map((metric) => (
+                    <Fragment key={`${metric.key}-header`}>
+                      <th
+                        className="border border-border/60 bg-background px-2 py-1 text-center text-[11px] font-medium uppercase text-muted-foreground"
+                      >
+                        Target
+                      </th>
+                      <th
+                        className="border border-border/60 bg-background px-2 py-1 text-center text-[11px] font-medium uppercase text-muted-foreground"
+                      >
+                        Achieved
+                      </th>
+                      <th
+                        className="border border-border/60 bg-background px-2 py-1 text-center text-[11px] font-medium uppercase text-muted-foreground"
+                      >
+                        Balance
+                      </th>
+                    </Fragment>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {activeConfig.rows.map((row) => (
+                  <tr key={`${row.region}-${row.district ?? "overall"}`} className="odd:bg-muted/5">
+                    <td className="border border-border/60 px-3 py-2 text-foreground text-sm font-medium">
+                      {row.region}
+                    </td>
+                    <td className="border border-border/60 px-3 py-2 text-foreground text-sm">
+                      {row.district ?? "—"}
+                    </td>
+                    {activeConfig.metrics.map((metric) => {
+                      const targetValue = row.targets[metric.key] ?? 0;
+                      const achievedValue = countAchieved(
+                        filteredSubmissions,
+                        row,
+                        metric.key,
+                        isTotalFilter ? undefined : selectedCountry,
+                        isTotalFilter
+                      );
+                      const balance = Math.max(targetValue - achievedValue, 0);
 
-          return (
-            <div key={country} className="minimal-card overflow-hidden">
-              <div className="border-b border-border/60 bg-muted/10 px-4 py-3 text-sm font-semibold">
-                {countryLabel(country)}
-              </div>
-              <div className="overflow-auto">
-                <table className="w-full text-sm border-collapse">
-                  <thead>
-                    <tr>
-                      <th
-                        className="border border-border/60 bg-muted/10 px-3 py-2 text-left text-xs font-semibold uppercase text-muted-foreground"
-                        rowSpan={2}
-                      >
-                        Region
-                      </th>
-                      <th
-                        className="border border-border/60 bg-muted/10 px-3 py-2 text-left text-xs font-semibold uppercase text-muted-foreground"
-                        rowSpan={2}
-                      >
-                        District
-                      </th>
-                      {headers.map((metric) => (
-                        <th
-                          key={metric.key}
-                          className="border border-border/60 bg-muted/10 px-2 py-2 text-center text-xs font-semibold uppercase text-muted-foreground"
-                          colSpan={3}
-                        >
-                          {metric.label}
-                        </th>
-                      ))}
-                    </tr>
-                    <tr>
-                      {headers.map((metric) => (
-                        <Fragment key={`${metric.key}-header`}>
-                          <th
-                            className="border border-border/60 bg-background px-2 py-1 text-center text-[11px] font-medium uppercase text-muted-foreground"
-                          >
-                            Target
-                          </th>
-                          <th
-                            className="border border-border/60 bg-background px-2 py-1 text-center text-[11px] font-medium uppercase text-muted-foreground"
-                          >
-                            Achieved
-                          </th>
-                          <th
-                            className="border border-border/60 bg-background px-2 py-1 text-center text-[11px] font-medium uppercase text-muted-foreground"
-                          >
-                            Balance
-                          </th>
+                      return (
+                        <Fragment key={`${row.region}-${row.district ?? "overall"}-${metric.key}`}>
+                          <td className="border border-border/60 px-2 py-2 text-center text-foreground">
+                            {targetValue.toLocaleString()}
+                          </td>
+                          <td className="border border-border/60 px-2 py-2 text-center text-primary font-semibold">
+                            {achievedValue.toLocaleString()}
+                          </td>
+                          <td className="border border-border/60 px-2 py-2 text-center text-foreground">
+                            {balance.toLocaleString()}
+                          </td>
                         </Fragment>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {countryConfig.rows.map((row) => (
-                      <tr key={`${row.region}-${row.district ?? "overall"}`} className="odd:bg-muted/5">
-                        <td className="border border-border/60 px-3 py-2 text-foreground text-sm font-medium">
-                          {row.region}
-                        </td>
-                        <td className="border border-border/60 px-3 py-2 text-foreground text-sm">
-                          {row.district ?? "—"}
-                        </td>
-                        {headers.map((metric) => {
-                          const targetValue = row.targets[metric.key] ?? 0;
-                          const achievedValue = countAchieved(
-                            countrySubmissions,
-                            row,
-                            metric.key,
-                            country
-                          );
-                          const balance = Math.max(targetValue - achievedValue, 0);
-
-                          return (
-                            <Fragment key={`${row.region}-${row.district ?? "overall"}-${metric.key}`}>
-                              <td className="border border-border/60 px-2 py-2 text-center text-foreground">
-                                {targetValue.toLocaleString()}
-                              </td>
-                              <td className="border border-border/60 px-2 py-2 text-center text-primary font-semibold">
-                                {achievedValue.toLocaleString()}
-                              </td>
-                              <td className="border border-border/60 px-2 py-2 text-center text-foreground">
-                                {balance.toLocaleString()}
-                              </td>
-                            </Fragment>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          );
-        })}
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   );
