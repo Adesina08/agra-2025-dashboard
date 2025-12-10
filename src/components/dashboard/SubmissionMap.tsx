@@ -144,12 +144,12 @@ export function SubmissionMap({
           const statusLabel = submission.status || "Pending";
 
           const marker = L.circleMarker([submission.latitude, submission.longitude], {
-            radius: 9,
-            color: color,
-            weight: 2.25,
+            radius: 7.25,
+            color: "#f8fafc",
+            weight: 2.4,
             fillColor: color,
-            fillOpacity: 0.85,
-            opacity: 0.85,
+            fillOpacity: 0.9,
+            opacity: 0.95,
           });
 
           marker.bindTooltip(
@@ -180,8 +180,12 @@ export function SubmissionMap({
             }
           );
 
-          marker.on("mouseover", () => marker.setStyle({ radius: 12, weight: 3.25, fillOpacity: 1, opacity: 1 }));
-          marker.on("mouseout", () => marker.setStyle({ radius: 9, weight: 2.25, fillOpacity: 0.85, opacity: 0.85 }));
+          marker.on("mouseover", () =>
+            marker.setStyle({ radius: 9.5, weight: 3, fillOpacity: 1, opacity: 1, color: "#e2e8f0" })
+          );
+          marker.on("mouseout", () =>
+            marker.setStyle({ radius: 7.25, weight: 2.4, fillOpacity: 0.9, opacity: 0.95, color: "#f8fafc" })
+          );
 
           marker.addTo(map!);
           markers.push(marker);

@@ -226,6 +226,10 @@ export function QuotaSection({
   const countryKeys = Object.keys(config.countries);
   const isTotalFilter = selectedCountry === "all";
 
+  if (isTotalFilter) {
+    return null;
+  }
+
   const allMetrics = useMemo(() => {
     const metricMap = new Map<QuotaMetricKey, QuotaMetric>();
     countryKeys.forEach((country) => {
