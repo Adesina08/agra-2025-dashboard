@@ -166,7 +166,8 @@ export function normalizeFarmerRow(row: SheetRow, index: number): FarmerData {
   const cropsCultivated = cropCodes.map(code => FM2_CROP_MAP[code] ?? code);
   const mainCrop = cropsCultivated[0] ?? 'N/A';
   const rawCropType = pickValue(row, ['DB19', 'db19', 'cropType', 'fm2'], mainCrop);
-  const normalizedCropType = FM2_CROP_MAP[rawCropType.trim()] ?? FM2_CROP_MAP[rawCropType.trim().toLowerCase()] ?? rawCropType || mainCrop;
+  const rt = (rawCropType ?? '').trim();
+  const normalizedCropType = FM2_CROP_MAP[rt] ?? FM2_CROP_MAP[rt.toLowerCase()] ?? (rt || mainCrop);
 
   const cropLandFields = Array.from({ length: 15 }, (_, i) => `fm6_${i + 1}`);
   const totalFarmSize = cropLandFields
