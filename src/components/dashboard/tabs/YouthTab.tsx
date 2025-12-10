@@ -265,9 +265,14 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
         />
       </div>
 
-      <div className="space-y-3">
-        <div className="flex flex-wrap gap-2 items-center justify-between">
-          <div className="flex gap-2">
+      <QuotaSection
+        variant="youth"
+        submissions={submissions}
+        selectedCountry={countryFilter}
+        config={quotaTabs.find((tab) => tab.key === quotaView)?.config ?? youthInWorkQuotaConfig}
+        title="Youth quota status"
+        controls={
+          <div className="flex flex-wrap gap-2">
             {quotaTabs.map((tab) => (
               <button
                 key={tab.key}
@@ -284,17 +289,8 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
               </button>
             ))}
           </div>
-          <span className="text-xs text-muted-foreground">Quota tables update with the country filter.</span>
-        </div>
-
-        <QuotaSection
-          variant="youth"
-          submissions={submissions}
-          selectedCountry={countryFilter}
-          config={quotaTabs.find((tab) => tab.key === quotaView)?.config ?? youthInWorkQuotaConfig}
-          title="Youth quota status"
-        />
-      </div>
+        }
+      />
 
       {/* NEW: Real Map with Markers - Updates with country filter */}
       <SubmissionMap

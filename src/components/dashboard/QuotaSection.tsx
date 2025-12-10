@@ -1,4 +1,4 @@
-import { useMemo, Fragment } from "react";
+import React, { useMemo, Fragment } from "react";
 import { cn } from "@/lib/utils";
 import { headerTone, Variant } from "./variantStyles";
 import {
@@ -16,6 +16,7 @@ interface QuotaSectionProps {
   selectedCountry: string;
   config: SegmentQuotaConfig;
   title?: string;
+  controls?: React.ReactNode;
 }
 
 const countryLabel = (country: string) => country || "All Countries";
@@ -213,6 +214,7 @@ export function QuotaSection({
   selectedCountry,
   config,
   title = "Quota Progress",
+  controls,
 }: QuotaSectionProps) {
   const countryKeys = Object.keys(config.countries);
   const isTotalFilter = selectedCountry === "all";
@@ -272,6 +274,7 @@ export function QuotaSection({
             Targets remain static while achieved and balance update with the country filter.
           </span>
         </div>
+        {controls ? <div className="mt-3 flex flex-wrap gap-2">{controls}</div> : null}
       </div>
 
       <div className="grid grid-cols-1 gap-4">
