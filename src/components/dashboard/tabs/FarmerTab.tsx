@@ -121,16 +121,36 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
       { totalSubmissions: 0, approved: 0, failed: 0, totalFlags: 0 }
     );
 
-    const totalInterviews = totalsFromStats.totalSubmissions || filteredSubmissions.length || safeKpis.totalInterviews;
-    const approved = totalsFromStats.approved || approvedFromSubmissions || safeKpis.approved;
-    const notApproved =
-      totalsFromStats.failed || notApprovedFromSubmissions || safeKpis.notApproved;
-    const approvalRate = totalInterviews ? approved / totalInterviews : safeKpis.approvalRate;
-    const totalFlags = totalFlagsFromFlags || totalsFromStats.totalFlags || safeKpis.totalFlags;
-    const avgFlagsPerInterview =
-      totalsFromStats.totalSubmissions > 0
-        ? totalFlags / totalsFromStats.totalSubmissions
-        : safeKpis.avgFlagsPerInterview;
+    const hasInterviewerStats = filteredInterviewerStats.length > 0;
+    const hasSubmissionData = filteredSubmissions.length > 0;
+    const hasFlagData = Object.keys(filteredFlagTotals).length > 0;
+
+    const totalInterviews = hasInterviewerStats
+      ? totalsFromStats.totalSubmissions
+      : hasSubmissionData
+        ? filteredSubmissions.length
+        : safeKpis.totalInterviews;
+    const approved = hasInterviewerStats
+      ? totalsFromStats.approved
+      : hasSubmissionData
+        ? approvedFromSubmissions
+        : safeKpis.approved;
+    const notApproved = hasInterviewerStats
+      ? totalsFromStats.failed
+      : hasSubmissionData
+        ? notApprovedFromSubmissions
+        : safeKpis.notApproved;
+    const approvalRate = totalInterviews
+      ? approved / totalInterviews
+      : safeKpis.approvalRate;
+    const totalFlags = hasFlagData
+      ? totalFlagsFromFlags
+      : hasInterviewerStats
+        ? totalsFromStats.totalFlags
+        : safeKpis.totalFlags;
+    const avgFlagsPerInterview = totalInterviews
+      ? totalFlags / totalInterviews
+      : safeKpis.avgFlagsPerInterview;
 
     return {
       totalInterviews,
