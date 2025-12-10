@@ -1,3 +1,6 @@
+// src/components/dashboard/SubmissionMap.tsx
+// FINAL VERSION — COLORS BY APPROVAL STATUS (Approved = Green, Not Approved = Red, Pending = Yellow)
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MapPin } from "lucide-react";
 import { Submission } from "@/data/mockData";
@@ -10,14 +13,14 @@ type LeafletMap = {
   fitBounds: (bounds: LeafletBounds, options?: { padding?: [number, number] }) => void;
   remove: () => void;
 };
-
 type LeafletLayer = { addTo: (map: LeafletMap) => LeafletLayer };
 type LeafletMarker = {
   bindTooltip: (html: string, options?: Record<string, unknown>) => LeafletMarker;
   addTo: (map: LeafletMap) => LeafletMarker;
   remove: () => void;
+  setStyle: (style: Record<string, unknown>) => void;
+  on: (event: string, handler: () => void) => void;
 };
-
 type LeafletNamespace = {
   map: (element: HTMLElement) => LeafletMap;
   tileLayer: (url: string, options?: Record<string, unknown>) => LeafletLayer;
@@ -31,18 +34,11 @@ interface SubmissionMapProps {
   variant?: Variant;
 }
 
-const variantColors: Record<Variant, string> = {
-  farmer: "#22c55e",
-  enterprise: "#f59e0b",
-  youth: "#06b6d4",
-};
-
 const LEAFLET_CSS = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
 const LEAFLET_JS = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
 
 function ensureLeaflet(): Promise<LeafletNamespace> {
   if (typeof window === "undefined") return Promise.reject();
-
   const existing = (window as any).L as LeafletNamespace | undefined;
   if (existing) return Promise.resolve(existing);
 
@@ -76,10 +72,7 @@ function ensureLeaflet(): Promise<LeafletNamespace> {
     script.async = true;
     script.onload = handleReady;
     script.onerror = () => reject(new Error("Failed to load Leaflet"));
-
-    if (!existingScript) {
-      document.body.appendChild(script);
-    }
+    if (!existingScript) document.body.appendChild(script);
   });
 }
 
@@ -93,7 +86,7 @@ export function SubmissionMap({
 
   const points = useMemo(
     () =>
-      (submissions || []).filter(
+      submissions.filter(
         (item) =>
           Number.isFinite(item.latitude) &&
           Number.isFinite(item.longitude) &&
@@ -104,7 +97,7 @@ export function SubmissionMap({
   );
 
   const center = useMemo<[number, number]>(() => {
-    if (!points.length) return [2, 20];
+    if (!points.length) return [-1.9, 29.9]; // Rwanda center
     const total = points.reduce(
       (acc, curr) => [acc[0] + curr.latitude, acc[1] + curr.longitude],
       [0, 0]
@@ -112,9 +105,16 @@ export function SubmissionMap({
     return [total[0] / points.length, total[1] / points.length];
   }, [points]);
 
+  // NEW: Get color based on QC status
+  const getStatusColor = (status?: string): string => {
+    const s = status?.toLowerCase().trim();
+    if (s === "approved") return "#22c55e";
+    if (s === "not approved" || s === "rejected") return "#ef4444";
+    return "#f59e0b"; // Pending or unknown
+  };
+
   useEffect(() => {
     if (!containerRef.current) return;
-
     setMapError(false);
 
     let map: LeafletMap | null = null;
@@ -125,79 +125,57 @@ export function SubmissionMap({
       .then((L) => {
         if (cancelled || !containerRef.current) return;
 
-        map = L.map(containerRef.current).setView(center, 5);
+        map = L.map(containerRef.current).setView(center, 6);
 
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          attribution: '&copy; OpenStreetMap contributors',
         }).addTo(map);
 
-        if (!map) return;
-
         points.forEach((submission) => {
-          const approvalColor = statusPill(submission.status as string);
-          const submittedOn = new Date(submission.submissionDate).toLocaleString('en-GB', {
-            dateStyle: 'medium',
-            timeStyle: 'short',
+          const color = getStatusColor(submission.status as string);
+          const submittedOn = new Date(submission.submissionDate).toLocaleDateString('en-GB', {
+            day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
           });
 
           const marker = L.circleMarker([submission.latitude, submission.longitude], {
-            radius: 7,
-            color: variantColors[variant],
-            weight: 2,
-            fillColor: variantColors[variant],
-            fillOpacity: 0.85,
-          }).bindTooltip(
+            radius: 8,
+            color: "#fff",
+            weight: 2.5,
+            fillColor: color,
+            fillOpacity: 0.9,
+          });
+
+          marker.bindTooltip(
             `
-      <div class="submission-tooltip">
-        <div class="tooltip-title">${submission.region}</div>
-        <div class="tooltip-sub">${submission.district}</div>
-
-        <div class="tooltip-row">
-          <span class="tooltip-label">Enumerator</span>
-          <span>${submission.enumerator}</span>
-        </div>
-
-        <div class="tooltip-row">
-          <span class="tooltip-label">Profile</span>
-          <span>${submission.gender} • ${submission.ageGroup}</span>
-        </div>
-
-        <div class="tooltip-row">
-          <span class="tooltip-label">Status</span>
-          <span class="tooltip-pill" style="
-            border-color:${approvalColor};
-            color:${approvalColor};
-            background-color:${approvalColor}1a;
-          ">
-            ${submission.status}
-          </span>
-        </div>
-
-        <div class="tooltip-row">
-          <span class="tooltip-label">Submitted</span>
-          <span>${submittedOn}</span>
-        </div>
-      </div>
+            <div style="font-family:system-ui,sans-serif;font-size:13px;line-height:1.4;">
+              <div style="font-weight:600;margin-bottom:4px;">${submission.district || submission.region || 'Unknown Location'}</div>
+              <div><strong>Status:</strong> 
+                <span style="padding:2px 6px;border-radius:4px;background:${color}22;color:${color};font-weight:600;">
+                  ${submission.status || 'Pending'}
+                </span>
+              </div>
+              <div><strong>Enumerator:</strong> ${submission.enumerator || 'Unknown'}</div>
+              <div><strong>Submitted:</strong> ${submittedOn}</div>
+            </div>
             `,
             {
-              className: 'submission-tooltip-wrapper',
-              direction: 'top',
-              opacity: 0.98,
+              permanent: false,
+              direction: "top",
               offset: [0, -10],
+              className: "custom-tooltip",
             }
           );
 
-          (marker as any).on('mouseover', () => marker.setStyle({ radius: 9, weight: 3 }));
-          (marker as any).on('mouseout', () => marker.setStyle({ radius: 7, weight: 2 }));
+          marker.on('mouseover', () => marker.setStyle({ radius: 11, weight: 3.5 }));
+          marker.on('mouseout', () => marker.setStyle({ radius: 8, weight: 2.5 }));
 
-          marker.addTo(map);
+          marker.addTo(map!);
           markers.push(marker);
         });
 
         if (points.length > 1) {
-          const bounds = L.latLngBounds(points.map((p) => [p.latitude, p.longitude]));
-          map.fitBounds(bounds, { padding: [32, 32] });
+          const bounds = L.latLngBounds(points.map(p => [p.latitude, p.longitude]));
+          map!.fitBounds(bounds, { padding: [40, 40] });
         }
       })
       .catch((err) => {
@@ -207,28 +185,16 @@ export function SubmissionMap({
 
     return () => {
       cancelled = true;
-      markers.forEach((m) => m.remove());
+      markers.forEach(m => m.remove());
       map?.remove();
     };
-  }, [center, points, variant]);
+  }, [points, center]);
 
-  const statusPill = (status?: string) => {
-    const normalized = status?.trim().toLowerCase();
-    if (normalized === 'approved') return '#22c55e';
-    if (normalized === 'rejected' || normalized === 'not approved') return '#ef4444';
-    return '#f59e0b';
-  };
-
-  const mapHeightClass = variant === 'youth' ? 'h-[460px]' : 'h-[380px]';
+  const mapHeightClass = variant === 'youth' ? 'h-[480px]' : 'h-[400px]';
 
   return (
     <div className="minimal-card h-full">
-      <div
-        className={cn(
-          'flex items-center gap-2 mb-3 text-sm rounded-lg px-4 py-3 border',
-          headerTone[variant]
-        )}
-      >
+      <div className={cn('flex items-center gap-2 mb-3 text-sm rounded-lg px-4 py-3 border', headerTone[variant])}>
         <MapPin className="h-4 w-4" />
         <span className="font-semibold">{title}</span>
       </div>
@@ -239,17 +205,31 @@ export function SubmissionMap({
         </div>
       ) : (
         <div className="relative">
-          <div
-            ref={containerRef}
-            className={cn('rounded-lg border border-border/60', mapHeightClass)}
-          />
+          <div ref={containerRef} className={cn('rounded-lg border border-border/60 overflow-hidden', mapHeightClass)} />
+          
           {points.length === 0 && (
-            <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground bg-background/80">
-              No submission coordinates available yet.
+            <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground bg-background/80 backdrop-blur-sm rounded-lg">
+              No GPS coordinates available
             </div>
           )}
         </div>
       )}
+
+      {/* Legend */}
+      <div className="flex justify-center gap-6 mt-4 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-green-500" />
+          Approved
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-yellow-500" />
+          Pending
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-red-500" />
+          Not Approved
+        </div>
+      </div>
     </div>
   );
 }
