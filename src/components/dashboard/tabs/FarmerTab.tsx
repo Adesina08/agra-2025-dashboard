@@ -60,10 +60,17 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
     } as const;
   }, [kpis]);
 
+  const getSubmissionCountry = (submission: FarmerData) => {
+    const rawCountry = (submission as Record<string, unknown>).dccot;
+    return typeof rawCountry === "string" && rawCountry.trim()
+      ? rawCountry
+      : submission.country;
+  };
+
   const availableCountries = useMemo(() => {
     const unique = new Set(
       submissions
-        .map((submission) => submission.country?.trim())
+        .map((submission) => getSubmissionCountry(submission)?.trim())
         .filter(
           (country): country is string =>
             !!country && !country.toLowerCase().startsWith("unknown")
@@ -75,9 +82,10 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
 
   const filteredSubmissions = useMemo(() => {
     if (countryFilter === "all") return submissions;
-    return submissions.filter(
-      (submission) => submission.country?.toLowerCase() === countryFilter.toLowerCase()
-    );
+    return submissions.filter((submission) => {
+      const country = getSubmissionCountry(submission);
+      return country?.toLowerCase() === countryFilter.toLowerCase();
+    });
   }, [countryFilter, submissions]);
 
   const filteredInterviewerStats = useMemo(() => {
@@ -113,10 +121,19 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
   }, [errorBreakdown, filteredFlagTotals]);
 
   const derivedKpis = useMemo(() => {
+    const getApprovalStatus = (submission: FarmerData) => {
+      const rawStatus = (submission as Record<string, unknown>)["QC Approval Status"];
+      return typeof rawStatus === "string" && rawStatus.trim()
+        ? rawStatus
+        : submission.status;
+    };
+
     const approvedFromSubmissions = filteredSubmissions.filter(
-      (submission) => submission.status?.toLowerCase() === "approved"
+      (submission) => getApprovalStatus(submission)?.toLowerCase() === "approved"
     ).length;
-    const notApprovedFromSubmissions = filteredSubmissions.length - approvedFromSubmissions;
+    const notApprovedFromSubmissions = filteredSubmissions.filter(
+      (submission) => getApprovalStatus(submission)?.toLowerCase() === "not approved"
+    ).length;
 
     const totalFlagsFromFlags = Object.values(filteredFlagTotals).reduce(
       (sum, value) => sum + value,
