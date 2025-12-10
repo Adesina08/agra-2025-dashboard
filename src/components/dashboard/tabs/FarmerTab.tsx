@@ -128,11 +128,19 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
         : submission.status;
     };
 
+    const normalizeStatus = (status: string | undefined | null) => {
+      const s = status?.trim().toLowerCase();
+      if (!s) return "";
+      if (s === "approved") return "approved";
+      if (s === "not approved" || s === "not_approved") return "not approved";
+      return s;
+    };
+
     const approvedFromSubmissions = filteredSubmissions.filter(
-      (submission) => getApprovalStatus(submission)?.toLowerCase() === "approved"
+      (submission) => normalizeStatus(getApprovalStatus(submission)) === "approved"
     ).length;
     const notApprovedFromSubmissions = filteredSubmissions.filter(
-      (submission) => getApprovalStatus(submission)?.toLowerCase() === "not approved"
+      (submission) => normalizeStatus(getApprovalStatus(submission)) === "not approved"
     ).length;
 
     const totalFlagsFromFlags = Object.values(filteredFlagTotals).reduce(
