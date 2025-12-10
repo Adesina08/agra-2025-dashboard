@@ -28,24 +28,37 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
 
   const hasData = !!(submissionQuality && errorBreakdown && interviewerStats && kpis);
   const safeInterviewerStats = useMemo(() => interviewerStats ?? [], [interviewerStats]);
-  const safeKpis = useMemo(
-    () =>
-      kpis ??
-      ({
+  const safeKpis = useMemo(() => {
+    if (!kpis) {
+      return {
         totalInterviews: 0,
         approved: 0,
         notApproved: 0,
         approvalRate: 0,
         totalFlags: 0,
         avgFlagsPerInterview: 0,
-        percentDuplicatePhone: null,
-        percentLOIIssues: null,
-        percentHardViolations: null,
-        ageOutsideYouthCount: null,
-        ageOutsideYouthPercent: null,
-      } as const),
-    [kpis]
-  );
+        percentDuplicatePhone: 0,
+        percentLOIIssues: 0,
+        percentHardViolations: 0,
+        ageOutsideYouthCount: 0,
+        ageOutsideYouthPercent: 0,
+      } as const;
+    }
+
+    return {
+      totalInterviews: kpis.totalInterviews ?? 0,
+      approved: kpis.approved ?? 0,
+      notApproved: kpis.notApproved ?? 0,
+      approvalRate: kpis.approvalRate ?? 0,
+      totalFlags: kpis.totalFlags ?? 0,
+      avgFlagsPerInterview: kpis.avgFlagsPerInterview ?? 0,
+      percentDuplicatePhone: kpis.percentDuplicatePhone ?? 0,
+      percentLOIIssues: kpis.percentLOIIssues ?? 0,
+      percentHardViolations: kpis.percentHardViolations ?? 0,
+      ageOutsideYouthCount: kpis.ageOutsideYouthCount ?? 0,
+      ageOutsideYouthPercent: kpis.ageOutsideYouthPercent ?? 0,
+    } as const;
+  }, [kpis]);
 
   const availableCountries = useMemo(() => {
     const unique = new Set(
@@ -124,33 +137,39 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
     const hasInterviewerStats = filteredInterviewerStats.length > 0;
     const hasSubmissionData = filteredSubmissions.length > 0;
     const hasFlagData = Object.keys(filteredFlagTotals).length > 0;
+    const noFilteredData =
+      countryFilter !== "all" && !hasInterviewerStats && !hasSubmissionData && !hasFlagData;
 
     const totalInterviews = hasInterviewerStats
       ? totalsFromStats.totalSubmissions
       : hasSubmissionData
         ? filteredSubmissions.length
-        : safeKpis.totalInterviews;
+        : noFilteredData
+          ? 0
+          : safeKpis.totalInterviews;
     const approved = hasInterviewerStats
       ? totalsFromStats.approved
       : hasSubmissionData
         ? approvedFromSubmissions
-        : safeKpis.approved;
+        : noFilteredData
+          ? 0
+          : safeKpis.approved;
     const notApproved = hasInterviewerStats
       ? totalsFromStats.failed
       : hasSubmissionData
         ? notApprovedFromSubmissions
-        : safeKpis.notApproved;
-    const approvalRate = totalInterviews
-      ? approved / totalInterviews
-      : safeKpis.approvalRate;
+        : noFilteredData
+          ? 0
+          : safeKpis.notApproved;
+    const approvalRate = totalInterviews ? approved / totalInterviews : 0;
     const totalFlags = hasFlagData
       ? totalFlagsFromFlags
       : hasInterviewerStats
         ? totalsFromStats.totalFlags
-        : safeKpis.totalFlags;
-    const avgFlagsPerInterview = totalInterviews
-      ? totalFlags / totalInterviews
-      : safeKpis.avgFlagsPerInterview;
+        : noFilteredData
+          ? 0
+          : safeKpis.totalFlags;
+    const avgFlagsPerInterview = totalInterviews ? totalFlags / totalInterviews : 0;
 
     return {
       totalInterviews,
@@ -160,7 +179,7 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
       totalFlags,
       avgFlagsPerInterview,
     };
-  }, [filteredFlagTotals, filteredInterviewerStats, filteredSubmissions, safeKpis]);
+  }, [countryFilter, filteredFlagTotals, filteredInterviewerStats, filteredSubmissions, safeKpis]);
 
   const submissionChartData = safeInterviewerStats.map((i) => ({
     name: i.enumeratorId,
