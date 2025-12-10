@@ -77,7 +77,7 @@ export function normalizeYouthRow(row: SheetRow, index: number): YouthData {
   const status = normalizeApprovalStatus(rawStatus);
 
   // NEW: GPS parsing for your format
-  const gpsRaw = pickValue(row, ['D8-Latitude', 'gps', '_gps_latitude', '_gps', 'gps_location']);
+  const gpsRaw = pickValue(row, ['D8', 'D8-Latitude', 'gps', '_gps_latitude', '_gps', 'gps_location']);
   const { lat: youthLat, lng: youthLng } = gpsRaw ? parseGpsString(gpsRaw) : { lat: 0, lng: 0 };
 
   return {
