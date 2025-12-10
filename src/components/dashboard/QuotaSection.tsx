@@ -196,16 +196,17 @@ function countAchieved(
   ignoreLocation = false
 ) {
   return submissions.reduce((sum, submission) => {
+    const submissionCountry = getSubmissionCountry(submission)?.toLowerCase();
     const matchesCountry = country
-      ? submission.country?.toLowerCase() === country.toLowerCase()
+      ? !submissionCountry || submissionCountry === country.toLowerCase()
       : true;
     if (!matchesCountry) return sum;
 
     const matchesRegion = ignoreLocation || row.region
-      ? submission.region?.toLowerCase() === row.region.toLowerCase()
+      ? submission.region?.trim().toLowerCase() === row.region.trim().toLowerCase()
       : true;
     const matchesDistrict = ignoreLocation || row.district
-      ? submission.district?.toLowerCase() === row.district.toLowerCase()
+      ? submission.district?.trim().toLowerCase() === row.district.trim().toLowerCase()
       : true;
 
     if (!matchesRegion || !matchesDistrict) return sum;
@@ -264,9 +265,11 @@ export function QuotaSection({
 
   const filteredSubmissions = useMemo(() => {
     if (isTotalFilter) return submissions;
-    return submissions.filter(
-      (submission) => getSubmissionCountry(submission)?.toLowerCase() === selectedCountry.toLowerCase()
-    );
+    return submissions.filter((submission) => {
+      const submissionCountry = getSubmissionCountry(submission);
+      if (!submissionCountry) return true;
+      return submissionCountry.toLowerCase() === selectedCountry.toLowerCase();
+    });
   }, [isTotalFilter, selectedCountry, submissions]);
 
   if (!activeConfig) {

@@ -7,7 +7,7 @@ export interface Submission {
   submissionDate: string;
   region: string;
   district: string;
-  gender: 'Male' | 'Female';
+  gender: 'Male' | 'Female' | 'Others' | 'Unknown';
   ageGroup: string;
   status: 'Approved' | 'Pending' | 'Rejected';
   latitude: number;
@@ -58,6 +58,7 @@ export interface YouthData extends Submission {
   w1?: string;
   country?: string;
   vulnerable?: boolean;
+  inWork?: boolean;
   workFocus?: string;
   outreachActivities?: string[];
 }

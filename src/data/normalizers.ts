@@ -30,6 +30,32 @@ const parseNumber = (value: string | undefined, fallback = 0): number => {
   return Number.isFinite(numeric) ? numeric : fallback;
 };
 
+const normalizeGender = (value: string): 'Male' | 'Female' | 'Others' | 'Unknown' => {
+  const normalized = value.trim().toLowerCase();
+  if (['1', 'male', 'm'].includes(normalized)) return 'Male';
+  if (['2', 'female', 'f'].includes(normalized)) return 'Female';
+  if (['3', 'other', 'others'].includes(normalized)) return 'Others';
+  return 'Unknown';
+};
+
+const normalizeAgeGroup = (value: string): string => {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return 'N/A';
+
+  // Explicit labels from the tool
+  if (normalized.includes('youth') || normalized.includes('18-35')) return 'Youth (18-35)';
+  if (normalized.includes('adult') || normalized.includes('over 35')) return 'Adult (over 35)';
+
+  // Numeric fallbacks
+  const numbers = normalized.match(/\d+/g)?.map(Number) ?? [];
+  if (numbers.length) {
+    const maxAge = Math.max(...numbers);
+    return maxAge <= 35 ? 'Youth (18-35)' : 'Adult (over 35)';
+  }
+
+  return value || 'N/A';
+};
+
 // NEW: Parses your GPS format "-2.218513 30.042789 1409.0 4.073"
 const parseGpsString = (gps: string): { lat: number; lng: number } => {
   if (!gps || typeof gps !== 'string') return { lat: 0, lng: 0 };
@@ -62,7 +88,7 @@ export function normalizeYouthRow(row: SheetRow, index: number): YouthData {
   const country = pickValue(row, ['country', 'int_country']);
   const region = pickValue(row, ['region']);
   const district = pickValue(row, ['district']);
-  const gender = pickValue(row, ['gender', 'sex', 'sex_id'], 'Unknown');
+  const gender = normalizeGender(pickValue(row, ['D4', 'gender', 'sex', 'sex_id'], 'Unknown'));
 
   // CRITICAL: "QC Approval Status" MUST be first in the list
   const rawStatus = pickValue(row, [
@@ -80,6 +106,24 @@ export function normalizeYouthRow(row: SheetRow, index: number): YouthData {
   const gpsRaw = pickValue(row, ['D8', 'D8-Latitude', 'gps', '_gps_latitude', '_gps', 'gps_location']);
   const { lat: youthLat, lng: youthLng } = gpsRaw ? parseGpsString(gpsRaw) : { lat: 0, lng: 0 };
 
+  const workResponse = pickValue(row, ['work'], '');
+  const isInWork = ['yes', 'y', 'true', '1'].includes(workResponse.trim().toLowerCase());
+  const workCategory = pickValue(row, ['rs3'], '');
+  const normalizedWorkFocus = (() => {
+    const normalized = workCategory.trim().toLowerCase();
+    if (normalized.includes('on-farm')) return 'onFarm';
+    if (normalized.includes('agri-service') || normalized.includes('agri service')) return 'agriService';
+    if (normalized.includes('agri-business') || normalized.includes('agri business')) return 'agriBusiness';
+    if (normalized.includes('trade')) return 'trade';
+    return '';
+  })();
+
+  const outreachDisability = pickValue(row, ['disability'], '').trim();
+  const workDisability = pickValue(row, ['e12'], '').trim();
+  const vulnerable = isInWork
+    ? !!(workDisability && !['7', '8'].includes(workDisability))
+    : !!outreachDisability;
+
   return {
     id: pickValue(row, ['id', 'caseid', 'case_id', 'uuid', 'KEY'], `youth-${index + 1}`),
     youthName: pickValue(row, ['youthName', 'name', 'participants'], 'Unknown youth'),
@@ -88,7 +132,7 @@ export function normalizeYouthRow(row: SheetRow, index: number): YouthData {
     region: region || 'Unknown region',
     district: district || 'Unknown district',
     gender: (gender.charAt(0).toUpperCase() + gender.slice(1)) as YouthData['gender'],
-    ageGroup: pickValue(row, ['agegroup', 'age'], '15-29'),
+    ageGroup: normalizeAgeGroup(pickValue(row, ['D3', 'agegroup', 'age'], '15-29')),
     status: status as YouthData['status'],
     latitude: youthLat,
     longitude: youthLng,
@@ -97,6 +141,10 @@ export function normalizeYouthRow(row: SheetRow, index: number): YouthData {
     trainingCompleted: pickValue(row, ['service'], '').toLowerCase().includes('training'),
     employmentStatus: pickValue(row, ['employmentStatus', 'employment_status'], 'N/A'),
     businessIdea: pickValue(row, ['businessIdea', 'service', 'chain'], 'N/A'),
+    inWork: isInWork,
+    workFocus: isInWork ? (normalizedWorkFocus as YouthData['workFocus']) : undefined,
+    vulnerable,
+    outreachActivities: [],
   };
 }
 
@@ -106,8 +154,8 @@ export function normalizeFarmerRow(row: SheetRow, index: number): FarmerData {
   const country = pickValue(row, ['dccot', 'country', 'dcountry']);
   const region = pickValue(row, ['region', 'db11', 'province']);
   const district = pickValue(row, ['district', 'db10']);
-  const gender = pickValue(row, ['gender', 'sex', 'e5'], 'Unknown');
-  const ageGroup = pickValue(row, ['agegroup', 'd6', 'age']);
+  const gender = normalizeGender(pickValue(row, ['D10', 'gender', 'sex', 'e5'], 'Unknown'));
+  const ageGroup = normalizeAgeGroup(pickValue(row, ['d6', 'agegroup', 'age']));
 
   const fm2Raw = pickValue(row, ['fm2'], '').trim();
   const cropCodes = fm2Raw ? fm2Raw.split(/\s+/) : [];
@@ -117,6 +165,8 @@ export function normalizeFarmerRow(row: SheetRow, index: number): FarmerData {
   };
   const cropsCultivated = cropCodes.map(code => FM2_CROP_MAP[code] ?? code);
   const mainCrop = cropsCultivated[0] ?? 'N/A';
+  const rawCropType = pickValue(row, ['DB19', 'db19', 'cropType', 'fm2'], mainCrop);
+  const normalizedCropType = FM2_CROP_MAP[rawCropType.trim()] ?? FM2_CROP_MAP[rawCropType.trim().toLowerCase()] ?? rawCropType || mainCrop;
 
   const cropLandFields = Array.from({ length: 15 }, (_, i) => `fm6_${i + 1}`);
   const totalFarmSize = cropLandFields
@@ -137,6 +187,8 @@ export function normalizeFarmerRow(row: SheetRow, index: number): FarmerData {
   const gpsRaw = pickValue(row, ['gps', 'gps_location', '_gps', 'gps-Latitude']);
   const { lat: farmerLat, lng: farmerLng } = gpsRaw ? parseGpsString(gpsRaw) : { lat: 0, lng: 0 };
 
+  const vulnerabilityCode = pickValue(row, ['db8', 'vulnerable'], '').trim();
+
   return {
     id: pickValue(row, ['id', 'caseid', 'case_id', 'uuid'], `farmer-${index + 1}`),
     farmerName: pickValue(row, ['farmerName', 'db2label', 'db2', 'name'], 'Unknown farmer'),
@@ -151,12 +203,13 @@ export function normalizeFarmerRow(row: SheetRow, index: number): FarmerData {
     longitude: farmerLng,
     enumerator: pickValue(row, ['enumerator', 'username', 'users', 'int_name'], 'Unknown'),
     farmSize: totalFarmSize || parseNumber(pickValue(row, ['farmSize', 'fm6_1', 'fm6']), 0),
-    cropType: mainCrop,
+    cropType: normalizedCropType,
     yieldEstimate: parseNumber(pickValue(row, ['yieldEstimate', 'fm26_1_1', 'yield']), 0),
     inputAccess: pickValue(row, ['inputAccess', 'k1', 'input_access'], 'false').toLowerCase() === 'true',
     cropsCultivated,
     isYouth: (ageGroup || '').includes('18') || (ageGroup || '').includes('35'),
     youthAttitudeScore: undefined,
+    vulnerable: !!vulnerabilityCode,
   };
 }
 

@@ -99,6 +99,13 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
     });
   }, [countryFilter, submissions]);
 
+  const quotaSubmissions = useMemo(() => {
+    if (quotaView === "work") {
+      return filteredSubmissions.filter((submission) => submission.inWork === true);
+    }
+    return filteredSubmissions.filter((submission) => submission.inWork !== true);
+  }, [filteredSubmissions, quotaView]);
+
   const filteredInterviewerStats = useMemo(() => {
     if (countryFilter === "all") return safeInterviewerStats;
     const enumeratorsInCountry = new Set(
@@ -331,7 +338,7 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
 
       <QuotaSection
         variant="youth"
-        submissions={submissions}
+        submissions={quotaSubmissions}
         selectedCountry={countryFilter}
         config={quotaTabs.find((tab) => tab.key === quotaView)?.config ?? youthInWorkQuotaConfig}
         title="Youth quota status"
