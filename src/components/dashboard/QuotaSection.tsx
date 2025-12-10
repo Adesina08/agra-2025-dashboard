@@ -5,6 +5,7 @@ import {
   type QuotaMetricKey,
   type SegmentQuotaConfig,
   type QuotaRow,
+  type QuotaMetric,
 } from "@/data/quotaData";
 import { FarmerData, EnterpriseData, YouthData } from "@/data/mockData";
 
@@ -17,6 +18,7 @@ interface QuotaSectionProps {
   config: SegmentQuotaConfig;
   title?: string;
   controls?: React.ReactNode;
+  sectionKey?: "farmer" | "youthWork" | "youthOutreach";
 }
 
 const countryLabel = (country: string) => country || "All Countries";
@@ -41,6 +43,13 @@ const cropIncludes = (cropType: string | undefined, needles: string[]) => {
   return needles.some((needle) => normalized.includes(needle));
 };
 
+const toYesFlag = (value: unknown) => {
+  if (typeof value === "string") {
+    return value.trim().toLowerCase() === "yes";
+  }
+  return Boolean(value);
+};
+
 const metricEvaluators: Record<QuotaMetricKey, (submission: SubmissionLike) => number> = {
   male: (submission) => (submission.gender?.toLowerCase() === "male" ? 1 : 0),
   female: (submission) => (submission.gender?.toLowerCase() === "female" ? 1 : 0),
@@ -57,7 +66,15 @@ const metricEvaluators: Record<QuotaMetricKey, (submission: SubmissionLike) => n
     if (cropIncludes(crop, ["maize", "soya", "soy", "groundnut", "rice"])) return 0;
     return 1;
   },
-  vulnerable: (submission) => (((submission as FarmerData) as any).vulnerable ? 1 : 0),
+  vulnerable: (submission) => {
+    if ("disability" in submission) {
+      return toYesFlag((submission as YouthData).disability) ? 1 : 0;
+    }
+    if ("vulnerable" in submission) {
+      return toYesFlag((submission as YouthData).vulnerable) ? 1 : 0;
+    }
+    return 0;
+  },
   total: () => 1,
   totalSampleYouth: (submission) => (isYouthAge((submission as FarmerData | YouthData).ageGroup) ? 1 : 0),
   totalSampleCrop2: (submission) => (cropIncludes((submission as FarmerData).cropType, ["rice"]) ? 1 : 0),
@@ -181,6 +198,40 @@ const metricEvaluators: Record<QuotaMetricKey, (submission: SubmissionLike) => n
       : 0,
 };
 
+function applyColumnRules(
+  metrics: QuotaMetric[],
+  sectionKey: QuotaSectionProps["sectionKey"],
+  selectedCountry: string,
+  isTotalFilter: boolean
+) {
+  if (isTotalFilter) return metrics;
+
+  const normalizedCountry = selectedCountry.toLowerCase();
+  const sliceAt = (key: QuotaMetricKey) => {
+    const index = metrics.findIndex((metric) => metric.key === key);
+    return index >= 0 ? metrics.slice(0, index + 1) : metrics;
+  };
+
+  switch (sectionKey) {
+    case "farmer":
+      if (normalizedCountry === "malawi") return sliceAt("groundnut");
+      if (normalizedCountry === "mozambique") return sliceAt("totalSampleYouth");
+      return metrics;
+    case "youthWork":
+      if (normalizedCountry === "malawi" || normalizedCountry === "mozambique") {
+        return sliceAt("agriBusiness");
+      }
+      return metrics;
+    case "youthOutreach":
+      if (normalizedCountry === "malawi") return sliceAt("agriBusinessOutreach");
+      if (normalizedCountry === "mozambique") return sliceAt("female");
+      if (normalizedCountry === "rwanda" || normalizedCountry === "tanzania") return sliceAt("vulnerable");
+      return metrics;
+    default:
+      return metrics;
+  }
+}
+
 function countAchieved(
   submissions: SubmissionLike[],
   row: QuotaRow,
@@ -215,6 +266,7 @@ export function QuotaSection({
   config,
   title = "Quota Progress",
   controls,
+  sectionKey,
 }: QuotaSectionProps) {
   const countryKeys = Object.keys(config.countries);
   const isTotalFilter = selectedCountry === "all";
@@ -250,6 +302,11 @@ export function QuotaSection({
   const activeConfig = isTotalFilter
     ? { metrics: allMetrics, rows: [aggregatedRow] }
     : config.countries[selectedCountry];
+
+  const metricsToDisplay = useMemo(
+    () => applyColumnRules(activeConfig?.metrics ?? [], sectionKey, selectedCountry, isTotalFilter),
+    [activeConfig?.metrics, isTotalFilter, sectionKey, selectedCountry]
+  );
 
   const filteredSubmissions = useMemo(() => {
     if (isTotalFilter) return submissions;
@@ -297,7 +354,7 @@ export function QuotaSection({
               >
                 District
               </th>
-              {activeConfig.metrics.map((metric) => (
+              {metricsToDisplay.map((metric) => (
                 <th
                   key={metric.key}
                   className="border border-border/60 bg-muted/10 px-2 py-2 text-center text-xs font-semibold uppercase text-muted-foreground"
@@ -308,7 +365,7 @@ export function QuotaSection({
               ))}
             </tr>
             <tr>
-              {activeConfig.metrics.map((metric) => (
+              {metricsToDisplay.map((metric) => (
                 <Fragment key={`${metric.key}-header`}>
                   <th
                     className="border border-border/60 bg-background px-2 py-1 text-center text-[11px] font-medium uppercase text-muted-foreground"
@@ -338,7 +395,7 @@ export function QuotaSection({
                 <td className="border border-border/60 px-3 py-2 text-foreground text-sm">
                   {row.district ?? "—"}
                 </td>
-                {activeConfig.metrics.map((metric) => {
+                {metricsToDisplay.map((metric) => {
                   const targetValue = row.targets[metric.key] ?? 0;
                   const achievedValue = countAchieved(
                     filteredSubmissions,

@@ -260,6 +260,7 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
         selectedCountry={countryFilter}
         config={farmerQuotaConfig}
         title="Farmer quota status"
+        sectionKey="farmer"
       />
 
       {/* NEW: Real Map with Markers - Updates with country filter */}

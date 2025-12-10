@@ -57,6 +57,7 @@ export interface YouthData extends Submission {
   businessIdea: string;
   country?: string;
   vulnerable?: boolean;
+  disability?: string;
   workFocus?: string;
   outreachActivities?: string[];
 }
@@ -305,6 +306,7 @@ function generateYouthData(count: number): YouthData[] {
       businessIdea: businessIdeas[Math.floor(Math.random() * businessIdeas.length)],
       country,
       vulnerable: Math.random() > 0.7,
+      disability: Math.random() > 0.8 ? "Yes" : "No",
       workFocus: youthWorkFocuses[Math.floor(Math.random() * youthWorkFocuses.length)],
       outreachActivities: youthOutreachActivities.filter(() => Math.random() > 0.7),
     });

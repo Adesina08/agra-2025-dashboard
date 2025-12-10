@@ -62,7 +62,7 @@ export function normalizeYouthRow(row: SheetRow, index: number): YouthData {
   const country = pickValue(row, ['country', 'int_country']);
   const region = pickValue(row, ['region']);
   const district = pickValue(row, ['district']);
-  const gender = pickValue(row, ['gender', 'sex', 'sex_id'], 'Unknown');
+  const gender = pickValue(row, ['gender', 'sex', 'sex_id', 'D4', 'd4'], 'Unknown');
 
   // CRITICAL: "QC Approval Status" MUST be first in the list
   const rawStatus = pickValue(row, [
@@ -97,6 +97,7 @@ export function normalizeYouthRow(row: SheetRow, index: number): YouthData {
     trainingCompleted: pickValue(row, ['service'], '').toLowerCase().includes('training'),
     employmentStatus: pickValue(row, ['employmentStatus', 'employment_status'], 'N/A'),
     businessIdea: pickValue(row, ['businessIdea', 'service', 'chain'], 'N/A'),
+    disability: pickValue(row, ['disability', 'disabilities', 'vulnerable'], '').toString(),
   };
 }
 
