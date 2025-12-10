@@ -1,5 +1,5 @@
 // src/data/normalizers.ts
-// FINAL VERSION — WORKS PERFECTLY WITH YOUR DATASET
+// FINAL VERSION WITH GPS STRING PARSING
 
 import { FarmerData, EnterpriseData, YouthData } from './mockData';
 import { SheetRow } from '@/lib/googleSheets';
@@ -30,6 +30,20 @@ const parseNumber = (value: string | undefined, fallback = 0): number => {
   return Number.isFinite(numeric) ? numeric : fallback;
 };
 
+// NEW: Parses your GPS format "-2.218513 30.042789 1409.0 4.073"
+const parseGpsString = (gps: string): { lat: number; lng: number } => {
+  if (!gps || typeof gps !== 'string') return { lat: 0, lng: 0 };
+  const parts = gps.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    const lat = parseFloat(parts[0]);
+    const lng = parseFloat(parts[1]);
+    if (!isNaN(lat) && !isNaN(lng)) {
+      return { lat, lng };
+    }
+  }
+  return { lat: 0, lng: 0 };
+};
+
 // Correctly handles your real text column: "Approved" or "Not Approved"
 const normalizeApprovalStatus = (value: string): 'Approved' | 'Not Approved' | 'Pending' => {
   const val = String(value || '').trim();
@@ -42,7 +56,7 @@ const normalizeApprovalStatus = (value: string): 'Approved' | 'Not Approved' | '
 export const normalizeSubmissionDate = (row: SheetRow) =>
   pickValue(row, ['SubmissionDate', 'submission_date', 'submissiondate', 'today', 'start', 'starttime']);
 
-// YOUTH NORMALIZER — FIXED
+// YOUTH NORMALIZER — FIXED WITH GPS
 export function normalizeYouthRow(row: SheetRow, index: number): YouthData {
   const submissionDate = normalizeSubmissionDate(row);
   const country = pickValue(row, ['country', 'int_country']);
@@ -62,6 +76,10 @@ export function normalizeYouthRow(row: SheetRow, index: number): YouthData {
 
   const status = normalizeApprovalStatus(rawStatus);
 
+  // NEW: GPS parsing for your format
+  const gpsRaw = pickValue(row, ['D8-Latitude', 'gps', '_gps_latitude', '_gps', 'gps_location']);
+  const { lat: youthLat, lng: youthLng } = gpsRaw ? parseGpsString(gpsRaw) : { lat: 0, lng: 0 };
+
   return {
     id: pickValue(row, ['id', 'caseid', 'case_id', 'uuid', 'KEY'], `youth-${index + 1}`),
     youthName: pickValue(row, ['youthName', 'name', 'participants'], 'Unknown youth'),
@@ -72,8 +90,8 @@ export function normalizeYouthRow(row: SheetRow, index: number): YouthData {
     gender: (gender.charAt(0).toUpperCase() + gender.slice(1)) as YouthData['gender'],
     ageGroup: pickValue(row, ['agegroup', 'age'], '15-29'),
     status: status as YouthData['status'],
-    latitude: parseNumber(pickValue(row, ['D8-Latitude', 'gps-Latitude', '-Latitude', '_gps_latitude'])),
-    longitude: parseNumber(pickValue(row, ['D8-Longitude', 'gps-Longitude', '-Longitude', '_gps_longitude'])),
+    latitude: youthLat,
+    longitude: youthLng,
     enumerator: pickValue(row, ['enumerator', 'users', 'partner_id', 'int_name', 'enu_id'], 'Unknown'),
     educationLevel: pickValue(row, ['educationLevel', 'education', 'education_level'], 'N/A'),
     trainingCompleted: pickValue(row, ['service'], '').toLowerCase().includes('training'),
@@ -82,7 +100,7 @@ export function normalizeYouthRow(row: SheetRow, index: number): YouthData {
   };
 }
 
-// FARMER NORMALIZER — FIXED
+// FARMER NORMALIZER — FIXED WITH GPS
 export function normalizeFarmerRow(row: SheetRow, index: number): FarmerData {
   const submissionDate = normalizeSubmissionDate(row);
   const country = pickValue(row, ['dccot', 'country', 'dcountry']);
@@ -115,6 +133,10 @@ export function normalizeFarmerRow(row: SheetRow, index: number): FarmerData {
   ], '');
   const status = normalizeApprovalStatus(rawStatus);
 
+  // NEW: GPS parsing for your format
+  const gpsRaw = pickValue(row, ['gps', 'gps_location', '_gps', 'gps-Latitude']);
+  const { lat: farmerLat, lng: farmerLng } = gpsRaw ? parseGpsString(gpsRaw) : { lat: 0, lng: 0 };
+
   return {
     id: pickValue(row, ['id', 'caseid', 'case_id', 'uuid'], `farmer-${index + 1}`),
     farmerName: pickValue(row, ['farmerName', 'db2label', 'db2', 'name'], 'Unknown farmer'),
@@ -125,8 +147,8 @@ export function normalizeFarmerRow(row: SheetRow, index: number): FarmerData {
     gender: (gender.charAt(0).toUpperCase() + gender.slice(1)) as FarmerData['gender'],
     ageGroup: ageGroup || 'N/A',
     status: status as FarmerData['status'],
-    latitude: parseNumber(pickValue(row, ['gps-Latitude', '-Latitude'])),
-    longitude: parseNumber(pickValue(row, ['gps-Longitude', '-Longitude'])),
+    latitude: farmerLat,
+    longitude: farmerLng,
     enumerator: pickValue(row, ['enumerator', 'username', 'users', 'int_name'], 'Unknown'),
     farmSize: totalFarmSize || parseNumber(pickValue(row, ['farmSize', 'fm6_1', 'fm6']), 0),
     cropType: mainCrop,
@@ -138,7 +160,7 @@ export function normalizeFarmerRow(row: SheetRow, index: number): FarmerData {
   };
 }
 
-// ENTERPRISE NORMALIZER — FIXED
+// ENTERPRISE NORMALIZER — FIXED WITH GPS
 export function normalizeEnterpriseRow(row: SheetRow, index: number): EnterpriseData {
   const submissionDate = normalizeSubmissionDate(row);
   const country = pickValue(row, ['A1_cal', 'country']);
@@ -156,6 +178,10 @@ export function normalizeEnterpriseRow(row: SheetRow, index: number): Enterprise
   ], '');
   const status = normalizeApprovalStatus(rawStatus);
 
+  // NEW: GPS parsing for your format
+  const gpsRaw = pickValue(row, ['outlet_gps', 'gps', '_gps', 'gps_location']);
+  const { lat: entLat, lng: entLng } = gpsRaw ? parseGpsString(gpsRaw) : { lat: 0, lng: 0 };
+
   return {
     id: pickValue(row, ['id', 'caseid', 'case_id', 'id_num'], `enterprise-${index + 1}`),
     enterpriseName: pickValue(row, ['enterpriseName', 'db8_q', 'db8_1', 'a2', 'name'], 'Unknown enterprise'),
@@ -166,8 +192,8 @@ export function normalizeEnterpriseRow(row: SheetRow, index: number): Enterprise
     gender: (gender.charAt(0).toUpperCase() + gender.slice(1)) as EnterpriseData['gender'],
     ageGroup: pickValue(row, ['agegroup', 'a3_1', 'years_operating'], 'N/A'),
     status: status as EnterpriseData['status'],
-    latitude: parseNumber(pickValue(row, ['lat', 'latitude', 'gps_lat', 'd8-latitude'])),
-    longitude: parseNumber(pickValue(row, ['lon', 'longitude', 'gps_lon', 'd8-longitude'])),
+    latitude: entLat,
+    longitude: entLng,
     enumerator: pickValue(row, ['enumerator', 'int_name', 'survey_firm'], 'Unknown'),
     businessType: pickValue(row, ['businessType', 'a4', 'a2', 'sector'], 'N/A'),
     employees: parseNumber(pickValue(row, ['employees', 'b5_q1', 'b5_q2']), 0),
