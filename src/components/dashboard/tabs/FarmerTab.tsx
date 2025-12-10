@@ -165,13 +165,6 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
     const noFilteredData =
       countryFilter !== "all" && !hasInterviewerStats && !hasSubmissionData && !hasFlagData;
 
-    const totalInterviews = hasInterviewerStats
-      ? totalsFromStats.totalSubmissions
-      : hasSubmissionData
-        ? filteredSubmissions.length
-        : noFilteredData
-          ? 0
-          : safeKpis.totalInterviews;
     const approved = hasInterviewerStats
       ? totalsFromStats.approved
       : hasSubmissionData
@@ -186,6 +179,7 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
         : noFilteredData
           ? 0
           : safeKpis.notApproved;
+    const totalInterviews = approved + notApproved;
     const approvalRate = totalInterviews ? approved / totalInterviews : 0;
     const totalFlags = hasFlagData
       ? totalFlagsFromFlags
