@@ -64,6 +64,120 @@ const metricEvaluators: Record<QuotaMetricKey, (submission: SubmissionLike) => n
   chili: (submission) => (cropIncludes((submission as FarmerData).cropType, ["chili", "chilli"]) ? 1 : 0),
   vegetable: (submission) => (cropIncludes((submission as FarmerData).cropType, ["vegetable"]) ? 1 : 0),
   poultry: (submission) => (cropIncludes((submission as FarmerData).cropType, ["poultry"]) ? 1 : 0),
+  onFarm: (submission) => (((submission as YouthData).workFocus || "").toLowerCase() === "onfarm" ? 1 : 0),
+  agriService: (submission) => (((submission as YouthData).workFocus || "").toLowerCase() === "agriservice" ? 1 : 0),
+  agriBusiness: (submission) => (((submission as YouthData).workFocus || "").toLowerCase() === "agribusiness" ? 1 : 0),
+  trade: (submission) => (((submission as YouthData).workFocus || "").toLowerCase() === "trade" ? 1 : 0),
+  extension: (submission) => (((submission as YouthData).workFocus || "").toLowerCase() === "extension" ? 1 : 0),
+  training: (submission) => (((submission as YouthData).workFocus || "").toLowerCase() === "training" ? 1 : 0),
+  accessToFinance: (submission) =>
+    Array.isArray((submission as YouthData).outreachActivities)
+      ? ((submission as YouthData).outreachActivities || []).includes("accessToFinance")
+        ? 1
+        : 0
+      : 0,
+  agroDealerTraining: (submission) =>
+    Array.isArray((submission as YouthData).outreachActivities)
+      ? ((submission as YouthData).outreachActivities || []).includes("agroDealerTraining")
+        ? 1
+        : 0
+      : 0,
+  incubationBds: (submission) =>
+    Array.isArray((submission as YouthData).outreachActivities)
+      ? ((submission as YouthData).outreachActivities || []).includes("incubationBds")
+        ? 1
+        : 0
+      : 0,
+  marketLinkages: (submission) =>
+    Array.isArray((submission as YouthData).outreachActivities)
+      ? ((submission as YouthData).outreachActivities || []).includes("marketLinkages")
+        ? 1
+        : 0
+      : 0,
+  trainingInternship: (submission) =>
+    Array.isArray((submission as YouthData).outreachActivities)
+      ? ((submission as YouthData).outreachActivities || []).includes("trainingInternship")
+        ? 1
+        : 0
+      : 0,
+  internship: (submission) =>
+    Array.isArray((submission as YouthData).outreachActivities)
+      ? ((submission as YouthData).outreachActivities || []).includes("internship")
+        ? 1
+        : 0
+      : 0,
+  extensionEvent: (submission) =>
+    Array.isArray((submission as YouthData).outreachActivities)
+      ? ((submission as YouthData).outreachActivities || []).includes("extensionEvent")
+        ? 1
+        : 0
+      : 0,
+  onFarmCsaTraining: (submission) =>
+    Array.isArray((submission as YouthData).outreachActivities)
+      ? ((submission as YouthData).outreachActivities || []).includes("onFarmCsaTraining")
+        ? 1
+        : 0
+      : 0,
+  entrepreneurshipTraining: (submission) =>
+    Array.isArray((submission as YouthData).outreachActivities)
+      ? ((submission as YouthData).outreachActivities || []).includes("entrepreneurshipTraining")
+        ? 1
+        : 0
+      : 0,
+  mentorshipSupport: (submission) =>
+    Array.isArray((submission as YouthData).outreachActivities)
+      ? ((submission as YouthData).outreachActivities || []).includes("mentorshipSupport")
+        ? 1
+        : 0
+      : 0,
+  grainAggregation: (submission) =>
+    Array.isArray((submission as YouthData).outreachActivities)
+      ? ((submission as YouthData).outreachActivities || []).includes("grainAggregation")
+        ? 1
+        : 0
+      : 0,
+  marketing: (submission) =>
+    Array.isArray((submission as YouthData).outreachActivities)
+      ? ((submission as YouthData).outreachActivities || []).includes("marketing")
+        ? 1
+        : 0
+      : 0,
+  seedsDistribution: (submission) =>
+    Array.isArray((submission as YouthData).outreachActivities)
+      ? ((submission as YouthData).outreachActivities || []).includes("seedsDistribution")
+        ? 1
+        : 0
+      : 0,
+  agriBusinessOutreach: (submission) =>
+    Array.isArray((submission as YouthData).outreachActivities)
+      ? ((submission as YouthData).outreachActivities || []).includes("agriBusinessOutreach")
+        ? 1
+        : 0
+      : 0,
+  caaOrientation: (submission) =>
+    Array.isArray((submission as YouthData).outreachActivities)
+      ? ((submission as YouthData).outreachActivities || []).includes("caaOrientation")
+        ? 1
+        : 0
+      : 0,
+  salesIncrease: (submission) =>
+    Array.isArray((submission as YouthData).outreachActivities)
+      ? ((submission as YouthData).outreachActivities || []).includes("salesIncrease")
+        ? 1
+        : 0
+      : 0,
+  fieldExchangeDemo: (submission) =>
+    Array.isArray((submission as YouthData).outreachActivities)
+      ? ((submission as YouthData).outreachActivities || []).includes("fieldExchangeDemo")
+        ? 1
+        : 0
+      : 0,
+  others: (submission) =>
+    Array.isArray((submission as YouthData).outreachActivities)
+      ? ((submission as YouthData).outreachActivities || []).includes("others")
+        ? 1
+        : 0
+      : 0,
 };
 
 function countAchieved(

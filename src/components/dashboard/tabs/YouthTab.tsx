@@ -9,8 +9,9 @@ import { YouthData } from "@/data/mockData";
 import { SubmissionMap } from "../SubmissionMap"; // NEW IMPORT
 import { KPI_BY_CODE } from "@/data/kpiDefinitions";
 import { CountryFilter } from "../CountryFilter";
-import { youthQuotaConfig } from "@/data/quotaData";
+import { youthInWorkQuotaConfig, youthOutreachQuotaConfig } from "@/data/quotaData";
 import { QuotaSection } from "../QuotaSection";
+import { cn } from "@/lib/utils";
 
 function formatPercent(value: number | null | undefined, digits = 1) {
   if (value == null) return "—";
@@ -25,6 +26,15 @@ interface YouthTabProps {
 export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
   const { loading, error, submissionQuality, errorBreakdown, interviewerStats, kpis } = qcData;
   const [countryFilter, setCountryFilter] = useState<string>("all");
+  const [quotaView, setQuotaView] = useState<"work" | "outreach">("work");
+
+  const quotaTabs = useMemo(
+    () => [
+      { key: "work" as const, label: "Youth in Work", config: youthInWorkQuotaConfig },
+      { key: "outreach" as const, label: "Outreach", config: youthOutreachQuotaConfig },
+    ],
+    []
+  );
 
   const hasData = !!(submissionQuality && errorBreakdown && interviewerStats && kpis);
   const safeInterviewerStats = useMemo(() => interviewerStats ?? [], [interviewerStats]);
@@ -55,9 +65,11 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
             !!country && !country.toLowerCase().startsWith("unknown")
         )
     );
-    Object.keys(youthQuotaConfig.countries).forEach((country) => unique.add(country));
+    quotaTabs.forEach(({ config }) => {
+      Object.keys(config.countries).forEach((country) => unique.add(country));
+    });
     return Array.from(unique).sort((a, b) => a.localeCompare(b));
-  }, [submissions]);
+  }, [quotaTabs, submissions]);
 
   const filteredSubmissions = useMemo(() => {
     if (countryFilter === "all") return submissions;
@@ -253,13 +265,36 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
         />
       </div>
 
-      <QuotaSection
-        variant="youth"
-        submissions={submissions}
-        selectedCountry={countryFilter}
-        config={youthQuotaConfig}
-        title="Youth quota status"
-      />
+      <div className="space-y-3">
+        <div className="flex flex-wrap gap-2 items-center justify-between">
+          <div className="flex gap-2">
+            {quotaTabs.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setQuotaView(tab.key)}
+                className={cn(
+                  "px-3 py-2 text-sm font-semibold rounded-lg border transition-colors",
+                  quotaView === tab.key
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-card text-foreground border-border hover:bg-muted"
+                )}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <span className="text-xs text-muted-foreground">Quota tables update with the country filter.</span>
+        </div>
+
+        <QuotaSection
+          variant="youth"
+          submissions={submissions}
+          selectedCountry={countryFilter}
+          config={quotaTabs.find((tab) => tab.key === quotaView)?.config ?? youthInWorkQuotaConfig}
+          title="Youth quota status"
+        />
+      </div>
 
       {/* NEW: Real Map with Markers - Updates with country filter */}
       <SubmissionMap
