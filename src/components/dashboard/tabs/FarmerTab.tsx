@@ -9,6 +9,8 @@ import { FarmerData } from "@/data/mockData";
 import { SubmissionMap } from "../SubmissionMap"; // NEW IMPORT
 import { KPI_BY_CODE } from "@/data/kpiDefinitions";
 import { CountryFilter } from "../CountryFilter";
+import { farmerQuotaConfig } from "@/data/quotaData";
+import { QuotaSection } from "../QuotaSection";
 
 function formatPercent(value: number | null | undefined, digits = 1) {
   if (value == null) return "—";
@@ -54,6 +56,7 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
             !!country && !country.toLowerCase().startsWith("unknown")
         )
     );
+    Object.keys(farmerQuotaConfig.countries).forEach((country) => unique.add(country));
     return Array.from(unique).sort((a, b) => a.localeCompare(b));
   }, [submissions]);
 
@@ -139,14 +142,14 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
     };
   }, [filteredFlagTotals, filteredInterviewerStats, filteredSubmissions, safeKpis]);
 
-  const submissionChartData = filteredInterviewerStats.map((i) => ({
+  const submissionChartData = safeInterviewerStats.map((i) => ({
     name: i.enumeratorId,
     approved: i.approvedInterviews,
     notApproved: i.failedInterviews,
     flagsByKpi: i.flagsByKpi,
   }));
 
-  const productivityData = filteredInterviewerStats.map((i) => ({
+  const productivityData = safeInterviewerStats.map((i) => ({
     name: i.enumeratorId,
     totalInterviews: i.totalSubmissions,
     approved: i.approvedInterviews,
@@ -251,8 +254,16 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
         />
       </div>
 
+      <QuotaSection
+        variant="farmer"
+        submissions={submissions}
+        selectedCountry={countryFilter}
+        config={farmerQuotaConfig}
+        title="Farmer quota status"
+      />
+
       {/* NEW: Real Map with Markers - Updates with country filter */}
-      <SubmissionMap 
+      <SubmissionMap
         submissions={filteredSubmissions.map(s => ({
           latitude: s.latitude ?? 0,
           longitude: s.longitude ?? 0,
