@@ -105,7 +105,6 @@ export function SubmissionMap({
     return [total[0] / points.length, total[1] / points.length];
   }, [points]);
 
-  // NEW: Get color based on QC status
   const getStatusColor = (status?: string): string => {
     const s = status?.toLowerCase().trim();
     if (s === "approved") return "#22c55e";
@@ -133,41 +132,56 @@ export function SubmissionMap({
 
         points.forEach((submission) => {
           const color = getStatusColor(submission.status as string);
-          const submittedOn = new Date(submission.submissionDate).toLocaleDateString('en-GB', {
-            day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+          const submittedOn = new Date(submission.submissionDate).toLocaleDateString("en-GB", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
           });
 
+          const tooltipTitle = submission.district || submission.region || "Unknown location";
+          const statusLabel = submission.status || "Pending";
+
           const marker = L.circleMarker([submission.latitude, submission.longitude], {
-            radius: 8,
-            color: "#fff",
-            weight: 2.5,
+            radius: 9,
+            color: color,
+            weight: 2.25,
             fillColor: color,
-            fillOpacity: 0.9,
+            fillOpacity: 0.85,
+            opacity: 0.85,
           });
 
           marker.bindTooltip(
             `
-            <div style="font-family:system-ui,sans-serif;font-size:13px;line-height:1.4;">
-              <div style="font-weight:600;margin-bottom:4px;">${submission.district || submission.region || 'Unknown Location'}</div>
-              <div><strong>Status:</strong> 
-                <span style="padding:2px 6px;border-radius:4px;background:${color}22;color:${color};font-weight:600;">
-                  ${submission.status || 'Pending'}
+            <div class="submission-tooltip">
+              <div class="tooltip-title">${tooltipTitle}</div>
+              <div class="tooltip-row">
+                <span class="tooltip-label">Status</span>
+                <span class="tooltip-pill" style="background:${color}15;color:${color};border-color:${color}45;">
+                  ${statusLabel}
                 </span>
               </div>
-              <div><strong>Enumerator:</strong> ${submission.enumerator || 'Unknown'}</div>
-              <div><strong>Submitted:</strong> ${submittedOn}</div>
+              <div class="tooltip-row">
+                <span class="tooltip-label">Enumerator</span>
+                <span>${submission.enumerator || "Unknown"}</span>
+              </div>
+              <div class="tooltip-row">
+                <span class="tooltip-label">Submitted</span>
+                <span>${submittedOn}</span>
+              </div>
             </div>
             `,
             {
               permanent: false,
               direction: "top",
               offset: [0, -10],
-              className: "custom-tooltip",
+              className: "submission-tooltip-wrapper",
             }
           );
 
-          marker.on('mouseover', () => marker.setStyle({ radius: 11, weight: 3.5 }));
-          marker.on('mouseout', () => marker.setStyle({ radius: 8, weight: 2.5 }));
+          marker.on("mouseover", () => marker.setStyle({ radius: 12, weight: 3.25, fillOpacity: 1, opacity: 1 }));
+          marker.on("mouseout", () => marker.setStyle({ radius: 9, weight: 2.25, fillOpacity: 0.85, opacity: 0.85 }));
 
           marker.addTo(map!);
           markers.push(marker);
