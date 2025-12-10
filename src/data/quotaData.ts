@@ -17,6 +17,8 @@ export type QuotaMetricKey =
   | "vegetable"
   | "poultry";
 
+export type YouthQuotaView = "inWork" | "outreach";
+
 export interface QuotaMetric {
   key: QuotaMetricKey;
   label: string;
@@ -423,12 +425,23 @@ const starterRows = (region: string, total: number): QuotaRow => ({
   },
 });
 
-export const youthQuotaConfig: SegmentQuotaConfig = {
-  countries: {
-    Ghana: { metrics: sharedQuotaMetrics, rows: [starterRows("Ghana", 420)] },
-    Malawi: { metrics: sharedQuotaMetrics, rows: [starterRows("Malawi", 360)] },
-    Mozambique: { metrics: sharedQuotaMetrics, rows: [starterRows("Mozambique", 310)] },
-    Rwanda: { metrics: sharedQuotaMetrics, rows: [starterRows("Rwanda", 280)] },
-    Tanzania: { metrics: sharedQuotaMetrics, rows: [starterRows("Tanzania", 330)] },
+export const youthQuotaConfig: Record<YouthQuotaView, SegmentQuotaConfig> = {
+  inWork: {
+    countries: {
+      Ghana: { metrics: sharedQuotaMetrics, rows: [starterRows("Ghana", 420)] },
+      Malawi: { metrics: sharedQuotaMetrics, rows: [starterRows("Malawi", 360)] },
+      Mozambique: { metrics: sharedQuotaMetrics, rows: [starterRows("Mozambique", 310)] },
+      Rwanda: { metrics: sharedQuotaMetrics, rows: [starterRows("Rwanda", 280)] },
+      Tanzania: { metrics: sharedQuotaMetrics, rows: [starterRows("Tanzania", 330)] },
+    },
+  },
+  outreach: {
+    countries: {
+      Ghana: { metrics: sharedQuotaMetrics, rows: [starterRows("Ghana", 420)] },
+      Malawi: { metrics: sharedQuotaMetrics, rows: [starterRows("Malawi", 360)] },
+      Mozambique: { metrics: sharedQuotaMetrics, rows: [starterRows("Mozambique", 310)] },
+      Rwanda: { metrics: sharedQuotaMetrics, rows: [starterRows("Rwanda", 280)] },
+      Tanzania: { metrics: sharedQuotaMetrics, rows: [starterRows("Tanzania", 330)] },
+    },
   },
 };

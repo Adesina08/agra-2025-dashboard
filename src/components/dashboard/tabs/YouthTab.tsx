@@ -9,8 +9,9 @@ import { YouthData } from "@/data/mockData";
 import { SubmissionMap } from "../SubmissionMap"; // NEW IMPORT
 import { KPI_BY_CODE } from "@/data/kpiDefinitions";
 import { CountryFilter } from "../CountryFilter";
-import { youthQuotaConfig } from "@/data/quotaData";
+import { youthQuotaConfig, type YouthQuotaView } from "@/data/quotaData";
 import { QuotaSection } from "../QuotaSection";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 function formatPercent(value: number | null | undefined, digits = 1) {
   if (value == null) return "—";
@@ -25,6 +26,7 @@ interface YouthTabProps {
 export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
   const { loading, error, submissionQuality, errorBreakdown, interviewerStats, kpis } = qcData;
   const [countryFilter, setCountryFilter] = useState<string>("all");
+  const [quotaView, setQuotaView] = useState<YouthQuotaView>("inWork");
 
   const hasData = !!(submissionQuality && errorBreakdown && interviewerStats && kpis);
   const safeInterviewerStats = useMemo(() => interviewerStats ?? [], [interviewerStats]);
@@ -55,7 +57,9 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
             !!country && !country.toLowerCase().startsWith("unknown")
         )
     );
-    Object.keys(youthQuotaConfig.countries).forEach((country) => unique.add(country));
+    Object.values(youthQuotaConfig).forEach((config) => {
+      Object.keys(config.countries).forEach((country) => unique.add(country));
+    });
     return Array.from(unique).sort((a, b) => a.localeCompare(b));
   }, [submissions]);
 
@@ -253,13 +257,22 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
         />
       </div>
 
-      <QuotaSection
-        variant="youth"
-        submissions={submissions}
-        selectedCountry={countryFilter}
-        config={youthQuotaConfig}
-        title="Youth quota status"
-      />
+      <div className="space-y-3">
+        <Tabs value={quotaView} onValueChange={(value) => setQuotaView(value as YouthQuotaView)}>
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="inWork">Youth in Work</TabsTrigger>
+            <TabsTrigger value="outreach">Outreach</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        <QuotaSection
+          variant="youth"
+          submissions={submissions}
+          selectedCountry={countryFilter}
+          config={youthQuotaConfig[quotaView]}
+          title={quotaView === "inWork" ? "Youth In Work quotas" : "Outreach quotas"}
+        />
+      </div>
 
       {/* NEW: Real Map with Markers - Updates with country filter */}
       <SubmissionMap
