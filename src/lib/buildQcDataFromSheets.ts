@@ -28,6 +28,7 @@ export interface InterviewerStats {
   totalFlags: number;
   flagsPerInterview: number;
   flagsByKpi?: Record<string, number>;
+  country?: string;
 }
 
 export interface KpiCards {
@@ -74,6 +75,11 @@ export function buildQcDataFromSheets(
   detailValues: string[][],
   surveyTypeLabelForDetail: string
 ): BuiltQcData {
+  const findHeaderIndex = (header: string[], candidates: string[]) =>
+    header.findIndex((h) =>
+      candidates.some((candidate) => h?.toLowerCase() === candidate.toLowerCase())
+    );
+
   // 1) SUMMARY SHEET
   const [summaryHeader, ...summaryRows] = summaryValues;
   const idxKPI = summaryHeader.indexOf("KPI");
@@ -141,19 +147,23 @@ export function buildQcDataFromSheets(
 
   // 2) ENUM SHEET
   const [enumHeader, ...enumRows] = enumValues;
-  const idxEnumId = enumHeader.indexOf("EnumeratorID");
+  const idxEnumId = findHeaderIndex(enumHeader, ["EnumeratorID", "INT_NAME"]);
   const idxTotalSubs = enumHeader.indexOf("TotalSubmissions");
   const idxTotalFlags = enumHeader.indexOf("TotalFlags");
+  const idxEnumCountry = enumHeader.findIndex(
+    (h) => h && h.toLowerCase() === "country"
+  );
 
   // 3) DETAIL SHEET
   const [detailHeader, ...detailRows] = detailValues;
   const idxDSurveyType = detailHeader.indexOf("SurveyType");
-  const idxDEnumId = detailHeader.indexOf("EnumeratorID");
+  const idxDEnumId = findHeaderIndex(detailHeader, ["EnumeratorID", "INT_NAME"]);
   const idxDApproval = detailHeader.indexOf("Approval");
   const idxDKpi = detailHeader.indexOf("KPI");
 
   const failedByEnumerator: Record<string, number> = {};
   const flagsByEnumerator: Record<string, Record<string, number>> = {};
+  const normalizeId = (value: string | undefined) => value?.trim() || "";
   for (const row of detailRows) {
     // If SurveyType column exists, filter; otherwise assume this detail sheet is only for that segment
     const surveyType =
@@ -167,7 +177,7 @@ export function buildQcDataFromSheets(
       normalizedApproval.includes("rejected");
     if (!isNotApproved) continue;
 
-    const id = row[idxDEnumId] || "";
+    const id = normalizeId(row[idxDEnumId]);
     const kpiCode = idxDKpi >= 0 ? row[idxDKpi] || "" : "";
     if (!id) continue;
 
@@ -182,7 +192,7 @@ export function buildQcDataFromSheets(
   const interviewerStats: InterviewerStats[] = enumRows
     .filter((row) => row[idxEnumId])
     .map((row) => {
-      const enumeratorId = row[idxEnumId];
+      const enumeratorId = normalizeId(row[idxEnumId]);
       const totalSubmissions = parseNumber(row[idxTotalSubs]);
       const totalFlags = parseNumber(row[idxTotalFlags]); // per-flag as you described
       const failedInterviews = failedByEnumerator[enumeratorId] || 0;
@@ -203,6 +213,7 @@ export function buildQcDataFromSheets(
         totalFlags,
         flagsPerInterview,
         flagsByKpi: kpiCounts,
+        country: idxEnumCountry >= 0 ? row[idxEnumCountry] : undefined,
       };
     });
 

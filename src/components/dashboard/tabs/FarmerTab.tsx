@@ -17,6 +17,18 @@ function formatPercent(value: number | null | undefined, digits = 1) {
   return `${(value * 100).toFixed(digits)}%`;
 }
 
+const normalizeString = (value?: string | null) => value?.trim().toLowerCase() || "";
+
+const getFarmerEnumeratorId = (submission: FarmerData) => {
+  const record = submission as Record<string, unknown>;
+  const rawUsername = record.username ?? record.USERNAME;
+  if (typeof rawUsername === "string" && rawUsername.trim()) {
+    return rawUsername;
+  }
+
+  return submission.enumerator;
+};
+
 interface FarmerTabProps {
   submissions?: FarmerData[];
   qcData: UseSegmentQcDataResult;
@@ -84,17 +96,21 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
     if (countryFilter === "all") return submissions;
     return submissions.filter((submission) => {
       const country = getSubmissionCountry(submission);
-      return country?.toLowerCase() === countryFilter.toLowerCase();
+      return normalizeString(country) === normalizeString(countryFilter);
     });
   }, [countryFilter, submissions]);
 
   const filteredInterviewerStats = useMemo(() => {
     if (countryFilter === "all") return safeInterviewerStats;
     const enumeratorsInCountry = new Set(
-      filteredSubmissions.map((submission) => submission.enumerator).filter(Boolean)
+      filteredSubmissions
+        .map((submission) => normalizeString(getFarmerEnumeratorId(submission)))
+        .filter(Boolean)
     );
     if (!enumeratorsInCountry.size) return [];
-    return safeInterviewerStats.filter((stat) => enumeratorsInCountry.has(stat.enumeratorId));
+    return safeInterviewerStats.filter((stat) =>
+      enumeratorsInCountry.has(normalizeString(stat.enumeratorId))
+    );
   }, [countryFilter, filteredSubmissions, safeInterviewerStats]);
 
   const filteredFlagTotals = useMemo(() => {
