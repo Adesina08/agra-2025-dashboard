@@ -163,6 +163,7 @@ export function buildQcDataFromSheets(
 
   const failedByEnumerator: Record<string, number> = {};
   const flagsByEnumerator: Record<string, Record<string, number>> = {};
+  const normalizeId = (value: string | undefined) => value?.trim() || "";
   for (const row of detailRows) {
     // If SurveyType column exists, filter; otherwise assume this detail sheet is only for that segment
     const surveyType =
@@ -176,7 +177,7 @@ export function buildQcDataFromSheets(
       normalizedApproval.includes("rejected");
     if (!isNotApproved) continue;
 
-    const id = row[idxDEnumId] || "";
+    const id = normalizeId(row[idxDEnumId]);
     const kpiCode = idxDKpi >= 0 ? row[idxDKpi] || "" : "";
     if (!id) continue;
 
@@ -191,7 +192,7 @@ export function buildQcDataFromSheets(
   const interviewerStats: InterviewerStats[] = enumRows
     .filter((row) => row[idxEnumId])
     .map((row) => {
-      const enumeratorId = row[idxEnumId];
+      const enumeratorId = normalizeId(row[idxEnumId]);
       const totalSubmissions = parseNumber(row[idxTotalSubs]);
       const totalFlags = parseNumber(row[idxTotalFlags]); // per-flag as you described
       const failedInterviews = failedByEnumerator[enumeratorId] || 0;

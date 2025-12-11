@@ -87,21 +87,25 @@ export function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) 
   }, [countryFilter, submissions]);
 
   const filteredInterviewerStats = useMemo(() => {
+    const normalize = (value?: string | null) => value?.trim().toLowerCase() || "";
+
     if (countryFilter === "all") return safeInterviewerStats;
-    const targetCountry = countryFilter.toLowerCase();
+    const targetCountry = normalize(countryFilter);
 
     const statsWithCountry = safeInterviewerStats.filter(
-      (stat) => stat.country?.toLowerCase() === targetCountry
+      (stat) => normalize(stat.country) === targetCountry
     );
     if (statsWithCountry.length) return statsWithCountry;
 
     const enumeratorsInCountry = new Set(
-      filteredSubmissions.map((submission) => submission.enumerator).filter(Boolean)
+      filteredSubmissions
+        .map((submission) => normalize(submission.enumerator))
+        .filter(Boolean)
     );
     if (!enumeratorsInCountry.size) return [];
 
     return safeInterviewerStats.filter((stat) =>
-      enumeratorsInCountry.has(stat.enumeratorId)
+      enumeratorsInCountry.has(normalize(stat.enumeratorId))
     );
   }, [countryFilter, filteredSubmissions, safeInterviewerStats]);
 
@@ -186,27 +190,27 @@ export function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) 
       0
     );
 
-    // UPDATED: Prefer submissions for total/approved/notApproved/approvalRate if available
-    const totalInterviews = hasSubmissionData
-      ? filteredSubmissions.length
-      : hasInterviewerStats
-        ? totalsFromStats.totalSubmissions
+    // Prefer QC interviewer stats when available, then submission data, then unfiltered rollups
+    const totalInterviews = hasInterviewerStats
+      ? totalsFromStats.totalSubmissions
+      : hasSubmissionData
+        ? filteredSubmissions.length
         : noFilteredData
           ? 0
           : safeKpis.totalInterviews;
 
-    const approved = hasSubmissionData
-      ? approvedFromSubmissions
-      : hasInterviewerStats
-        ? totalsFromStats.approved
+    const approved = hasInterviewerStats
+      ? totalsFromStats.approved
+      : hasSubmissionData
+        ? approvedFromSubmissions
         : noFilteredData
           ? 0
           : safeKpis.approved;
 
-    const notApproved = hasSubmissionData
-      ? notApprovedFromSubmissions
-      : hasInterviewerStats
-        ? totalsFromStats.failed
+    const notApproved = hasInterviewerStats
+      ? totalsFromStats.failed
+      : hasSubmissionData
+        ? notApprovedFromSubmissions
         : noFilteredData
           ? 0
           : safeKpis.notApproved;
