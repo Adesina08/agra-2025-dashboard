@@ -256,15 +256,9 @@ const Index = () => {
 
         {/* Tab Content */}
         <div className="pb-12 space-y-8">
-          {activeTab === 'farmer' && (
-            <FarmerTab submissions={farmerQuery.data} qcData={farmerQc} />
-          )}
-          {activeTab === 'enterprise' && (
-            <EnterpriseTab submissions={enterpriseQuery.data} qcData={enterpriseQc} />
-          )}
-          {activeTab === 'youth' && (
-            <YouthTab submissions={youthQuery.data} qcData={youthQc} />
-          )}
+          {activeTab === 'farmer' && <FarmerTab submissions={farmerQuery.data} />}
+          {activeTab === 'enterprise' && <EnterpriseTab submissions={enterpriseQuery.data} />}
+          {activeTab === 'youth' && <YouthTab submissions={youthQuery.data} />}
 
           <div className="minimal-card flex flex-col gap-4 border border-border/60">
             <div className="flex flex-col gap-1">

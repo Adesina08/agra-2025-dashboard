@@ -89,6 +89,8 @@ export function normalizeYouthRow(row: SheetRow, index: number): YouthData {
 
   return {
     id: pickValue(row, ['id', 'caseid', 'case_id', 'uuid', 'KEY'], `youth-${index + 1}`),
+    qcApprovalStatus: rawStatus || undefined,
+    rawCountry: country || undefined,
     youthName: pickValue(row, ['youthName', 'name', 'participants'], 'Unknown youth'),
     submissionDate,
     country: country || 'Unknown country',
@@ -161,6 +163,8 @@ export function normalizeFarmerRow(row: SheetRow, index: number): FarmerData {
 
   return {
     id: pickValue(row, ['id', 'caseid', 'case_id', 'uuid'], `farmer-${index + 1}`),
+    qcApprovalStatus: rawStatus || undefined,
+    rawCountry: country || undefined,
     farmerName: pickValue(row, ['farmerName', 'db2label', 'db2', 'name'], 'Unknown farmer'),
     submissionDate,
     country: country || 'Unknown country',
@@ -214,6 +218,8 @@ export function normalizeEnterpriseRow(row: SheetRow, index: number): Enterprise
 
   return {
     id: pickValue(row, ['id', 'caseid', 'case_id', 'id_num'], `enterprise-${index + 1}`),
+    qcApprovalStatus: rawStatus || undefined,
+    rawCountry: country || undefined,
     enterpriseName: pickValue(row, ['enterpriseName', 'db8_q', 'db8_1', 'a2', 'name'], 'Unknown enterprise'),
     submissionDate,
     country: country || 'Unknown country',

@@ -3,6 +3,8 @@
 
 export interface Submission {
   id: string;
+  qcApprovalStatus?: string;
+  rawCountry?: string;
   country?: string;
   submissionDate: string;
   region: string;
