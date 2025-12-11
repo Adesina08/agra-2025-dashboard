@@ -138,7 +138,9 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
 
   const derivedKpis = useMemo(() => {
     const getApprovalStatus = (submission: FarmerData) => {
-      const rawStatus = (submission as Record<string, unknown>)["QC Approval Status"];
+      const rawStatus =
+        (submission as Record<string, unknown>)["Approval"] ??
+        (submission as Record<string, unknown>)["QC Approval Status"];
       return typeof rawStatus === "string" && rawStatus.trim()
         ? rawStatus
         : submission.status;
