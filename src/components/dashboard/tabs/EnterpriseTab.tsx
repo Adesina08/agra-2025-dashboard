@@ -7,7 +7,7 @@ import { SubmissionQualityChart } from "../SubmissionQualityChart";
 import { ErrorBreakdown } from "../ErrorBreakdown";
 import { ProductivityRankings } from "../ProductivityRankings";
 import { KPI_BY_CODE } from "@/data/kpiDefinitions";
-import { SubmissionMap } from "../SubmissionMap"; // NEW IMPORT
+import { SubmissionMap } from "../SubmissionMap";
 import { CountryFilter } from "../CountryFilter";
 
 function formatPercent(value: number | null | undefined, digits = 1) {
@@ -141,50 +141,48 @@ export function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) 
       (submission) => normalizeStatus(getApprovalStatus(submission)) === "not approved"
     ).length;
 
-    const totalFlagsFromFlags = Object.values(filteredFlagTotals).reduce(
-      (sum, value) => sum + value,
-      0
-    );
+    const hasSubmissionData = filteredSubmissions.length > 0;
+    const noFilteredData = countryFilter !== "all" && !hasSubmissionData;
+    const hasInterviewerStats = filteredInterviewerStats.length > 0;
 
     const totalsFromStats = filteredInterviewerStats.reduce(
-      (acc, stat) => {
-        acc.totalSubmissions += stat.totalSubmissions;
-        acc.approved += stat.approvedInterviews;
-        acc.failed += stat.failedInterviews;
-        acc.totalFlags += stat.totalFlags;
-        return acc;
-      },
+      (acc, stat) => ({
+        totalSubmissions: acc.totalSubmissions + stat.totalSubmissions,
+        approved: acc.approved + stat.approvedInterviews,
+        failed: acc.failed + stat.failedInterviews,
+        totalFlags: acc.totalFlags + stat.totalFlags,
+      }),
       { totalSubmissions: 0, approved: 0, failed: 0, totalFlags: 0 }
     );
 
-    const hasInterviewerStats = filteredInterviewerStats.length > 0;
-    const hasSubmissionData = filteredSubmissions.length > 0;
     const hasFlagData = Object.keys(filteredFlagTotals).length > 0;
-    const noFilteredData =
-      countryFilter !== "all" && !hasInterviewerStats && !hasSubmissionData && !hasFlagData;
+    const totalFlagsFromFlags = Object.values(filteredFlagTotals).reduce(
+      (sum, count) => sum + count,
+      0
+    );
 
-    const totalInterviews = hasInterviewerStats
-      ? totalsFromStats.totalSubmissions
-      : hasSubmissionData
-        ? filteredSubmissions.length
-        : noFilteredData
-          ? 0
-          : safeKpis.totalInterviews;
-    const approved = hasInterviewerStats
-      ? totalsFromStats.approved
-      : hasSubmissionData
-        ? approvedFromSubmissions
-        : noFilteredData
-          ? 0
-          : safeKpis.approved;
-    const notApproved = hasInterviewerStats
-      ? totalsFromStats.failed
-      : hasSubmissionData
-        ? notApprovedFromSubmissions
-        : noFilteredData
-          ? 0
-          : safeKpis.notApproved;
+    // UPDATED: Prefer submissions for total/approved/notApproved/approvalRate if available
+    const totalInterviews = hasSubmissionData
+      ? filteredSubmissions.length
+      : hasInterviewerStats
+        ? totalsFromStats.totalSubmissions
+        : safeKpis.totalInterviews;
+
+    const approved = hasSubmissionData
+      ? approvedFromSubmissions
+      : hasInterviewerStats
+        ? totalsFromStats.approved
+        : safeKpis.approved;
+
+    const notApproved = hasSubmissionData
+      ? notApprovedFromSubmissions
+      : hasInterviewerStats
+        ? totalsFromStats.failed
+        : safeKpis.notApproved;
+
     const approvalRate = totalInterviews ? approved / totalInterviews : 0;
+
+    // For flags, keep preferring QC data (since not in submissions), but fall back appropriately
     const totalFlags = hasFlagData
       ? totalFlagsFromFlags
       : hasInterviewerStats
@@ -192,6 +190,7 @@ export function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) 
         : noFilteredData
           ? 0
           : safeKpis.totalFlags;
+
     const avgFlagsPerInterview = totalInterviews ? totalFlags / totalInterviews : 0;
 
     return {
@@ -316,7 +315,6 @@ export function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) 
         />
       </div>
 
-      {/* NEW: Real Map with Markers - Updates with country filter */}
       <SubmissionMap 
         submissions={filteredSubmissions.map(s => ({
           latitude: s.latitude ?? 0,
