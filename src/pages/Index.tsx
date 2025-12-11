@@ -27,6 +27,8 @@ const Index = () => {
   const enterpriseQuery = useSurveySheet<EnterpriseData>('enterprise');
   const youthQuery = useSurveySheet<YouthData>('youth');
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   const farmerQc = useFarmerQcData();
   const enterpriseQc = useEnterpriseQcData();
   const youthQc = useYouthQcData();
@@ -58,6 +60,28 @@ const Index = () => {
   const activeSegmentKey = activeTab;
   const exportSheetRows = (activeSheetQuery.raw as SheetRow[]) ?? [];
   const exportNormalizedRows = (activeSheetQuery.data as SheetRow[]) ?? [];
+  const isHeaderRefreshing =
+    isRefreshing || farmerQuery.isFetching || enterpriseQuery.isFetching || youthQuery.isFetching;
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        farmerQuery.refetch(),
+        enterpriseQuery.refetch(),
+        youthQuery.refetch(),
+      ]);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to refresh data right now.';
+      toast({
+        title: 'Refresh failed',
+        description: message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const escapeHtml = (value: unknown) => {
     if (value === null || value === undefined) return '';
@@ -199,9 +223,11 @@ const Index = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8 flex-1 w-full">
         <Header
-          farmer={{ data: farmerQuery.data, isLive: farmerQuery.isLive, refreshedAt: farmerQuery.refreshedAt }}
-          enterprise={{ data: enterpriseQuery.data, isLive: enterpriseQuery.isLive, refreshedAt: enterpriseQuery.refreshedAt }}
-          youth={{ data: youthQuery.data, isLive: youthQuery.isLive, refreshedAt: youthQuery.refreshedAt }}
+          farmer={{ data: farmerQuery.data, isLive: farmerQuery.isLive }}
+          enterprise={{ data: enterpriseQuery.data, isLive: enterpriseQuery.isLive }}
+          youth={{ data: youthQuery.data, isLive: youthQuery.isLive }}
+          onRefresh={handleRefresh}
+          isRefreshing={isHeaderRefreshing}
         />
 
         {/* Tab Navigation */}

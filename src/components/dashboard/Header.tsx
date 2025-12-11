@@ -1,61 +1,21 @@
-import { Clock, RefreshCw } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { RefreshCw } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { FarmerData, EnterpriseData, YouthData } from '@/data/mockData';
 
 type SurveyState<T> = {
   data: T[];
   isLive: boolean;
-  refreshedAt?: Date;
 };
 
 interface HeaderProps {
   farmer: SurveyState<FarmerData>;
   enterprise: SurveyState<EnterpriseData>;
   youth: SurveyState<YouthData>;
+  onRefresh: () => void;
+  isRefreshing: boolean;
 }
 
-export function Header({ farmer, enterprise, youth }: HeaderProps) {
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const latestSubmissionDate = useMemo(() => {
-    const submissions = [...farmer.data, ...enterprise.data, ...youth.data];
-    if (!submissions.length) return null;
-
-    return submissions.reduce((latest, current) => {
-      const currentDate = new Date(current.submissionDate);
-      return currentDate > latest ? currentDate : latest;
-    }, new Date(submissions[0].submissionDate));
-  }, [enterprise.data, farmer.data, youth.data]);
-
-  useEffect(() => {
-    const interval = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const lastRefreshed = useMemo(() => {
-    const dates = [farmer.refreshedAt, enterprise.refreshedAt, youth.refreshedAt].filter(Boolean) as Date[];
-    if (!dates.length) return null;
-    return dates.reduce((latest, current) => (current > latest ? current : latest));
-  }, [enterprise.refreshedAt, farmer.refreshedAt, youth.refreshedAt]);
-
-  const handleRefresh = () => {
-    setIsRefreshing(true);
-    setTimeout(() => setIsRefreshing(false), 1000);
-  };
-
-  const formatDateTime = (date: Date | null) => {
-    if (!date) return '—';
-    return date.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
+export function Header({ farmer, enterprise, youth, onRefresh, isRefreshing }: HeaderProps) {
   return (
     <header className="mb-8">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -68,34 +28,18 @@ export function Header({ farmer, enterprise, youth }: HeaderProps) {
           </p>
         </div>
 
-        <div className="flex flex-col gap-3 text-sm text-muted-foreground lg:flex-row lg:items-center lg:gap-6">
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4" />
-            <span className="font-mono">{currentTime.toLocaleTimeString()}</span>
-          </div>
+        <div className="flex items-center gap-3 lg:gap-4">
+          <button
+            onClick={onRefresh}
+            className="inline-flex items-center gap-2 rounded-md border border-border/60 px-3 py-2 text-sm font-medium transition-all hover:-translate-y-0.5 hover:bg-secondary"
+            title="Refresh live data"
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
+          </button>
 
-          <div className="flex flex-1 flex-col gap-2 text-right sm:flex-row sm:justify-end sm:gap-6">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">Last Refreshed</p>
-              <p className="text-sm font-semibold text-foreground">{formatDateTime(lastRefreshed)}</p>
-            </div>
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">Latest Submission</p>
-              <p className="text-sm font-semibold text-foreground">{formatDateTime(latestSubmissionDate)}</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleRefresh}
-              className="rounded p-1.5 transition-all hover:-translate-y-0.5 hover:bg-secondary"
-              title="Refresh"
-            >
-              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            </button>
-
-            <ThemeToggle />
-          </div>
+          <ThemeToggle />
         </div>
       </div>
 
