@@ -1,34 +1,29 @@
-import { useMemo, useState } from "react";
-import { ClipboardCheck, CheckCircle2, FlagTriangleRight, TriangleAlert, XCircle } from "lucide-react";
-import { type UseSegmentQcDataResult } from "@/hooks/useSegmentQcData";
+import React, { useMemo, useState } from "react";
+import {
+  ClipboardCheck,
+  CheckCircle2,
+  XCircle,
+  TriangleAlert,
+  FlagTriangleRight,
+} from "lucide-react";
+
 import { KPICard } from "../KPICard";
-import { SubmissionQualityChart } from "../SubmissionQualityChart";
-import { ErrorBreakdown } from "../ErrorBreakdown";
-import { ProductivityRankings } from "../ProductivityRankings";
-import { YouthData } from "@/data/mockData";
-import { SubmissionMap } from "../SubmissionMap"; // NEW IMPORT
-import { KPI_BY_CODE } from "@/data/kpiDefinitions";
 import { CountryFilter } from "../CountryFilter";
-import { youthInWorkQuotaConfig, youthOutreachQuotaConfig } from "@/data/quotaData";
-import { QuotaSection } from "../QuotaSection";
-import { cn } from "@/lib/utils";
+import { SegmentLayout } from "../SegmentLayout";
+import { ErrorBreakdownCard } from "../ErrorBreakdownCard";
+import { SubmissionQualityCard } from "../SubmissionQualityCard";
+import { InterviewerProductivityCard } from "../InterviewerProductivityCard";
+import { FlagsByTypeCard } from "../FlagsByTypeCard";
+import { LoadingState } from "../LoadingState";
+import { ErrorState } from "../ErrorState";
 
-function formatPercent(value: number | null | undefined, digits = 1) {
-  if (value == null) return "—";
-  return `${(value * 100).toFixed(digits)}%`;
+import type { YouthData } from "../../../types/youth";
+import type { UseSegmentQcDataResult } from "../../../hooks/useSegmentQcData";
+import type { InterviewerStats } from "../../../lib/buildQcDataFromSheets";
+
+function normalizeString(value?: string | null) {
+  return value?.trim().toLowerCase() ?? "";
 }
-
-const normalizeString = (value?: string | null) => value?.trim().toLowerCase() || "";
-
-const getYouthEnumeratorId = (submission: YouthData) => {
-  const record = submission as Record<string, unknown>;
-  const rawCaseId = record.caseid ?? record.CASEID;
-  if (typeof rawCaseId === "string" && rawCaseId.trim()) {
-    return rawCaseId;
-  }
-
-  return submission.enumerator;
-};
 
 interface YouthTabProps {
   submissions?: YouthData[];
@@ -36,80 +31,57 @@ interface YouthTabProps {
 }
 
 export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
-  const { loading, error, submissionQuality, errorBreakdown, interviewerStats, kpis } = qcData;
-  const [countryFilter, setCountryFilter] = useState<string>("all");
-  const [quotaView, setQuotaView] = useState<"work" | "outreach">("work");
+  const {
+    loading,
+    error,
+    submissionQuality,
+    errorBreakdown,
+    interviewerStats,
+    kpis,
+  } = qcData;
 
-  const quotaTabs = useMemo(
-    () => [
-      { key: "work" as const, label: "Youth in Work", config: youthInWorkQuotaConfig },
-      { key: "outreach" as const, label: "Outreach", config: youthOutreachQuotaConfig },
-    ],
-    []
+  const [countryFilter, setCountryFilter] = useState<string>("all");
+
+  const safeInterviewerStats: InterviewerStats[] = useMemo(
+    () => interviewerStats ?? [],
+    [interviewerStats]
   );
 
-  const hasData = !!(submissionQuality && errorBreakdown && interviewerStats && kpis);
-  const safeInterviewerStats = useMemo(() => interviewerStats ?? [], [interviewerStats]);
-  const safeKpis = useMemo(() => {
-    if (!kpis) {
-      return {
+  const safeKpis = useMemo(
+    () =>
+      kpis ?? {
         totalInterviews: 0,
         approved: 0,
         notApproved: 0,
         approvalRate: 0,
         totalFlags: 0,
         avgFlagsPerInterview: 0,
-        percentDuplicatePhone: 0,
-        percentLOIIssues: 0,
-        percentHardViolations: 0,
-        ageOutsideYouthCount: 0,
-        ageOutsideYouthPercent: 0,
-      } as const;
-    }
+        percentDuplicatePhone: null,
+        percentLOIIssues: null,
+        percentHardViolations: null,
+        ageOutsideYouthCount: null,
+        ageOutsideYouthPercent: null,
+      },
+    [kpis]
+  );
 
-    return {
-      totalInterviews: kpis.totalInterviews ?? 0,
-      approved: kpis.approved ?? 0,
-      notApproved: kpis.notApproved ?? 0,
-      approvalRate: kpis.approvalRate ?? 0,
-      totalFlags: kpis.totalFlags ?? 0,
-      avgFlagsPerInterview: kpis.avgFlagsPerInterview ?? 0,
-      percentDuplicatePhone: kpis.percentDuplicatePhone ?? 0,
-      percentLOIIssues: kpis.percentLOIIssues ?? 0,
-      percentHardViolations: kpis.percentHardViolations ?? 0,
-      ageOutsideYouthCount: kpis.ageOutsideYouthCount ?? 0,
-      ageOutsideYouthPercent: kpis.ageOutsideYouthPercent ?? 0,
-    } as const;
-  }, [kpis]);
+  // --- Country helpers ------------------------------------------------------
+
   const getSubmissionCountry = (submission: YouthData) => {
-    const rawCountry = (submission as Record<string, unknown>).w1;
-    return typeof rawCountry === "string" && rawCountry.trim()
-      ? rawCountry
-      : submission.country;
+    // In your youth sheet, w1 is the canonical country column
+    const rawCountry = (submission as Record<string, unknown>)["w1"];
+    if (typeof rawCountry === "string" && rawCountry.trim()) {
+      return rawCountry;
+    }
+    return submission.country;
   };
-
-  const availableCountries = useMemo(() => {
-    const unique = new Set(
-      submissions
-        .map((submission) => getSubmissionCountry(submission)?.trim())
-        .filter(
-          (country): country is string =>
-            !!country && !country.toLowerCase().startsWith("unknown")
-        )
-    );
-    quotaTabs.forEach(({ config }) => {
-      Object.keys(config.countries).forEach((country) => unique.add(country));
-    });
-    return Array.from(unique).sort((a, b) => a.localeCompare(b));
-  }, [quotaTabs, submissions]);
 
   const filteredSubmissions = useMemo(() => {
     if (countryFilter === "all") return submissions;
-
-    const targetCountry = normalizeString(countryFilter);
+    const target = normalizeString(countryFilter);
     return submissions.filter((submission) => {
-      const country = normalizeString(getSubmissionCountry(submission));
-      return country === targetCountry;
+      const country = getSubmissionCountry(submission);
+      return normalizeString(country) === target;
     });
   }, [countryFilter, submissions]);
 
@@ -125,64 +97,51 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
 
     const enumeratorsInCountry = new Set(
       filteredSubmissions
-        .map((submission) => normalizeString(getYouthEnumeratorId(submission)))
+        .map((submission) => normalizeString(submission.enumerator))
         .filter(Boolean)
     );
+
     if (!enumeratorsInCountry.size) return [];
+
     return safeInterviewerStats.filter((stat) =>
       enumeratorsInCountry.has(normalizeString(stat.enumeratorId))
     );
   }, [countryFilter, filteredSubmissions, safeInterviewerStats]);
 
   const filteredFlagTotals = useMemo(() => {
-    const totals: Record<string, number> = {};
-    filteredInterviewerStats.forEach((stat) => {
-      Object.entries(stat.flagsByKpi ?? {}).forEach(([kpiCode, count]) => {
-        totals[kpiCode] = (totals[kpiCode] || 0) + count;
-      });
-    });
-    return totals;
-  }, [filteredInterviewerStats]);
+    if (countryFilter === "all") return submissionQuality?.flagTotals ?? null;
 
-  const flagNameByCode = useMemo(() => {
-    const map: Record<string, string> = {};
-    (errorBreakdown ?? []).forEach((item) => {
-      if (item.kpiCode) {
-        map[item.kpiCode] = item.errorType || KPI_BY_CODE[item.kpiCode]?.flagName || item.kpiCode;
-      }
-    });
-    Object.keys(filteredFlagTotals).forEach((code) => {
-      map[code] = map[code] || KPI_BY_CODE[code]?.flagName || code;
-    });
-    return map;
-  }, [errorBreakdown, filteredFlagTotals]);
+    if (!submissionQuality?.flagTotals) return null;
+    if (!filteredInterviewerStats.length) return null;
 
-  const derivedKpis = useMemo(() => {
-    // When no country filter is applied, prefer the authoritative QC rollups.
-    // This mirrors the enterprise tab so the unfiltered dashboard always
-    // reflects the pre-computed QC KPI figures instead of live submission
-    // totals that can drift from the QC summary.
-    if (countryFilter === "all") {
-      return {
-        totalInterviews: safeKpis.totalInterviews,
-        approved: safeKpis.approved,
-        notApproved: safeKpis.notApproved,
-        approvalRate: safeKpis.approvalRate,
-        totalFlags: safeKpis.totalFlags,
-        avgFlagsPerInterview: safeKpis.avgFlagsPerInterview,
-        percentDuplicatePhone: safeKpis.percentDuplicatePhone,
-        percentLOIIssues: safeKpis.percentLOIIssues,
-        percentHardViolations: safeKpis.percentHardViolations,
-        ageOutsideYouthCount: safeKpis.ageOutsideYouthCount,
-        ageOutsideYouthPercent: safeKpis.ageOutsideYouthPercent,
-      } as const;
+    const flagsByInterviewerId = new Map<string, number>();
+
+    for (const stat of filteredInterviewerStats) {
+      flagsByInterviewerId.set(stat.interviewerId, stat.totalFlags);
     }
 
+    const totalFlags = Array.from(flagsByInterviewerId.values()).reduce(
+      (sum, count) => sum + (count ?? 0),
+      0
+    );
+
+    return {
+      ...submissionQuality.flagTotals,
+      totalFlags,
+    };
+  }, [countryFilter, submissionQuality, filteredInterviewerStats]);
+
+  // --- KPI derivation from QC Approval Status -------------------------------
+
+  const derivedKpis = useMemo(() => {
     const getApprovalStatus = (submission: YouthData) => {
-      const rawStatus = (submission as Record<string, unknown>)["QC Approval Status"];
-      return typeof rawStatus === "string" && rawStatus.trim()
-        ? rawStatus
-        : submission.status;
+      const rawStatus = (submission as Record<string, unknown>)[
+        "QC Approval Status"
+      ];
+      if (typeof rawStatus === "string" && rawStatus.trim()) {
+        return rawStatus;
+      }
+      return submission.status;
     };
 
     const normalizeStatus = (status: string | undefined | null) => {
@@ -196,62 +155,62 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
     const approvedFromSubmissions = filteredSubmissions.filter(
       (submission) => normalizeStatus(getApprovalStatus(submission)) === "approved"
     ).length;
+
     const notApprovedFromSubmissions = filteredSubmissions.filter(
-      (submission) => normalizeStatus(getApprovalStatus(submission)) === "not approved"
+      (submission) =>
+        normalizeStatus(getApprovalStatus(submission)) === "not approved"
     ).length;
 
-    const totalFlagsFromFlags = Object.values(filteredFlagTotals).reduce(
-      (sum, value) => sum + value,
-      0
-    );
+    const hasSubmissionData = filteredSubmissions.length > 0;
+    const hasInterviewerStats = filteredInterviewerStats.length > 0;
+    const noFilteredData =
+      countryFilter !== "all" && !hasSubmissionData && !hasInterviewerStats;
 
     const totalsFromStats = filteredInterviewerStats.reduce(
-      (acc, stat) => {
-        acc.totalSubmissions += stat.totalSubmissions;
-        acc.approved += stat.approvedInterviews;
-        acc.failed += stat.failedInterviews;
-        acc.totalFlags += stat.totalFlags;
-        return acc;
-      },
+      (acc, stat) => ({
+        totalSubmissions: acc.totalSubmissions + stat.totalSubmissions,
+        approved: acc.approved + stat.approvedInterviews,
+        failed: acc.failed + stat.failedInterviews,
+        totalFlags: acc.totalFlags + stat.totalFlags,
+      }),
       { totalSubmissions: 0, approved: 0, failed: 0, totalFlags: 0 }
     );
-
-    const hasInterviewerStats = filteredInterviewerStats.length > 0;
-    const hasSubmissionData = filteredSubmissions.length > 0;
-    const hasFlagData = Object.keys(filteredFlagTotals).length > 0;
-    const noFilteredData =
-      countryFilter !== "all" && !hasInterviewerStats && !hasSubmissionData && !hasFlagData;
 
     const totalInterviews = hasInterviewerStats
       ? totalsFromStats.totalSubmissions
       : hasSubmissionData
-        ? filteredSubmissions.length
-        : noFilteredData
-          ? 0
-          : safeKpis.totalInterviews;
+      ? filteredSubmissions.length
+      : noFilteredData
+      ? 0
+      : safeKpis.totalInterviews;
+
     const approved = hasInterviewerStats
       ? totalsFromStats.approved
       : hasSubmissionData
-        ? approvedFromSubmissions
-        : noFilteredData
-          ? 0
-          : safeKpis.approved;
+      ? approvedFromSubmissions
+      : noFilteredData
+      ? 0
+      : safeKpis.approved;
+
     const notApproved = hasInterviewerStats
       ? totalsFromStats.failed
       : hasSubmissionData
-        ? notApprovedFromSubmissions
-        : noFilteredData
-          ? 0
-          : safeKpis.notApproved;
+      ? notApprovedFromSubmissions
+      : noFilteredData
+      ? 0
+      : safeKpis.notApproved;
+
     const approvalRate = totalInterviews ? approved / totalInterviews : 0;
-    const totalFlags = hasFlagData
-      ? totalFlagsFromFlags
-      : hasInterviewerStats
-        ? totalsFromStats.totalFlags
-        : noFilteredData
-          ? 0
-          : safeKpis.totalFlags;
-    const avgFlagsPerInterview = totalInterviews ? totalFlags / totalInterviews : 0;
+
+    const totalFlags = hasInterviewerStats
+      ? totalsFromStats.totalFlags
+      : noFilteredData
+      ? 0
+      : safeKpis.totalFlags;
+
+    const avgFlagsPerInterview = totalInterviews
+      ? totalFlags / totalInterviews
+      : 0;
 
     return {
       totalInterviews,
@@ -260,86 +219,57 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
       approvalRate,
       totalFlags,
       avgFlagsPerInterview,
-    };
-  }, [countryFilter, filteredFlagTotals, filteredInterviewerStats, filteredSubmissions, safeKpis]);
+      // Keep youth-specific KPI fields from safeKpis for any charts/insights using them
+      percentDuplicatePhone: safeKpis.percentDuplicatePhone,
+      percentLOIIssues: safeKpis.percentLOIIssues,
+      percentHardViolations: safeKpis.percentHardViolations,
+      ageOutsideYouthCount: safeKpis.ageOutsideYouthCount,
+      ageOutsideYouthPercent: safeKpis.ageOutsideYouthPercent,
+    } as const;
+  }, [
+    countryFilter,
+    filteredSubmissions,
+    filteredInterviewerStats,
+    safeKpis,
+  ]);
 
-  const submissionChartData = safeInterviewerStats.map((i) => ({
-    name: i.enumeratorId,
-    approved: i.approvedInterviews,
-    notApproved: i.failedInterviews,
-    flagsByKpi: i.flagsByKpi,
-  }));
-
-  const productivityData = safeInterviewerStats.map((i) => ({
-    name: i.enumeratorId,
-    totalInterviews: i.totalSubmissions,
-    approved: i.approvedInterviews,
-  }));
-
-  const flagCountsByType = useMemo(
-    () =>
-      Object.entries(filteredFlagTotals).reduce(
-        (acc, [kpiCode, count]) => {
-          const type = KPI_BY_CODE[kpiCode]?.type?.toUpperCase();
-          if (type === "HARD") {
-            acc.hard += count;
-          } else {
-            acc.soft += count;
-          }
-          return acc;
-        },
-        { hard: 0, soft: 0 }
-      ),
-    [filteredFlagTotals]
-  );
+  const formatPercent = (value: number | null | undefined, decimals = 0) => {
+    if (value == null || Number.isNaN(value)) return "0%";
+    return `${(value * 100).toFixed(decimals)}%`;
+  };
 
   const flagSubtitle =
-    flagCountsByType.hard + flagCountsByType.soft > 0
-      ? `${flagCountsByType.hard.toLocaleString()} hard / ${flagCountsByType.soft.toLocaleString()} soft`
-      : undefined;
+    derivedKpis.totalFlags && derivedKpis.totalInterviews
+      ? `${derivedKpis.totalFlags} flags across ${derivedKpis.totalInterviews} interviews`
+      : "Flags across all interviews";
 
-  const errorBreakdownData = useMemo(() => {
-    const entries = Object.entries(filteredFlagTotals);
-    if (entries.length) {
-      return entries.map(([kpiCode, count]) => {
-        const kpi = KPI_BY_CODE[kpiCode];
-        return {
-          errorType: `${kpiCode} • ${kpi?.flagName ?? "Flag"}`,
-          relatedVariables: kpi?.variables ?? "—",
-          count,
-        };
-      });
-    }
+  if (loading) {
+    return <LoadingState segment="youth" />;
+  }
 
-    if (!errorBreakdown?.length) return [];
-
-    return errorBreakdown.map((item) => {
-      const kpiCode = item.kpiCode || "";
-      const kpi = KPI_BY_CODE[kpiCode];
-      return {
-        errorType: `${kpiCode ? `${kpiCode} • ` : ""}${item.errorType || kpiCode || "Flag"}`,
-        relatedVariables: kpi?.variables ?? "—",
-        count: item.count ?? 0,
-      };
-    });
-  }, [errorBreakdown, filteredFlagTotals]);
-
-  if (loading && !hasData) return <div>Loading Youth QC…</div>;
-  if (error) return <div className="text-red-600">Error: {error}</div>;
-  if (!hasData) {
-    return <div>No Youth QC data.</div>;
+  if (error) {
+    return (
+      <ErrorState
+        segment="youth"
+        message="Unable to load youth dashboard data."
+      />
+    );
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <CountryFilter
-        countries={availableCountries}
-        selected={countryFilter}
-        onChange={setCountryFilter}
-        variant="youth"
-      />
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+    <SegmentLayout
+      segment="youth"
+      countryFilter={
+        <CountryFilter
+          value={countryFilter}
+          onChange={setCountryFilter}
+          submissions={submissions}
+          getSubmissionCountry={getSubmissionCountry}
+        />
+      }
+    >
+      {/* KPI summary cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
         <KPICard
           title="Total Interviews"
           value={derivedKpis.totalInterviews}
@@ -351,13 +281,20 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
           title="Approved"
           value={derivedKpis.approved}
           icon={CheckCircle2}
-          subtitle={`${derivedKpis.approvalRate > 0 ? formatPercent(derivedKpis.approvalRate) : "0%"}`}
+          subtitle={
+            derivedKpis.approvalRate > 0
+              ? formatPercent(derivedKpis.approvalRate)
+              : "0%"
+          }
           variant="youth"
         />
         <KPICard
           title="Not Approved"
           value={derivedKpis.notApproved}
           icon={XCircle}
+          subtitle={`${formatPercent(
+            1 - (derivedKpis.approvalRate ?? 0)
+          )} not approved`}
           variant="youth"
         />
         <KPICard
@@ -375,58 +312,31 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
         />
       </div>
 
-      <QuotaSection
-        variant="youth"
-        submissions={submissions}
-        selectedCountry={countryFilter}
-        config={quotaTabs.find((tab) => tab.key === quotaView)?.config ?? youthInWorkQuotaConfig}
-        title="Youth quota status"
-        workFocus={quotaView === "work" ? "Youth in Work" : "Outreach"}
-        controls={
-          <div className="flex flex-wrap gap-2">
-            {quotaTabs.map((tab) => (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setQuotaView(tab.key)}
-                className={cn(
-                  "px-3 py-2 text-sm font-semibold rounded-lg border transition-colors",
-                  quotaView === tab.key
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-card text-foreground border-border hover:bg-muted"
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        }
-      />
-
-      {/* NEW: Real Map with Markers - Updates with country filter */}
-      <SubmissionMap
-        submissions={filteredSubmissions.map(s => ({
-          latitude: s.latitude ?? 0,
-          longitude: s.longitude ?? 0,
-          region: s.region,
-          district: s.district,
-          status: s.status,
-          id: s.id,
-          enumerator: s.enumerator,
-        }))}
-        title="Live Youth Submission Map"
-        variant="youth"
-      />
-
-      <SubmissionQualityChart
-        data={submissionChartData}
-        variant="youth"
-        flagNames={flagNameByCode}
-      />
-
-      <ProductivityRankings data={productivityData} variant="youth" />
-
-      <ErrorBreakdown data={errorBreakdownData} variant="youth" />
-    </div>
+      {/* Rest of the dashboard content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="space-y-6 lg:col-span-2">
+          <SubmissionQualityCard
+            segment="youth"
+            submissionQuality={submissionQuality}
+            filteredFlagTotals={filteredFlagTotals}
+          />
+          <ErrorBreakdownCard
+            segment="youth"
+            errorBreakdown={errorBreakdown}
+          />
+        </div>
+        <div className="space-y-6">
+          <InterviewerProductivityCard
+            segment="youth"
+            interviewerStats={filteredInterviewerStats}
+          />
+          <FlagsByTypeCard
+            segment="youth"
+            submissionQuality={submissionQuality}
+            filteredFlagTotals={filteredFlagTotals}
+          />
+        </div>
+      </div>
+    </SegmentLayout>
   );
 }
