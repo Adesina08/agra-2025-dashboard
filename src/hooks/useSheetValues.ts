@@ -17,8 +17,15 @@ export function useSheetValues(
 
   React.useEffect(() => {
     let cancelled = false;
+    const REFRESH_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes for near-realtime sync
 
     async function load() {
+      if (!sheetId || !tabName) {
+        setValues(null);
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       setError(null);
 
@@ -45,8 +52,15 @@ export function useSheetValues(
       setLoading(false);
     }
 
+    const intervalId = setInterval(() => {
+      if (!cancelled) {
+        load();
+      }
+    }, REFRESH_INTERVAL_MS);
+
     return () => {
       cancelled = true;
+      clearInterval(intervalId);
     };
   }, [sheetId, tabName]);
 

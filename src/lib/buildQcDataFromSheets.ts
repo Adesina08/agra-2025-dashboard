@@ -160,8 +160,12 @@ export function buildQcDataFromSheets(
       idxDSurveyType >= 0 ? row[idxDSurveyType] || "" : surveyTypeLabelForDetail;
     if (surveyType !== surveyTypeLabelForDetail) continue;
 
-    const approval = row[idxDApproval] || "";
-    if (approval !== "Not Approved") continue;
+    const rawApproval = idxDApproval >= 0 ? row[idxDApproval] || "" : "";
+    const normalizedApproval = rawApproval.toString().trim().toLowerCase();
+    const isNotApproved =
+      normalizedApproval.includes("not approved") ||
+      normalizedApproval.includes("rejected");
+    if (!isNotApproved) continue;
 
     const id = row[idxDEnumId] || "";
     const kpiCode = idxDKpi >= 0 ? row[idxDKpi] || "" : "";
