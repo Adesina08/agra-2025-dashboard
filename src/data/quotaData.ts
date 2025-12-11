@@ -113,7 +113,7 @@ export const farmerQuotaConfig: SegmentQuotaConfig = {
       ],
       rows: [
         {
-          region: "Central",
+          region: "Central Region",
           district: "Dowa",
           targets: {
             male: 53,
@@ -128,7 +128,7 @@ export const farmerQuotaConfig: SegmentQuotaConfig = {
           },
         },
         {
-          region: "Central",
+          region: "Central Region",
           district: "Lilongwe",
           targets: {
             male: 107,
@@ -143,7 +143,7 @@ export const farmerQuotaConfig: SegmentQuotaConfig = {
           },
         },
         {
-          region: "Southern",
+          region: "Southern Region",
           district: "Zomba",
           targets: {
             male: 7,
@@ -158,7 +158,7 @@ export const farmerQuotaConfig: SegmentQuotaConfig = {
           },
         },
         {
-          region: "Southern",
+          region: "Southern Region",
           district: "Machinga",
           targets: {
             male: 2,
