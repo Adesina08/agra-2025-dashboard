@@ -18,6 +18,18 @@ function formatPercent(value: number | null | undefined, digits = 1) {
   return `${(value * 100).toFixed(digits)}%`;
 }
 
+const normalizeString = (value?: string | null) => value?.trim().toLowerCase() || "";
+
+const getYouthEnumeratorId = (submission: YouthData) => {
+  const record = submission as Record<string, unknown>;
+  const rawCaseId = record.caseid ?? record.CASEID;
+  if (typeof rawCaseId === "string" && rawCaseId.trim()) {
+    return rawCaseId;
+  }
+
+  return submission.enumerator;
+};
+
 interface YouthTabProps {
   submissions?: YouthData[];
   qcData: UseSegmentQcDataResult;
@@ -93,19 +105,33 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
 
   const filteredSubmissions = useMemo(() => {
     if (countryFilter === "all") return submissions;
+
+    const targetCountry = normalizeString(countryFilter);
     return submissions.filter((submission) => {
-      const country = getSubmissionCountry(submission);
-      return country?.toLowerCase() === countryFilter.toLowerCase();
+      const country = normalizeString(getSubmissionCountry(submission));
+      return country === targetCountry;
     });
   }, [countryFilter, submissions]);
 
   const filteredInterviewerStats = useMemo(() => {
     if (countryFilter === "all") return safeInterviewerStats;
+
+    const targetCountry = normalizeString(countryFilter);
+
+    const statsWithCountry = safeInterviewerStats.filter(
+      (stat) => normalizeString(stat.country) === targetCountry
+    );
+    if (statsWithCountry.length) return statsWithCountry;
+
     const enumeratorsInCountry = new Set(
-      filteredSubmissions.map((submission) => submission.enumerator).filter(Boolean)
+      filteredSubmissions
+        .map((submission) => normalizeString(getYouthEnumeratorId(submission)))
+        .filter(Boolean)
     );
     if (!enumeratorsInCountry.size) return [];
-    return safeInterviewerStats.filter((stat) => enumeratorsInCountry.has(stat.enumeratorId));
+    return safeInterviewerStats.filter((stat) =>
+      enumeratorsInCountry.has(normalizeString(stat.enumeratorId))
+    );
   }, [countryFilter, filteredSubmissions, safeInterviewerStats]);
 
   const filteredFlagTotals = useMemo(() => {
@@ -132,6 +158,26 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
   }, [errorBreakdown, filteredFlagTotals]);
 
   const derivedKpis = useMemo(() => {
+    // When no country filter is applied, prefer the authoritative QC rollups.
+    // This mirrors the enterprise tab so the unfiltered dashboard always
+    // reflects the pre-computed QC KPI figures instead of live submission
+    // totals that can drift from the QC summary.
+    if (countryFilter === "all") {
+      return {
+        totalInterviews: safeKpis.totalInterviews,
+        approved: safeKpis.approved,
+        notApproved: safeKpis.notApproved,
+        approvalRate: safeKpis.approvalRate,
+        totalFlags: safeKpis.totalFlags,
+        avgFlagsPerInterview: safeKpis.avgFlagsPerInterview,
+        percentDuplicatePhone: safeKpis.percentDuplicatePhone,
+        percentLOIIssues: safeKpis.percentLOIIssues,
+        percentHardViolations: safeKpis.percentHardViolations,
+        ageOutsideYouthCount: safeKpis.ageOutsideYouthCount,
+        ageOutsideYouthPercent: safeKpis.ageOutsideYouthPercent,
+      } as const;
+    }
+
     const getApprovalStatus = (submission: YouthData) => {
       const rawStatus = (submission as Record<string, unknown>)["QC Approval Status"];
       return typeof rawStatus === "string" && rawStatus.trim()
