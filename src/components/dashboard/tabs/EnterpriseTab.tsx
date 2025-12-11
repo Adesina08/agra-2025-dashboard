@@ -95,15 +95,30 @@ export function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) 
     return safeInterviewerStats.filter((stat) => enumeratorsInCountry.has(stat.enumeratorId));
   }, [countryFilter, filteredSubmissions, safeInterviewerStats]);
 
+  const submissionsByEnumerator = useMemo(() => {
+    return filteredSubmissions.reduce<Record<string, number>>((acc, submission) => {
+      if (!submission.enumerator) return acc;
+      acc[submission.enumerator] = (acc[submission.enumerator] || 0) + 1;
+      return acc;
+    }, {});
+  }, [filteredSubmissions]);
+
   const filteredFlagTotals = useMemo(() => {
     const totals: Record<string, number> = {};
     filteredInterviewerStats.forEach((stat) => {
+      const countryCount = submissionsByEnumerator[stat.enumeratorId];
+      const ratio =
+        countryFilter === "all" || !stat.totalSubmissions
+          ? 1
+          : Math.min((countryCount || 0) / stat.totalSubmissions, 1);
+
       Object.entries(stat.flagsByKpi ?? {}).forEach(([kpiCode, count]) => {
-        totals[kpiCode] = (totals[kpiCode] || 0) + count;
+        const scaledCount = Math.round(count * ratio);
+        totals[kpiCode] = (totals[kpiCode] || 0) + scaledCount;
       });
     });
     return totals;
-  }, [filteredInterviewerStats]);
+  }, [countryFilter, filteredInterviewerStats, submissionsByEnumerator]);
 
   const flagNameByCode = useMemo(() => {
     const map: Record<string, string> = {};
@@ -144,6 +159,7 @@ export function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) 
     const hasSubmissionData = filteredSubmissions.length > 0;
     const noFilteredData = countryFilter !== "all" && !hasSubmissionData;
     const hasInterviewerStats = filteredInterviewerStats.length > 0;
+    const shouldUseStatsForTotals = countryFilter === "all" && hasInterviewerStats;
 
     const totalsFromStats = filteredInterviewerStats.reduce(
       (acc, stat) => ({
@@ -162,22 +178,22 @@ export function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) 
     );
 
     // UPDATED: Prefer submissions for total/approved/notApproved/approvalRate if available
-    const totalInterviews = hasSubmissionData
-      ? filteredSubmissions.length
-      : hasInterviewerStats
-        ? totalsFromStats.totalSubmissions
+    const totalInterviews = shouldUseStatsForTotals
+      ? totalsFromStats.totalSubmissions
+      : hasSubmissionData
+        ? filteredSubmissions.length
         : safeKpis.totalInterviews;
 
-    const approved = hasSubmissionData
-      ? approvedFromSubmissions
-      : hasInterviewerStats
-        ? totalsFromStats.approved
+    const approved = shouldUseStatsForTotals
+      ? totalsFromStats.approved
+      : hasSubmissionData
+        ? approvedFromSubmissions
         : safeKpis.approved;
 
-    const notApproved = hasSubmissionData
-      ? notApprovedFromSubmissions
-      : hasInterviewerStats
-        ? totalsFromStats.failed
+    const notApproved = shouldUseStatsForTotals
+      ? totalsFromStats.failed
+      : hasSubmissionData
+        ? notApprovedFromSubmissions
         : safeKpis.notApproved;
 
     const approvalRate = totalInterviews ? approved / totalInterviews : 0;
@@ -185,9 +201,9 @@ export function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) 
     // For flags, keep preferring QC data (since not in submissions), but fall back appropriately
     const totalFlags = hasFlagData
       ? totalFlagsFromFlags
-      : hasInterviewerStats
+      : shouldUseStatsForTotals
         ? totalsFromStats.totalFlags
-        : noFilteredData
+        : hasSubmissionData
           ? 0
           : safeKpis.totalFlags;
 
