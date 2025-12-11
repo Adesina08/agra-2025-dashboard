@@ -577,7 +577,6 @@ export const youthInWorkQuotaConfig: SegmentQuotaConfig = {
     },
     Ghana: {
       metrics: [
-        { key: "total", label: "Total" },
         { key: "male", label: "Male" },
         { key: "female", label: "Female" },
         { key: "onFarm", label: "On-Farm" },
@@ -606,7 +605,7 @@ export const youthInWorkQuotaConfig: SegmentQuotaConfig = {
           targets: { total: 34, male: 16, female: 18, onFarm: 16, agriService: 0, agriBusiness: 18 },
         },
         {
-          region: "Northern",
+          region: "",
           district: "Total",
           targets: { total: 200, male: 90, female: 110, onFarm: 60, agriService: 74, agriBusiness: 65 },
         },
@@ -675,7 +674,6 @@ export const youthOutreachQuotaConfig: SegmentQuotaConfig = {
       metrics: [
         { key: "male", label: "Male" },
         { key: "female", label: "Female" },
-        { key: "vulnerable", label: "Vulnerable" }
       ],
       rows: [
         {
@@ -683,8 +681,7 @@ export const youthOutreachQuotaConfig: SegmentQuotaConfig = {
           district: "Bugesera",
           targets: {
             male: 15,
-            female: 21,
-            vulnerable: 0
+            female: 21
           },
         },
         {
@@ -692,8 +689,7 @@ export const youthOutreachQuotaConfig: SegmentQuotaConfig = {
           district: "Gatsibo",
           targets: {
             male: 27,
-            female: 31,
-            vulnerable: 0
+            female: 31
           },
         },
         {
@@ -701,8 +697,7 @@ export const youthOutreachQuotaConfig: SegmentQuotaConfig = {
           district: "Kayonza",
           targets: {
             male: 12,
-            female: 22,
-            vulnerable: 0
+            female: 22
           },
         },
         {
@@ -710,8 +705,7 @@ export const youthOutreachQuotaConfig: SegmentQuotaConfig = {
           district: "Rwamagana",
           targets: {
             male: 28,
-            female: 44,
-            vulnerable: 0
+            female: 44
           },
         },
       ],
