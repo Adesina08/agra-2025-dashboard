@@ -86,13 +86,20 @@ export function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) 
     });
   }, [countryFilter, submissions]);
 
+  const normalizeEnumeratorId = (id: string | null | undefined) =>
+    id?.toString().trim().toLowerCase() ?? "";
+
   const filteredInterviewerStats = useMemo(() => {
     if (countryFilter === "all") return safeInterviewerStats;
     const enumeratorsInCountry = new Set(
-      filteredSubmissions.map((submission) => submission.enumerator).filter(Boolean)
+      filteredSubmissions
+        .map((submission) => normalizeEnumeratorId(submission.enumerator))
+        .filter(Boolean)
     );
     if (!enumeratorsInCountry.size) return [];
-    return safeInterviewerStats.filter((stat) => enumeratorsInCountry.has(stat.enumeratorId));
+    return safeInterviewerStats.filter((stat) =>
+      enumeratorsInCountry.has(normalizeEnumeratorId(stat.enumeratorId))
+    );
   }, [countryFilter, filteredSubmissions, safeInterviewerStats]);
 
   const filteredFlagTotals = useMemo(() => {
@@ -156,8 +163,9 @@ export function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) 
     ).length;
 
     const hasSubmissionData = filteredSubmissions.length > 0;
-    const noFilteredData = countryFilter !== "all" && !hasSubmissionData;
     const hasInterviewerStats = filteredInterviewerStats.length > 0;
+    const noFilteredData =
+      countryFilter !== "all" && !hasSubmissionData && !hasInterviewerStats;
 
     const totalsFromStats = filteredInterviewerStats.reduce(
       (acc, stat) => ({
@@ -180,19 +188,25 @@ export function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) 
       ? filteredSubmissions.length
       : hasInterviewerStats
         ? totalsFromStats.totalSubmissions
-        : safeKpis.totalInterviews;
+        : noFilteredData
+          ? 0
+          : safeKpis.totalInterviews;
 
     const approved = hasSubmissionData
       ? approvedFromSubmissions
       : hasInterviewerStats
         ? totalsFromStats.approved
-        : safeKpis.approved;
+        : noFilteredData
+          ? 0
+          : safeKpis.approved;
 
     const notApproved = hasSubmissionData
       ? notApprovedFromSubmissions
       : hasInterviewerStats
         ? totalsFromStats.failed
-        : safeKpis.notApproved;
+        : noFilteredData
+          ? 0
+          : safeKpis.notApproved;
 
     const approvalRate = totalInterviews ? approved / totalInterviews : 0;
 
