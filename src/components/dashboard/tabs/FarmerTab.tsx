@@ -23,7 +23,17 @@ const getFarmerEnumeratorId = (submission: FarmerData) => {
   const record = submission as Record<string, unknown>;
   const rawUsername = record.username ?? record.USERNAME;
   if (typeof rawUsername === "string" && rawUsername.trim()) {
-    return rawUsername;
+    return rawUsername.trim();
+  }
+
+  const rawEnumerator = record.enumerator ?? record.Enumerator;
+  if (typeof rawEnumerator === "string" && rawEnumerator.trim()) {
+    return rawEnumerator.trim();
+  }
+
+  const rawCaseId = record.caseid ?? record.CASEID;
+  if (typeof rawCaseId === "string" && rawCaseId.trim()) {
+    return rawCaseId.trim();
   }
 
   return submission.enumerator;
@@ -39,7 +49,20 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
   const [countryFilter, setCountryFilter] = useState<string>("all");
 
   const hasData = !!(submissionQuality && errorBreakdown && interviewerStats && kpis);
-  const safeInterviewerStats = useMemo(() => interviewerStats ?? [], [interviewerStats]);
+
+  const safeInterviewerStats = useMemo(
+    () =>
+      (interviewerStats ?? []).map((stat) => ({
+        ...stat,
+        approvedInterviews: stat.approvedInterviews ?? 0,
+        failedInterviews: stat.failedInterviews ?? 0,
+        totalSubmissions: stat.totalSubmissions ?? 0,
+        totalFlags: stat.totalFlags ?? 0,
+        flagsByKpi: stat.flagsByKpi ?? {},
+      })),
+    [interviewerStats]
+  );
+
   const safeKpis = useMemo(() => {
     if (!kpis) {
       return {
@@ -79,9 +102,21 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
       : submission.country;
   };
 
+  // ✅ Only keep Farmer rows where obs0 is NOT blank
+  const validSubmissions = useMemo(
+    () =>
+      submissions.filter((submission) => {
+        const value = (submission as Record<string, unknown>)["obs0"];
+        if (value == null) return false;
+        if (typeof value === "string") return value.trim() !== "";
+        return true;
+      }),
+    [submissions]
+  );
+
   const availableCountries = useMemo(() => {
     const unique = new Set(
-      submissions
+      validSubmissions
         .map((submission) => getSubmissionCountry(submission)?.trim())
         .filter(
           (country): country is string =>
@@ -90,15 +125,15 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
     );
     Object.keys(farmerQuotaConfig.countries).forEach((country) => unique.add(country));
     return Array.from(unique).sort((a, b) => a.localeCompare(b));
-  }, [submissions]);
+  }, [validSubmissions]);
 
   const filteredSubmissions = useMemo(() => {
-    if (countryFilter === "all") return submissions;
-    return submissions.filter((submission) => {
+    if (countryFilter === "all") return validSubmissions;
+    return validSubmissions.filter((submission) => {
       const country = getSubmissionCountry(submission);
       return normalizeString(country) === normalizeString(countryFilter);
     });
-  }, [countryFilter, submissions]);
+  }, [countryFilter, validSubmissions]);
 
   const filteredInterviewerStats = useMemo(() => {
     if (countryFilter === "all") return safeInterviewerStats;
@@ -188,6 +223,7 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
         : noFilteredData
           ? 0
           : safeKpis.totalInterviews;
+
     const approved = hasInterviewerStats
       ? totalsFromStats.approved
       : hasSubmissionData
@@ -195,6 +231,7 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
         : noFilteredData
           ? 0
           : safeKpis.approved;
+
     const notApproved = hasInterviewerStats
       ? totalsFromStats.failed
       : hasSubmissionData
@@ -202,7 +239,9 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
         : noFilteredData
           ? 0
           : safeKpis.notApproved;
+
     const approvalRate = totalInterviews ? approved / totalInterviews : 0;
+
     const totalFlags = hasFlagData
       ? totalFlagsFromFlags
       : hasInterviewerStats
@@ -210,6 +249,7 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
         : noFilteredData
           ? 0
           : safeKpis.totalFlags;
+
     const avgFlagsPerInterview = totalInterviews ? totalFlags / totalInterviews : 0;
 
     return {
@@ -336,36 +376,38 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
 
       <QuotaSection
         variant="farmer"
-        submissions={submissions}
+        submissions={validSubmissions}
         selectedCountry={countryFilter}
         config={farmerQuotaConfig}
         title="Farmer quota status"
       />
 
-      {/* NEW: Real Map with Markers - Updates with country filter */}
-      <SubmissionMap
-        submissions={filteredSubmissions.map(s => ({
-          latitude: s.latitude ?? 0,
-          longitude: s.longitude ?? 0,
-          region: s.region,
-          district: s.district,
-          status: s.status,
-          id: s.id,
-          enumerator: s.enumerator,
-        }))}
-        title="Live Farmer Submission Map"
-        variant="farmer"
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="space-y-6 lg:col-span-2">
+          <SubmissionQualityChart
+            data={submissionChartData}
+            variant="farmer"
+            flagNames={flagNameByCode}
+          />
 
-      <SubmissionQualityChart
-        data={submissionChartData}
-        variant="farmer"
-        flagNames={flagNameByCode}
-      />
+          <ProductivityRankings data={productivityData} variant="farmer" />
 
-      <ProductivityRankings data={productivityData} variant="farmer" />
+          <ErrorBreakdown data={errorBreakdownData} variant="farmer" />
+        </div>
 
-      <ErrorBreakdown data={errorBreakdownData} variant="farmer" />
+        {/* Map with Markers - Updates with country filter */}
+        <SubmissionMap
+          submissions={filteredSubmissions.map(s => ({
+            latitude: s.latitude ?? 0,
+            longitude: s.longitude ?? 0,
+            region: s.region,
+            district: s.district,
+            status: s.status,
+            id: s.id,
+            enumerator: s.enumerator,
+          }))}
+        />
+      </div>
     </div>
   );
 }
