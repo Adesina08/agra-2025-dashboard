@@ -119,6 +119,20 @@ export function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) 
   }, [errorBreakdown, filteredFlagTotals]);
 
   const derivedKpis = useMemo(() => {
+    // When no country filter is applied, prefer the authoritative QC rollups.
+    // Live submission data can drift from the QC summary, so we show the
+    // pre-computed KPI figures to keep the enterprise dashboard consistent.
+    if (countryFilter === "all") {
+      return {
+        totalInterviews: safeKpis.totalInterviews,
+        approved: safeKpis.approved,
+        notApproved: safeKpis.notApproved,
+        approvalRate: safeKpis.approvalRate,
+        totalFlags: safeKpis.totalFlags,
+        avgFlagsPerInterview: safeKpis.avgFlagsPerInterview,
+      };
+    }
+
     const getApprovalStatus = (submission: EnterpriseData) => {
       const rawStatus = (submission as Record<string, unknown>)["QC Approval Status"];
       return typeof rawStatus === "string" && rawStatus.trim()
