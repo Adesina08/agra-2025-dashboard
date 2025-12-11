@@ -19,27 +19,7 @@ export type QuotaMetricKey =
   | "onFarm"
   | "agriService"
   | "agriBusiness"
-  | "trade"
-  | "extension"
-  | "training"
-  | "accessToFinance"
-  | "agroDealerTraining"
-  | "incubationBds"
-  | "marketLinkages"
-  | "trainingInternship"
-  | "internship"
-  | "extensionEvent"
-  | "onFarmCsaTraining"
-  | "entrepreneurshipTraining"
-  | "mentorshipSupport"
-  | "grainAggregation"
-  | "marketing"
-  | "seedsDistribution"
-  | "agriBusinessOutreach"
-  | "caaOrientation"
-  | "salesIncrease"
-  | "fieldExchangeDemo"
-  | "others";
+  | "trade";
 
 export interface QuotaMetric {
   key: QuotaMetricKey;
@@ -208,7 +188,7 @@ export const farmerQuotaConfig: SegmentQuotaConfig = {
         },
       ],
     },
-    Mozambique: {
+    Moçambique: {
       metrics: [
         { key: "total", label: "Total" },
         { key: "male", label: "Male" },
@@ -775,22 +755,22 @@ export const youthOutreachQuotaConfig: SegmentQuotaConfig = {
       ],
       rows: [
         {
-          region: "Central",
+          region: "Central Region",
           district: "Lilongwe",
           targets: { male: 49, female: 65, vulnerable: 5, onFarm: 113, agriBusinessOutreach: 1 },
         },
         {
-          region: "Central",
+          region: "Central Region",
           district: "Kasungu",
           targets: { male: 22, female: 27, vulnerable: 7, onFarm: 49, agriBusinessOutreach: 0 },
         },
         {
-          region: "Central",
+          region: "Central Region",
           district: "Dowa",
           targets: { male: 11, female: 12, vulnerable: 4, onFarm: 22, agriBusinessOutreach: 1},
         },
         {
-          region: "Southern",
+          region: "Southern Region",
           district: "Zomba",
           targets: { male: 3, female: 12, vulnerable: 0, onFarm: 0, agriBusinessOutreach: 0},
         },
