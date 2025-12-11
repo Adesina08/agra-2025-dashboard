@@ -158,6 +158,26 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
   }, [errorBreakdown, filteredFlagTotals]);
 
   const derivedKpis = useMemo(() => {
+    // When no country filter is applied, prefer the authoritative QC rollups.
+    // This mirrors the enterprise tab so the unfiltered dashboard always
+    // reflects the pre-computed QC KPI figures instead of live submission
+    // totals that can drift from the QC summary.
+    if (countryFilter === "all") {
+      return {
+        totalInterviews: safeKpis.totalInterviews,
+        approved: safeKpis.approved,
+        notApproved: safeKpis.notApproved,
+        approvalRate: safeKpis.approvalRate,
+        totalFlags: safeKpis.totalFlags,
+        avgFlagsPerInterview: safeKpis.avgFlagsPerInterview,
+        percentDuplicatePhone: safeKpis.percentDuplicatePhone,
+        percentLOIIssues: safeKpis.percentLOIIssues,
+        percentHardViolations: safeKpis.percentHardViolations,
+        ageOutsideYouthCount: safeKpis.ageOutsideYouthCount,
+        ageOutsideYouthPercent: safeKpis.ageOutsideYouthPercent,
+      } as const;
+    }
+
     const getApprovalStatus = (submission: YouthData) => {
       const rawStatus = (submission as Record<string, unknown>)["QC Approval Status"];
       return typeof rawStatus === "string" && rawStatus.trim()
