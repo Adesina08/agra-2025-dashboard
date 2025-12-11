@@ -74,7 +74,7 @@ export const farmerQuotaConfig: SegmentQuotaConfig = {
       ],
       rows: [
         {
-          region: "North East Region",
+          region: "North East",
           district: "East Mamprusi",
           targets: {
             male: 0,
@@ -85,7 +85,7 @@ export const farmerQuotaConfig: SegmentQuotaConfig = {
           },
         },
         {
-          region: "North East Region",
+          region: "North East",
           district: "Mampurugu-Moagduri",
           targets: {
             male: 21,
@@ -96,7 +96,7 @@ export const farmerQuotaConfig: SegmentQuotaConfig = {
           },
         },
         {
-          region: "Northern Region",
+          region: "Northern",
           district: "Gushegu Municipal District",
           targets: {
             male: 20,
@@ -107,7 +107,7 @@ export const farmerQuotaConfig: SegmentQuotaConfig = {
           },
         },
         {
-          region: "Northern Region",
+          region: "Northern",
           district: "Nanumba south",
           targets: {
             male: 94,
@@ -133,7 +133,7 @@ export const farmerQuotaConfig: SegmentQuotaConfig = {
       ],
       rows: [
         {
-          region: "Central Region",
+          region: "Central",
           district: "Dowa",
           targets: {
             male: 53,
@@ -148,7 +148,7 @@ export const farmerQuotaConfig: SegmentQuotaConfig = {
           },
         },
         {
-          region: "Central Region",
+          region: "Central",
           district: "Lilongwe",
           targets: {
             male: 107,
@@ -163,7 +163,7 @@ export const farmerQuotaConfig: SegmentQuotaConfig = {
           },
         },
         {
-          region: "Southern Region",
+          region: "Southern",
           district: "Zomba",
           targets: {
             male: 7,
@@ -178,7 +178,7 @@ export const farmerQuotaConfig: SegmentQuotaConfig = {
           },
         },
         {
-          region: "Southern Region",
+          region: "Southern",
           district: "Machinga",
           targets: {
             male: 2,
@@ -203,8 +203,7 @@ export const farmerQuotaConfig: SegmentQuotaConfig = {
             vulnerable: 5,
             maize: 241,
             soyaBean: 124,
-            groundnut: 4,
-            otherCrops: 141,
+            groundnut: 4
           },
         },
       ],
@@ -215,9 +214,9 @@ export const farmerQuotaConfig: SegmentQuotaConfig = {
         { key: "male", label: "Male" },
         { key: "female", label: "Female" },
         { key: "adult", label: "Adult" },
-        { key: "totalSampleYouth", label: "Total sample size_youth" },
-        { key: "totalSampleCrop2", label: "Total sample size-crop-2 (Rice)" },
-        { key: "totalSampleCrop3", label: "Total sample size-crop-3 (Soya)" },
+        { key: "totalSampleYouth", label: "Youth" },
+        { key: "totalSampleCrop2", label: "TRice" },
+        { key: "totalSampleCrop3", label: "Soya" },
       ],
       rows: [
         {
@@ -275,7 +274,7 @@ export const farmerQuotaConfig: SegmentQuotaConfig = {
       ],
       rows: [
         {
-          region: "Eastern Region",
+          region: "Eastern",
           district: "Bugesera",
           targets: {
             male: 65,
@@ -290,7 +289,7 @@ export const farmerQuotaConfig: SegmentQuotaConfig = {
           },
         },
         {
-          region: "Eastern Region",
+          region: "Eastern",
           district: "Gatsibo",
           targets: {
             male: 67,
@@ -305,7 +304,7 @@ export const farmerQuotaConfig: SegmentQuotaConfig = {
           },
         },
         {
-          region: "Eastern Region",
+          region: "Eastern",
           district: "Kayonza",
           targets: {
             male: 14,
@@ -320,7 +319,7 @@ export const farmerQuotaConfig: SegmentQuotaConfig = {
           },
         },
         {
-          region: "Eastern Region",
+          region: "Eastern",
           district: "Rwamagana",
           targets: {
             male: 7,
@@ -346,7 +345,7 @@ export const farmerQuotaConfig: SegmentQuotaConfig = {
       ],
       rows: [
         {
-          region: "Kigoma Region",
+          region: "Kigoma",
           district: "Kasulu",
           targets: {
             male: 58,
@@ -357,7 +356,7 @@ export const farmerQuotaConfig: SegmentQuotaConfig = {
           },
         },
         {
-          region: "Kigoma Region",
+          region: "Kigoma",
           district: "Kakonko",
           targets: {
             male: 32,
@@ -368,7 +367,7 @@ export const farmerQuotaConfig: SegmentQuotaConfig = {
           },
         },
         {
-          region: "Kigoma Region",
+          region: "Kigoma",
           district: "Uvinza",
           targets: {
             male: 30,
@@ -379,7 +378,7 @@ export const farmerQuotaConfig: SegmentQuotaConfig = {
           },
         },
         {
-          region: "Katavi Region",
+          region: "Katavi",
           district: "Nsimbo",
           targets: {
             male: 52,
@@ -390,7 +389,7 @@ export const farmerQuotaConfig: SegmentQuotaConfig = {
           },
         },
         {
-          region: "Katavi Region",
+          region: "Katavi",
           district: "Tanganyika",
           targets: {
             male: 16,
@@ -401,7 +400,7 @@ export const farmerQuotaConfig: SegmentQuotaConfig = {
           },
         },
         {
-          region: "Mbeya Region",
+          region: "Mbeya",
           district: "Kyela",
           targets: {
             male: 42,
@@ -441,32 +440,32 @@ export const youthInWorkQuotaConfig: SegmentQuotaConfig = {
       ],
       rows: [
         {
-          region: "Kigoma Region",
+          region: "Kigoma",
           district: "Uvinza",
           targets: { male: 36, female: 43, vulnerable: 0, onFarm: 48, agriService: 0, agriBusiness: 21, trade: 11 },
         },
         {
-          region: "Kigoma Region",
+          region: "Kigoma",
           district: "Kibondo",
           targets: { male: 8, female: 9, vulnerable: 2, onFarm: 11, agriService: 0, agriBusiness: 3, trade: 2 },
         },
         {
-          region: "Kigoma Region",
+          region: "Kigoma",
           district: "Mpimbwe",
           targets: { male: 23, female: 21, vulnerable: 0, onFarm: 36, agriService: 0, agriBusiness: 9, trade: 0 },
         },
         {
-          region: "Katavi Region",
+          region: "Katavi",
           district: "Nsimbo",
           targets: { male: 10, female: 19, vulnerable: 0, onFarm: 24, agriService: 0, agriBusiness: 5, trade: 0 },
         },
         {
-          region: "Katavi Region",
+          region: "Katavi",
           district: "MPANDA",
           targets: { male: 17, female: 13, vulnerable: 0, onFarm: 14, agriService: 2, agriBusiness: 14, trade: 0 },
         },
         {
-          region: "Katavi Region",
+          region: "Katavi",
           district: "Total",
           targets: { male: 50, female: 53, vulnerable: 0, onFarm: 74, agriService: 2, agriBusiness: 28, trade: 0 },
         },
@@ -484,22 +483,22 @@ export const youthInWorkQuotaConfig: SegmentQuotaConfig = {
       ],
       rows: [
         {
-          region: "Eastern Region",
+          region: "Eastern",
           district: "Bugesera",
           targets: { male: 17, female: 25, vulnerable: 0, onFarm: 34, agriService: 4, agriBusiness: 3, trade: 1 },
         },
         {
-          region: "Eastern Region",
+          region: "Eastern",
           district: "Gatsibo",
           targets: { male: 23, female: 34, vulnerable: 1, onFarm: 49, agriService: 2, agriBusiness: 3, trade: 4 },
         },
         {
-          region: "Eastern Region",
+          region: "Eastern",
           district: "Kayonza",
           targets: { male: 19, female: 29, vulnerable: 1, onFarm: 44, agriService: 1, agriBusiness: 4, trade: 0 },
         },
         {
-          region: "Eastern Region",
+          region: "Eastern",
           district: "Rwamagana",
           targets: { male: 17, female: 35, vulnerable: 1, onFarm: 46, agriService: 1, agriBusiness: 2, trade: 2 },
         },
@@ -509,30 +508,28 @@ export const youthInWorkQuotaConfig: SegmentQuotaConfig = {
       metrics: [
         { key: "male", label: "Male" },
         { key: "female", label: "Female" },
-        { key: "onFarm", label: "On-Farm" },
-        { key: "extension", label: "Extension" },
-        { key: "training", label: "Training" },
+        { key: "onFarm", label: "On-Farm" }
       ],
       rows: [
         {
-          region: "Nampula Region",
+          region: "Nampula",
           district: "Ribáuè",
-          targets: { male: 28, female: 46, onFarm: 74, extension: 17, training: 31 },
+          targets: { male: 28, female: 46, onFarm: 74 },
         },
         {
-          region: "Sofala Region",
+          region: "Sofala",
           district: "Meconta",
-          targets: { male: 37, female: 21, onFarm: 57, extension: 57, training: 0 },
+          targets: { male: 37, female: 21, onFarm: 57},
         },
         {
-          region: "Sofala Region",
+          region: "Sofala",
           district: "Gorongosa",
-          targets: { male: 19, female: 16, onFarm: 35, extension: 35, training: 0 },
+          targets: { male: 19, female: 16, onFarm: 35},
         },
         {
-          region: "Sofala Region",
+          region: "Sofala",
           district: "Nhamatanda",
-          targets: { male: 14, female: 19, onFarm: 33, extension: 29, training: 0 },
+          targets: { male: 14, female: 19, onFarm: 33},
         },
       ],
     },
@@ -543,47 +540,33 @@ export const youthInWorkQuotaConfig: SegmentQuotaConfig = {
         { key: "vulnerable", label: "Vulnerable" },
         { key: "onFarm", label: "On-Farm" },
         { key: "agriService", label: "Agri-Services" },
-        { key: "agriBusiness", label: "Agri-Business" },
-        { key: "accessToFinance", label: "Access to Finance" },
-        { key: "agroDealerTraining", label: "Agro-Dealer Training" },
-        { key: "incubationBds", label: "Incubation-Business Development Service" },
-        { key: "marketLinkages", label: "Market Linkages" },
+        { key: "agriBusiness", label: "Agri-Business" }
       ],
       rows: [
         {
-          region: "Central Region",
+          region: "Central",
           district: "Lilongwe",
           targets: {
             male: 42,
             female: 49,
             vulnerable: 1,
             onFarm: 90,
-            agriService: 0,
-            agriBusiness: 1,
-            accessToFinance: 1,
-            agroDealerTraining: 0,
-            incubationBds: 0,
-            marketLinkages: 88,
+            agriService: 0
           },
         },
         {
-          region: "Southern Region",
+          region: "Southern",
           district: "Kasungu",
           targets: {
             male: 15,
             female: 23,
             vulnerable: 2,
             onFarm: 36,
-            agriService: 0,
-            agriBusiness: 0,
-            accessToFinance: 0,
-            agroDealerTraining: 0,
-            incubationBds: 0,
-            marketLinkages: 38,
+            agriService: 0
           },
         },
         {
-          region: "Southern Region",
+          region: "Southern",
           district: "Dowa",
           targets: {
             male: 28,
@@ -595,11 +578,11 @@ export const youthInWorkQuotaConfig: SegmentQuotaConfig = {
             accessToFinance: 0,
             agroDealerTraining: 0,
             incubationBds: 0,
-            marketLinkages: 57,
+            marketLinkages: 57
           },
         },
         {
-          region: "Southern Region",
+          region: "Southern",
           district: "Zomba",
           targets: {
             male: 11,
@@ -607,11 +590,7 @@ export const youthInWorkQuotaConfig: SegmentQuotaConfig = {
             vulnerable: 0,
             onFarm: 3,
             agriService: 4,
-            agriBusiness: 8,
-            accessToFinance: 0,
-            agroDealerTraining: 11,
-            incubationBds: 17,
-            marketLinkages: 0,
+            agriBusiness: 8
           },
         },
       ],
@@ -627,27 +606,27 @@ export const youthInWorkQuotaConfig: SegmentQuotaConfig = {
       ],
       rows: [
         {
-          region: "Northern Region",
+          region: "Northern",
           district: "Sagnarigu",
           targets: { total: 40, male: 17, female: 23, onFarm: 13, agriService: 0, agriBusiness: 27 },
         },
         {
-          region: "Northern Region",
+          region: "Northern",
           district: "Yendi",
           targets: { total: 46, male: 18, female: 28, onFarm: 27, agriService: 0, agriBusiness: 19 },
         },
         {
-          region: "Northern Region",
+          region: "Northern",
           district: "Mion",
           targets: { total: 79, male: 39, female: 40, onFarm: 4, agriService: 74, agriBusiness: 1 },
         },
         {
-          region: "Northern Region",
+          region: "Northern",
           district: "Tamale",
           targets: { total: 34, male: 16, female: 18, onFarm: 16, agriService: 0, agriBusiness: 18 },
         },
         {
-          region: "Northern Region",
+          region: "Northern",
           district: "Total",
           targets: { total: 200, male: 90, female: 110, onFarm: 60, agriService: 74, agriBusiness: 65 },
         },
@@ -662,112 +641,52 @@ export const youthOutreachQuotaConfig: SegmentQuotaConfig = {
       metrics: [
         { key: "male", label: "Male" },
         { key: "female", label: "Female" },
-        { key: "vulnerable", label: "Vulnerable" },
-        { key: "extensionEvent", label: "Extension Event" },
-        { key: "onFarmCsaTraining", label: "On-Farm CSA Training" },
-        { key: "entrepreneurshipTraining", label: "Entrepreneurship Training" },
-        { key: "mentorshipSupport", label: "Mentorship & Extension Support" },
-        { key: "accessToFinance", label: "Access to Finance" },
-        { key: "grainAggregation", label: "Grain Aggregation" },
-        { key: "internship", label: "Internship" },
-        { key: "marketing", label: "Marketing" },
-        { key: "seedsDistribution", label: "Seeds/Seedling Distribution" },
-        { key: "training", label: "Training" },
+        { key: "vulnerable", label: "Vulnerable" }
       ],
       rows: [
         {
-          region: "Kigoma Region",
+          region: "Kigoma",
           district: "Uvinza",
           targets: {
             male: 30,
             female: 43,
-            vulnerable: 0,
-            extensionEvent: 0,
-            onFarmCsaTraining: 0,
-            entrepreneurshipTraining: 0,
-            mentorshipSupport: 2,
-            accessToFinance: 3,
-            grainAggregation: 2,
-            internship: 2,
-            marketing: 2,
-            seedsDistribution: 2,
-            training: 0,
+            vulnerable: 0
           },
         },
         {
-          region: "Kigoma Region",
+          region: "Kigoma",
           district: "Kibondo",
           targets: {
             male: 19,
             female: 21,
-            vulnerable: 1,
-            extensionEvent: 0,
-            onFarmCsaTraining: 0,
-            entrepreneurshipTraining: 62,
-            mentorshipSupport: 10,
-            accessToFinance: 1,
-            grainAggregation: 0,
-            internship: 0,
-            marketing: 0,
-            seedsDistribution: 0,
-            training: 0,
+            vulnerable: 1
           },
         },
         {
-          region: "Katavi Region",
+          region: "Katavi",
           district: "Mpimbwe",
           targets: {
             male: 18,
             female: 23,
-            vulnerable: 0,
-            extensionEvent: 6,
-            onFarmCsaTraining: 0,
-            entrepreneurshipTraining: 0,
-            mentorshipSupport: 0,
-            accessToFinance: 0,
-            grainAggregation: 0,
-            internship: 0,
-            marketing: 0,
-            seedsDistribution: 0,
-            training: 0,
+            vulnerable: 0
           },
         },
         {
-          region: "Katavi Region",
+          region: "Katavi",
           district: "Nsimbo",
           targets: {
             male: 16,
             female: 15,
-            vulnerable: 0,
-            extensionEvent: 8,
-            onFarmCsaTraining: 0,
-            entrepreneurshipTraining: 0,
-            mentorshipSupport: 0,
-            accessToFinance: 0,
-            grainAggregation: 0,
-            internship: 0,
-            marketing: 0,
-            seedsDistribution: 0,
-            training: 0,
+            vulnerable: 0
           },
         },
         {
-          region: "Katavi Region",
+          region: "Katavi",
           district: "MPANDA",
           targets: {
             male: 8,
             female: 7,
-            vulnerable: 0,
-            extensionEvent: 23,
-            onFarmCsaTraining: 0,
-            entrepreneurshipTraining: 0,
-            mentorshipSupport: 0,
-            accessToFinance: 0,
-            grainAggregation: 0,
-            internship: 0,
-            marketing: 0,
-            seedsDistribution: 0,
-            training: 0,
+            vulnerable: 0
           },
         },
       ],
@@ -776,88 +695,43 @@ export const youthOutreachQuotaConfig: SegmentQuotaConfig = {
       metrics: [
         { key: "male", label: "Male" },
         { key: "female", label: "Female" },
-        { key: "vulnerable", label: "Vulnerable" },
-        { key: "trainingInternship", label: "Training / Internship" },
-        { key: "internship", label: "Internship" },
-        { key: "accessToFinance", label: "Access to Finance" },
-        { key: "salesIncrease", label: "Increase Crop & Poultry Sales" },
-        { key: "fieldExchangeDemo", label: "Field Exchange Demo" },
-        { key: "seedsDistribution", label: "Seeds/Seedling Distribution" },
-        { key: "extensionEvent", label: "Extension Event" },
-        { key: "training", label: "Training" },
-        { key: "others", label: "Others" },
+        { key: "vulnerable", label: "Vulnerable" }
       ],
       rows: [
         {
-          region: "Eastern Region",
+          region: "Eastern",
           district: "Bugesera",
           targets: {
             male: 15,
             female: 21,
-            vulnerable: 0.12 as number,
-            trainingInternship: 0,
-            internship: 0,
-            accessToFinance: 0,
-            salesIncrease: 0,
-            fieldExchangeDemo: 0,
-            seedsDistribution: 8,
-            extensionEvent: 2,
-            training: 17,
-            others: 7,
+            vulnerable: 0
           },
         },
         {
-          region: "Eastern Region",
+          region: "Eastern",
           district: "Gatsibo",
           targets: {
             male: 27,
             female: 31,
-            vulnerable: 0.19 as number,
-            trainingInternship: 0,
-            internship: 0,
-            accessToFinance: 1,
-            salesIncrease: 0,
-            fieldExchangeDemo: 8,
-            seedsDistribution: 0,
-            extensionEvent: 0,
-            training: 47,
-            others: 0,
+            vulnerable: 0
           },
         },
         {
-          region: "Eastern Region",
+          region: "Eastern",
           district: "Kayonza",
           targets: {
             male: 12,
             female: 22,
-            vulnerable: 0.22 as number,
-            trainingInternship: 0,
-            internship: 1,
-            accessToFinance: 1,
-            salesIncrease: 2,
-            fieldExchangeDemo: 1,
-            seedsDistribution: 0,
-            extensionEvent: 23,
-            training: 5,
-            others: 5,
+            vulnerable: 0
           },
         },
         {
-          region: "Eastern Region",
+          region: "Eastern",
           district: "Rwamagana",
           targets: {
             male: 28,
             female: 44,
-            vulnerable: 0.35 as number,
-            trainingInternship: 0,
-            internship: 0,
-            accessToFinance: 1,
-            salesIncrease: 1,
-            fieldExchangeDemo: 1,
-            seedsDistribution: 2,
-            extensionEvent: 66,
-            training: 0,
-            others: 0,
+            vulnerable: 0
           },
         },
       ],
@@ -866,34 +740,28 @@ export const youthOutreachQuotaConfig: SegmentQuotaConfig = {
       metrics: [
         { key: "total", label: "Total" },
         { key: "male", label: "Male" },
-        { key: "female", label: "Female" },
-        { key: "extensionEvent", label: "Extension Event" },
-        { key: "training", label: "Training" },
-        { key: "seedsDistribution", label: "Seeds/Seedling Distribution" },
-        { key: "marketing", label: "Marketing" },
-        { key: "accessToFinance", label: "Access to Finance" },
-        { key: "grainAggregation", label: "Grain Aggregation" },
+        { key: "female", label: "Female" }
       ],
       rows: [
         {
-          region: "Nampula Region",
+          region: "Nampula",
           district: "Ribáuè",
-          targets: { total: 70, male: 31, female: 39, extensionEvent: 29, training: 19, seedsDistribution: 37, marketing: 1, accessToFinance: 1, grainAggregation: 2 },
+          targets: { total: 70, male: 31, female: 39 },
         },
         {
-          region: "Nampula Region",
+          region: "Nampula",
           district: "Meconta",
-          targets: { total: 23, male: 11, female: 12, extensionEvent: 22, training: 0.3 as number, seedsDistribution: 0, marketing: 0, accessToFinance: 0, grainAggregation: 0 },
+          targets: { total: 23, male: 11, female: 12},
         },
         {
-          region: "Sofala Region",
+          region: "Sofala",
           district: "Gorongosa",
-          targets: { total: 60, male: 31, female: 29, extensionEvent: 60, training: 0, seedsDistribution: 0, marketing: 0, accessToFinance: 0, grainAggregation: 0 },
+          targets: { total: 60, male: 31, female: 29},
         },
         {
-          region: "Sofala Region",
+          region: "Sofala",
           district: "Nhamatanda",
-          targets: { total: 47, male: 21, female: 26, extensionEvent: 16, training: 0, seedsDistribution: 0, marketing: 0, accessToFinance: 0, grainAggregation: 0 },
+          targets: { total: 47, male: 21, female: 26},
         },
       ],
     },
@@ -903,31 +771,28 @@ export const youthOutreachQuotaConfig: SegmentQuotaConfig = {
         { key: "female", label: "Female" },
         { key: "vulnerable", label: "Vulnerable" },
         { key: "onFarm", label: "On-Farm" },
-        { key: "agriBusinessOutreach", label: "Agri Business" },
-        { key: "caaOrientation", label: "CAA Orientation" },
-        { key: "incubationBds", label: "Incubation-Business Development Service" },
-        { key: "marketLinkages", label: "Market Linkages" },
+        { key: "agriBusinessOutreach", label: "Agri Business" }
       ],
       rows: [
         {
-          region: "Central Region",
+          region: "Central",
           district: "Lilongwe",
-          targets: { male: 49, female: 65, vulnerable: 5, onFarm: 113, agriBusinessOutreach: 1, caaOrientation: 0, incubationBds: 1, marketLinkages: 113 },
+          targets: { male: 49, female: 65, vulnerable: 5, onFarm: 113, agriBusinessOutreach: 1 },
         },
         {
-          region: "Central Region",
+          region: "Central",
           district: "Kasungu",
-          targets: { male: 22, female: 27, vulnerable: 7, onFarm: 49, agriBusinessOutreach: 0, caaOrientation: 0, incubationBds: 0, marketLinkages: 48 },
+          targets: { male: 22, female: 27, vulnerable: 7, onFarm: 49, agriBusinessOutreach: 0 },
         },
         {
-          region: "Central Region",
+          region: "Central",
           district: "Dowa",
-          targets: { male: 11, female: 12, vulnerable: 4, onFarm: 22, agriBusinessOutreach: 1, caaOrientation: 0, incubationBds: 1, marketLinkages: 22 },
+          targets: { male: 11, female: 12, vulnerable: 4, onFarm: 22, agriBusinessOutreach: 1},
         },
         {
-          region: "Southern Region",
+          region: "Southern",
           district: "Zomba",
-          targets: { male: 3, female: 12, vulnerable: 0, onFarm: 0, agriBusinessOutreach: 0, caaOrientation: 15, incubationBds: 15, marketLinkages: 0 },
+          targets: { male: 3, female: 12, vulnerable: 0, onFarm: 0, agriBusinessOutreach: 0},
         },
       ],
     },
