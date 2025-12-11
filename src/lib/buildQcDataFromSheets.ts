@@ -28,6 +28,7 @@ export interface InterviewerStats {
   totalFlags: number;
   flagsPerInterview: number;
   flagsByKpi?: Record<string, number>;
+  country?: string;
 }
 
 export interface KpiCards {
@@ -144,6 +145,9 @@ export function buildQcDataFromSheets(
   const idxEnumId = enumHeader.indexOf("EnumeratorID");
   const idxTotalSubs = enumHeader.indexOf("TotalSubmissions");
   const idxTotalFlags = enumHeader.indexOf("TotalFlags");
+  const idxEnumCountry = enumHeader.findIndex(
+    (h) => h && h.toLowerCase() === "country"
+  );
 
   // 3) DETAIL SHEET
   const [detailHeader, ...detailRows] = detailValues;
@@ -203,6 +207,7 @@ export function buildQcDataFromSheets(
         totalFlags,
         flagsPerInterview,
         flagsByKpi: kpiCounts,
+        country: idxEnumCountry >= 0 ? row[idxEnumCountry] : undefined,
       };
     });
 

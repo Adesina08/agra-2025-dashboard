@@ -86,19 +86,22 @@ export function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) 
     });
   }, [countryFilter, submissions]);
 
-  const normalizeEnumeratorId = (id: string | null | undefined) =>
-    id?.toString().trim().toLowerCase() ?? "";
-
   const filteredInterviewerStats = useMemo(() => {
     if (countryFilter === "all") return safeInterviewerStats;
+    const targetCountry = countryFilter.toLowerCase();
+
+    const statsWithCountry = safeInterviewerStats.filter(
+      (stat) => stat.country?.toLowerCase() === targetCountry
+    );
+    if (statsWithCountry.length) return statsWithCountry;
+
     const enumeratorsInCountry = new Set(
-      filteredSubmissions
-        .map((submission) => normalizeEnumeratorId(submission.enumerator))
-        .filter(Boolean)
+      filteredSubmissions.map((submission) => submission.enumerator).filter(Boolean)
     );
     if (!enumeratorsInCountry.size) return [];
+
     return safeInterviewerStats.filter((stat) =>
-      enumeratorsInCountry.has(normalizeEnumeratorId(stat.enumeratorId))
+      enumeratorsInCountry.has(stat.enumeratorId)
     );
   }, [countryFilter, filteredSubmissions, safeInterviewerStats]);
 
