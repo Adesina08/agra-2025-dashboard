@@ -71,9 +71,11 @@ export function normalizeYouthRow(row: SheetRow, index: number): YouthData {
   const e12 = pickValue(row, ['E12', 'e12']);
   const rs3 = pickValue(row, ['RS3', 'rs3']);
 
-  // CRITICAL: "QC Approval Status" MUST be first in the list
+  // CRITICAL: "Approval" MUST be first in the list
   const rawStatus = pickValue(row, [
-    'QC Approval Status',      // ← Your real column — comes FIRST
+    'Approval',                // ← Primary Approval column
+    'approval',
+    'QC Approval Status',
     'qc_approval_status',
     'QC Approval status',
     'status',
@@ -145,8 +147,10 @@ export function normalizeFarmerRow(row: SheetRow, index: number): FarmerData {
     .map(f => parseNumber(pickValue(row, [f]), 0))
     .reduce((sum, v) => sum + v, 0);
 
-  // Status — "QC Approval Status" first
+  // Status — "Approval" first
   const rawStatus = pickValue(row, [
+    'Approval',
+    'approval',
     'QC Approval Status',
     'qc_approval_status',
     'status',
@@ -198,8 +202,10 @@ export function normalizeEnterpriseRow(row: SheetRow, index: number): Enterprise
   const district = pickValue(row, ['district', 'db0_q']);
   const gender = pickValue(row, ['gender', 'sex', 'a7'], 'Unknown');
 
-  // Status — "QC Approval Status" first
+  // Status — "Approval" first
   const rawStatus = pickValue(row, [
+    'Approval',
+    'approval',
     'QC Approval Status',
     'qc_approval_status',
     'status',

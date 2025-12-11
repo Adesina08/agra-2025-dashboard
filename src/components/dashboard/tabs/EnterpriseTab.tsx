@@ -148,7 +148,9 @@ export function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) 
     }
 
     const getApprovalStatus = (submission: EnterpriseData) => {
-      const rawStatus = (submission as Record<string, unknown>)["QC Approval Status"];
+      const rawStatus =
+        (submission as Record<string, unknown>)["Approval"] ??
+        (submission as Record<string, unknown>)["QC Approval Status"];
       return typeof rawStatus === "string" && rawStatus.trim()
         ? rawStatus
         : submission.status;
