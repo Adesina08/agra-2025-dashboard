@@ -126,8 +126,9 @@ export function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
     const approvedFromSubmissions = validSubmissions.filter(
       (submission) => submission.status === "Approved"
     ).length;
+    // Count both "Rejected" status and any status that is not "Approved" or "Pending"
     const notApprovedFromSubmissions = validSubmissions.filter(
-      (submission) => submission.status === "Rejected"
+      (submission) => submission.status === "Rejected" || (submission.status !== "Approved" && submission.status !== "Pending")
     ).length;
 
     const totalFlagsFromFlags = Object.values(filteredFlagTotals).reduce(
