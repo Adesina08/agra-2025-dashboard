@@ -86,7 +86,7 @@ export function SubmissionMap({
 
   const points = useMemo(
     () =>
-      submissions.filter(
+      (submissions ?? []).filter(
         (item) =>
           Number.isFinite(item.latitude) &&
           Number.isFinite(item.longitude) &&
