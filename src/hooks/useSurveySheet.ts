@@ -11,8 +11,6 @@ interface SurveyResult<T> {
   isLoading: boolean;
   error: Error | null;
   refreshedAt?: Date;
-  isFetching: boolean;
-  refetch: () => Promise<unknown>;
 }
 
 const normalizerMap: Record<SurveyKey, (row: SheetRow, index: number) => any> = {
@@ -23,11 +21,14 @@ const normalizerMap: Record<SurveyKey, (row: SheetRow, index: number) => any> = 
 
 export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData>(survey: SurveyKey): SurveyResult<T> {
   const config = sheetConfigs[survey];
+  const REFETCH_INTERVAL = 5 * 60 * 1000; // 10 minutes
+
+  const isEnabled = Boolean(config.sheetId && (config.sheetName || config.sheetGid));
 
   const query = useQuery<{ rows: SheetRow[]; refreshedAt: Date }>({
     queryKey: ['google-sheet', survey, config.sheetId, config.sheetName, config.sheetGid],
     queryFn: async () => {
-      if (!config.sheetId || !(config.sheetName || config.sheetGid)) {
+      if (!isEnabled) {
         throw new Error('Missing Google Sheet configuration');
       }
       const rows = await fetchSheetRows({
@@ -37,14 +38,37 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
       });
       return { rows, refreshedAt: new Date() };
     },
+    enabled: isEnabled,
+    refetchInterval: isEnabled ? REFETCH_INTERVAL : false,
     refetchOnWindowFocus: false,
-    // Keep data fresh even without manual refreshes
-    refetchInterval: 10 * 60 * 1000,
-    refetchIntervalInBackground: true,
     retry: 1,
   });
 
   const normalizer = normalizerMap[survey] as (row: SheetRow, index: number) => T;
+
+  // Helper function to check if a value is blank/empty
+  const isBlank = (value: unknown): boolean => {
+    if (value === null || value === undefined) return true;
+    const str = String(value).trim();
+    return str === '' || str.toLowerCase() === 'null' || str.toLowerCase() === 'undefined';
+  };
+
+  // Helper function to get column value (case-insensitive, handles whitespace)
+  const getColumnValue = (row: SheetRow, columnName: string): unknown => {
+    // Try exact match first
+    if (row[columnName] !== undefined && row[columnName] !== null && row[columnName] !== '') {
+      return row[columnName];
+    }
+    // Try case-insensitive match (with and without whitespace trimming)
+    const lowerKey = columnName.toLowerCase().trim();
+    for (const [key, value] of Object.entries(row)) {
+      const trimmedKey = key.trim().toLowerCase();
+      if (trimmedKey === lowerKey) {
+        return value;
+      }
+    }
+    return undefined;
+  };
 
   // 🔹 Clean live rows: drop empty rows and any accidental header rows
   const cleanedRows = query.data?.rows.filter((row) => {
@@ -65,8 +89,31 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
     return true;
   }) ?? [];
 
+  // 🔹 Filter rows based on survey-specific criteria BEFORE normalization
+  // This ensures excluded rows never appear in the dashboard
+  const filteredRows = cleanedRows.filter((row) => {
+    if (survey === 'youth') {
+      // Youth: exclude where status_com is not "1"
+      const statusCom = getColumnValue(row, 'status_com');
+      const statusComStr = String(statusCom || '').trim();
+      // Only include rows where status_com exactly equals "1"
+      return statusComStr === '1';
+    } else if (survey === 'enterprise') {
+      // Enterprise: exclude where F1_Q is blank
+      const f1Q = getColumnValue(row, 'F1_Q');
+      // Only include rows where F1_Q has a non-blank value
+      return !isBlank(f1Q);
+    } else if (survey === 'farmer') {
+      // Farmer: exclude where obs0 is blank
+      const obs0 = getColumnValue(row, 'obs0');
+      // Only include rows where obs0 has a non-blank value
+      return !isBlank(obs0);
+    }
+    return true; // If survey type doesn't match, include the row
+  });
+
   // Ensure we never count the first row (sheet headers) toward any dashboard metric
-  const dataRows = cleanedRows.slice(1);
+  const dataRows = filteredRows;
 
   if (query.isError || !query.data || !dataRows.length) {
     return {
@@ -76,8 +123,6 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
       isLoading: query.isLoading,
       error: query.error as Error | null,
       refreshedAt: query.data?.refreshedAt,
-      isFetching: query.isFetching,
-      refetch: query.refetch,
     };
   }
 
@@ -90,7 +135,5 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
     isLoading: query.isLoading,
     error: null,
     refreshedAt: query.data.refreshedAt,
-    isFetching: query.isFetching,
-    refetch: query.refetch,
   };
 }

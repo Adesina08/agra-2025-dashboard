@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { headerTone, Variant } from "./variantStyles";
 import {
   type QuotaMetricKey,
+  type QuotaMetric,
   type SegmentQuotaConfig,
   type QuotaRow,
 } from "@/data/quotaData";
@@ -21,7 +22,7 @@ interface QuotaSectionProps {
 }
 
 const getSubmissionCountry = (submission: SubmissionLike) => {
-  const record = submission as Record<string, unknown>;
+  const record = submission as unknown as Record<string, unknown>;
 
   // Farmer: prefer dccot
   if (typeof record.dccot === "string" && record.dccot.trim()) {
@@ -245,7 +246,7 @@ const evaluateYouthMetric = (
     default: {
       if (outreachActivityMetrics.includes(metric)) {
         const activities = Array.isArray(submission.outreachActivities) ? submission.outreachActivities.map(toLower) : [];
-        return activities.includes(toLower(metric));
+        return activities.includes(toLower(metric)) ? 1 : 0;
       }
 
       return 0;
@@ -364,7 +365,8 @@ const computeYouthQuotaAchieved = (
       workFocus: row.workFocus ?? workFocus,
     };
 
-    const matching = submissions.filter((submission) => matchesYouthRow(submission, rowWithFocus, countryFilter));
+    const safeSubmissions = submissions ?? [];
+    const matching = safeSubmissions.filter((submission) => matchesYouthRow(submission, rowWithFocus, countryFilter));
     const workCounts = initWorkCategoryCounts();
     const metricTotals: Partial<Record<QuotaMetricKey, number>> = {};
 
@@ -407,7 +409,8 @@ const computeFarmerQuotaAchieved = (
       workFocus: row.workFocus ?? workFocus,
     };
 
-    const matching = submissions.filter((submission) => matchesFarmerRow(submission, rowWithFocus, countryFilter));
+    const safeSubmissions = submissions ?? [];
+    const matching = safeSubmissions.filter((submission) => matchesFarmerRow(submission, rowWithFocus, countryFilter));
     const metricTotals: Partial<Record<QuotaMetricKey, number>> = {};
 
     matching.forEach((submission) => {
@@ -472,8 +475,9 @@ export function QuotaSection({
   );
 
   const filteredSubmissions = useMemo(() => {
-    if (isTotalFilter) return submissions;
-    return submissions.filter(
+    const safeSubmissions = submissions ?? [];
+    if (isTotalFilter) return safeSubmissions;
+    return safeSubmissions.filter(
       (submission) => getSubmissionCountry(submission)?.toLowerCase() === selectedCountry.toLowerCase()
     );
   }, [isTotalFilter, selectedCountry, submissions]);
