@@ -53,14 +53,19 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
     return str === '' || str.toLowerCase() === 'null' || str.toLowerCase() === 'undefined';
   };
 
-  // Helper function to get column value (case-insensitive)
+  // Helper function to get column value (case-insensitive, handles whitespace)
   const getColumnValue = (row: SheetRow, columnName: string): unknown => {
     // Try exact match first
-    if (row[columnName] !== undefined) return row[columnName];
-    // Try case-insensitive match
-    const lowerKey = columnName.toLowerCase();
+    if (row[columnName] !== undefined && row[columnName] !== null && row[columnName] !== '') {
+      return row[columnName];
+    }
+    // Try case-insensitive match (with and without whitespace trimming)
+    const lowerKey = columnName.toLowerCase().trim();
     for (const [key, value] of Object.entries(row)) {
-      if (key.toLowerCase() === lowerKey) return value;
+      const trimmedKey = key.trim().toLowerCase();
+      if (trimmedKey === lowerKey) {
+        return value;
+      }
     }
     return undefined;
   };
@@ -91,14 +96,17 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
       // Youth: exclude where status_com is not "1"
       const statusCom = getColumnValue(row, 'status_com');
       const statusComStr = String(statusCom || '').trim();
+      // Only include rows where status_com exactly equals "1"
       return statusComStr === '1';
     } else if (survey === 'enterprise') {
       // Enterprise: exclude where F1_Q is blank
       const f1Q = getColumnValue(row, 'F1_Q');
+      // Only include rows where F1_Q has a non-blank value
       return !isBlank(f1Q);
     } else if (survey === 'farmer') {
       // Farmer: exclude where obs0 is blank
       const obs0 = getColumnValue(row, 'obs0');
+      // Only include rows where obs0 has a non-blank value
       return !isBlank(obs0);
     }
     return true; // If survey type doesn't match, include the row
