@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { headerTone, Variant } from "./variantStyles";
 import {
   type QuotaMetricKey,
+  type QuotaMetric,
   type SegmentQuotaConfig,
   type QuotaRow,
 } from "@/data/quotaData";
@@ -21,7 +22,7 @@ interface QuotaSectionProps {
 }
 
 const getSubmissionCountry = (submission: SubmissionLike) => {
-  const record = submission as Record<string, unknown>;
+  const record = submission as unknown as Record<string, unknown>;
 
   // Farmer: prefer dccot
   if (typeof record.dccot === "string" && record.dccot.trim()) {
@@ -245,7 +246,7 @@ const evaluateYouthMetric = (
     default: {
       if (outreachActivityMetrics.includes(metric)) {
         const activities = Array.isArray(submission.outreachActivities) ? submission.outreachActivities.map(toLower) : [];
-        return activities.includes(toLower(metric));
+        return activities.includes(toLower(metric)) ? 1 : 0;
       }
 
       return 0;
