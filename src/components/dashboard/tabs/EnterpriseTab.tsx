@@ -20,7 +20,7 @@ interface EnterpriseTabProps {
   qcData: UseSegmentQcDataResult;
 }
 
-export function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) {
+function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) {
   const { loading, error, submissionQuality, errorBreakdown, interviewerStats, kpis } = qcData;
   const [countryFilter, setCountryFilter] = useState<string>("all");
 
@@ -334,3 +334,6 @@ export function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) 
     </div>
   );
 }
+
+export { EnterpriseTab };
+export default EnterpriseTab;
