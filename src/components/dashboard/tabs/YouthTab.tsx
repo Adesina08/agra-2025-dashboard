@@ -23,7 +23,7 @@ interface YouthTabProps {
   qcData: UseSegmentQcDataResult;
 }
 
-export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
+function YouthTab({ submissions = [], qcData }: YouthTabProps) {
   const { loading, error, submissionQuality, errorBreakdown, interviewerStats, kpis } = qcData;
   const [countryFilter, setCountryFilter] = useState<string>("all");
   const [quotaView, setQuotaView] = useState<"work" | "outreach">("work");
@@ -378,3 +378,6 @@ export function YouthTab({ submissions = [], qcData }: YouthTabProps) {
     </div>
   );
 }
+
+export { YouthTab };
+export default YouthTab;
