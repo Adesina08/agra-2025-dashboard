@@ -11,6 +11,7 @@ import { useFarmerQcData, useEnterpriseQcData, useYouthQcData } from '@/hooks/us
 import type { UseSegmentQcDataResult } from '@/hooks/useSegmentQcData';
 import { SheetRow } from '@/lib/googleSheets';
 import { toast } from '@/components/ui/use-toast';
+import * as XLSX from 'xlsx';
 
 type TabType = 'farmer' | 'enterprise' | 'youth';
 
@@ -59,16 +60,6 @@ const Index = () => {
   const exportSheetRows = (activeSheetQuery.raw as SheetRow[]) ?? [];
   const exportNormalizedRows = (activeSheetQuery.data as unknown as SheetRow[]) ?? [];
 
-  const escapeHtml = (value: unknown) => {
-    if (value === null || value === undefined) return '';
-    const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
-    return stringValue
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  };
-
   const downloadExcel = (filename: string, rows: Record<string, unknown>[]) => {
     if (!rows.length) {
       toast({
@@ -79,28 +70,19 @@ const Index = () => {
       return;
     }
 
-    const headers = Array.from(new Set(rows.flatMap((row) => Object.keys(row))));
-    const body = rows
-      .map(
-        (row) =>
-          `<tr>${headers.map((header) => `<td>${escapeHtml(row[header])}</td>`).join('')}</tr>`
-      )
-      .join('');
+    // Convert rows to worksheet
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');
 
-    const tableHtml = `
-      <table>
-        <thead>
-          <tr>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join('')}</tr>
-        </thead>
-        <tbody>${body}</tbody>
-      </table>
-    `;
-
-    const blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel' });
+    // Generate Excel file
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = filename.endsWith('.xls') ? filename : `${filename}.xls`;
+    const fileExtension = filename.endsWith('.xlsx') ? '' : '.xlsx';
+    anchor.download = `${filename}${fileExtension}`;
     anchor.click();
     URL.revokeObjectURL(url);
 
@@ -111,7 +93,7 @@ const Index = () => {
   };
 
   const exportAllRows = () => {
-    downloadExcel(`${activeSegmentKey}_all_data.xls`, exportSheetRows);
+    downloadExcel(`${activeSegmentKey}_all_data`, exportSheetRows);
   };
 
   const APPROVED_LABELS = [
@@ -159,12 +141,12 @@ const Index = () => {
 
   const exportApprovedRows = () => {
     const filtered = filterRowsByApproval(true);
-    downloadExcel(`${activeSegmentKey}_approved_data.xls`, filtered);
+    downloadExcel(`${activeSegmentKey}_approved_data`, filtered);
   };
 
   const exportNotApprovedRows = () => {
     const filtered = filterRowsByApproval(false);
-    downloadExcel(`${activeSegmentKey}_not_approved_data.xls`, filtered);
+    downloadExcel(`${activeSegmentKey}_not_approved_data`, filtered);
   };
 
   const exportErrorFlags = () => {
@@ -186,7 +168,7 @@ const Index = () => {
       '% of Interviews': `${(item.percentOfInterviews * 100).toFixed(2)}%`,
     }));
 
-    downloadExcel(`${activeSegmentKey}_error_flags.xls`, rows);
+    downloadExcel(`${activeSegmentKey}_error_flags`, rows);
   };
 
   const activeTabConfig = {
@@ -231,13 +213,13 @@ const Index = () => {
         {/* Tab Content */}
         <div className="pb-12 space-y-8">
           {activeTab === 'farmer' && (
-            <FarmerTab submissions={farmerQuery.data ?? []} qcData={farmerQc} />
+            <FarmerTab submissions={farmerQuery.data ?? []} rawData={farmerQuery.raw ?? []} qcData={farmerQc} />
           )}
           {activeTab === 'enterprise' && (
-            <EnterpriseTab submissions={enterpriseQuery.data ?? []} qcData={enterpriseQc} />
+            <EnterpriseTab submissions={enterpriseQuery.data ?? []} rawData={enterpriseQuery.raw ?? []} qcData={enterpriseQc} />
           )}
           {activeTab === 'youth' && (
-            <YouthTab submissions={youthQuery.data ?? []} qcData={youthQc} />
+            <YouthTab submissions={youthQuery.data ?? []} rawData={youthQuery.raw ?? []} qcData={youthQc} />
           )}
 
           <div className="minimal-card flex flex-col gap-4 border border-border/60">
