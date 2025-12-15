@@ -37,6 +37,13 @@ const isBlank = (value: unknown): boolean => {
   return str === '' || str.toLowerCase() === 'null' || str.toLowerCase() === 'undefined';
 };
 
+// Helper function to get country from raw row (matches Enterprise normalizer logic)
+const getCountryFromRawRow = (row: SheetRow): string => {
+  const country = getColumnValue(row, 'A1_cal') || 
+                  getColumnValue(row, 'country');
+  return country ? String(country).trim() : 'Unknown country';
+};
+
 interface EnterpriseTabProps {
   submissions?: EnterpriseData[];
   rawData?: SheetRow[];
@@ -142,26 +149,44 @@ function EnterpriseTab({ qcData, submissions = [], rawData = [], rawUnfilteredDa
   }, [errorBreakdown, filteredFlagTotals]);
 
   // Count all non-blank QC Approval Status rows from unfiltered raw data (Total Submissions)
+  // Respects country filter when a country is selected
   const totalSubmissionsCount = useMemo(() => {
     const safeRawUnfilteredData = rawUnfilteredData ?? [];
     return safeRawUnfilteredData.filter((row) => {
+      // Filter by country if a country is selected
+      if (countryFilter !== 'all') {
+        const rowCountry = getCountryFromRawRow(row);
+        if (rowCountry?.toLowerCase() !== countryFilter.toLowerCase()) {
+          return false;
+        }
+      }
+      
       const qcStatus = getColumnValue(row, 'QC Approval Status') || 
                        getColumnValue(row, 'qc_approval_status') || 
                        getColumnValue(row, 'QC Approval status');
       return !isBlank(qcStatus);
     }).length;
-  }, [rawUnfilteredData]);
+  }, [rawUnfilteredData, countryFilter]);
 
   // Count all non-blank QC Approval Status rows from filtered raw data (Valid Submissions)
+  // Respects country filter when a country is selected
   const validSubmissionsCount = useMemo(() => {
     const safeRawData = rawData ?? [];
     return safeRawData.filter((row) => {
+      // Filter by country if a country is selected
+      if (countryFilter !== 'all') {
+        const rowCountry = getCountryFromRawRow(row);
+        if (rowCountry?.toLowerCase() !== countryFilter.toLowerCase()) {
+          return false;
+        }
+      }
+      
       const qcStatus = getColumnValue(row, 'QC Approval Status') || 
                        getColumnValue(row, 'qc_approval_status') || 
                        getColumnValue(row, 'QC Approval status');
       return !isBlank(qcStatus);
     }).length;
-  }, [rawData]);
+  }, [rawData, countryFilter]);
 
   const derivedKpis = useMemo(() => {
     // Filter out 'Pending' (blank) statuses for Valid Submissions
