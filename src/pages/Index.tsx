@@ -213,13 +213,13 @@ const Index = () => {
         {/* Tab Content */}
         <div className="pb-12 space-y-8">
           {activeTab === 'farmer' && (
-            <FarmerTab submissions={farmerQuery.data ?? []} rawData={farmerQuery.raw ?? []} qcData={farmerQc} />
+            <FarmerTab submissions={farmerQuery.data ?? []} rawData={farmerQuery.raw ?? []} rawUnfilteredData={farmerQuery.rawUnfiltered ?? []} qcData={farmerQc} />
           )}
           {activeTab === 'enterprise' && (
-            <EnterpriseTab submissions={enterpriseQuery.data ?? []} rawData={enterpriseQuery.raw ?? []} qcData={enterpriseQc} />
+            <EnterpriseTab submissions={enterpriseQuery.data ?? []} rawData={enterpriseQuery.raw ?? []} rawUnfilteredData={enterpriseQuery.rawUnfiltered ?? []} qcData={enterpriseQc} />
           )}
           {activeTab === 'youth' && (
-            <YouthTab submissions={youthQuery.data ?? []} rawData={youthQuery.raw ?? []} qcData={youthQc} />
+            <YouthTab submissions={youthQuery.data ?? []} rawData={youthQuery.raw ?? []} rawUnfilteredData={youthQuery.rawUnfiltered ?? []} qcData={youthQc} />
           )}
 
           <div className="minimal-card flex flex-col gap-4 border border-border/60">
