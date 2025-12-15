@@ -43,6 +43,8 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
     refetchInterval: isEnabled ? REFETCH_INTERVAL : false,
     refetchOnWindowFocus: true, // Refresh when user returns to the tab
     staleTime: 0, // Consider data stale immediately to ensure fresh fetches
+    // Keep previous data while fetching new data to avoid flickering
+    placeholderData: (previousData) => previousData,
     retry: 1,
   });
 
@@ -72,8 +74,14 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
     return undefined;
   };
 
+  // IMPORTANT: Store raw unfiltered rows FIRST, before any processing
+  // This ensures "Total Submissions" always counts ALL rows from Google Sheets CSV
+  // regardless of any filtering or processing that happens afterwards
+  // Always use the most recent query data, even during loading states
+  const rawUnfilteredRows = (query.data?.rows ?? []);
+
   // 🔹 Clean live rows: drop empty rows and any accidental header rows
-  const cleanedRows = query.data?.rows.filter((row) => {
+  const cleanedRows = rawUnfilteredRows.filter((row) => {
     const entries = Object.entries(row);
     const nonEmpty = entries.filter(([, v]) => v !== '' && v != null);
 
@@ -89,7 +97,7 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
     if (headerLike.length === nonEmpty.length) return false;
 
     return true;
-  }) ?? [];
+  });
 
   // 🔹 Filter rows based on survey-specific criteria BEFORE normalization
   // This ensures excluded rows never appear in the dashboard
@@ -118,11 +126,9 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
   // Ensure we never count the first row (sheet headers) toward any dashboard metric
   const dataRows = filteredRows;
 
-  // Return raw unfiltered rows directly from query (before any cleaning/filtering)
-  // This ensures "Total Submissions" matches exactly what's in Google Sheets
-  const rawUnfilteredRows = query.data?.rows ?? [];
-
-  if (query.isError || !query.data || !dataRows.length) {
+  // Even if there are no filtered data rows, we still want to return the unfiltered rows
+  // so that Total Submissions can be calculated correctly
+  if (query.isError || !query.data) {
     return {
       data: [],
       raw: dataRows,
@@ -134,12 +140,14 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
     };
   }
 
-  const normalized = dataRows.map((row, idx) => normalizer(row, idx));
+  // Only normalize and return filtered data if we have filtered rows
+  // But always return rawUnfilteredRows regardless
+  const normalized = dataRows.length > 0 ? dataRows.map((row, idx) => normalizer(row, idx)) : [];
 
   return {
     data: normalized,
     raw: dataRows,
-    rawUnfiltered: rawUnfilteredRows,
+    rawUnfiltered: rawUnfilteredRows, // Always includes ALL rows from Google Sheets CSV
     isLive: true,
     isLoading: query.isLoading,
     error: null,
