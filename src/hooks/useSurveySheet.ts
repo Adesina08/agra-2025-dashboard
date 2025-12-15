@@ -22,7 +22,7 @@ const normalizerMap: Record<SurveyKey, (row: SheetRow, index: number) => any> = 
 
 export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData>(survey: SurveyKey): SurveyResult<T> {
   const config = sheetConfigs[survey];
-  const REFETCH_INTERVAL = 30 * 1000; // 30 seconds for real-time updates
+  const REFETCH_INTERVAL = 60 * 1000; // 1 minute
 
   const isEnabled = Boolean(config.sheetId && (config.sheetName || config.sheetGid));
 
