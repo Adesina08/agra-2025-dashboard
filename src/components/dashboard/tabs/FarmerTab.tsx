@@ -156,34 +156,36 @@ function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
     const noFilteredData =
       countryFilter !== "all" && !hasInterviewerStats && !hasSubmissionData && !hasFlagData;
 
+    const fallbackTotals = submissionQuality ?? safeKpis;
+
     const totalSubmissions = hasSubmissionData
       ? submissionsWithStatus.length
       : hasInterviewerStats
         ? totalsFromStats.totalSubmissions
         : noFilteredData
           ? 0
-          : safeKpis.totalInterviews;
+          : fallbackTotals.totalInterviews;
     const totalInterviews = hasSubmissionData
       ? validSubmissions.length
       : hasInterviewerStats
         ? totalsFromStats.totalSubmissions
         : noFilteredData
           ? 0
-          : safeKpis.totalInterviews;
+          : fallbackTotals.totalInterviews;
     const approved = hasSubmissionData
       ? approvedFromSubmissions
       : hasInterviewerStats
         ? totalsFromStats.approved
         : noFilteredData
           ? 0
-          : safeKpis.approved;
+          : fallbackTotals.approved;
     const notApproved = hasSubmissionData
       ? notApprovedFromSubmissions
       : hasInterviewerStats
         ? totalsFromStats.failed
         : noFilteredData
           ? 0
-          : safeKpis.notApproved;
+          : fallbackTotals.notApproved;
     const approvalRate = totalInterviews ? approved / totalInterviews : 0;
     const totalFlags = hasFlagData
       ? totalFlagsFromFlags
@@ -191,7 +193,7 @@ function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
         ? totalsFromStats.totalFlags
         : noFilteredData
           ? 0
-          : safeKpis.totalFlags;
+          : fallbackTotals.totalFlags;
     const avgFlagsPerInterview = totalInterviews ? totalFlags / totalInterviews : 0;
 
     return {
@@ -203,7 +205,7 @@ function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
       totalFlags,
       avgFlagsPerInterview,
     };
-  }, [countryFilter, filteredFlagTotals, filteredInterviewerStats, filteredSubmissions, safeKpis]);
+  }, [countryFilter, filteredFlagTotals, filteredInterviewerStats, filteredSubmissions, safeKpis, submissionQuality]);
 
   const submissionChartData = safeInterviewerStats.map((i) => ({
     name: i.enumeratorId,
