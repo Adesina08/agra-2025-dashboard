@@ -17,7 +17,7 @@ export function useSheetValues(
 
   React.useEffect(() => {
     let cancelled = false;
-    const REFRESH_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes for near-realtime sync
+    const REFRESH_INTERVAL_MS = 60 * 1000; // 1 minute for near-realtime sync
 
     async function load() {
       if (!sheetId || !tabName) {
