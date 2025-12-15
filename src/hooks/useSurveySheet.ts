@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import { useCallback, useEffect, useState } from 'react';
+import { QueryObserverResult, useQuery } from '@tanstack/react-query';
 import { sheetConfigs, SurveyKey } from '@/data/sheetsConfig';
 import { fetchSheetRows, SheetRow } from '@/lib/googleSheets';
 import { YouthData, EnterpriseData, FarmerData } from '@/data/mockData';
@@ -12,6 +13,8 @@ interface SurveyResult<T> {
   isLoading: boolean;
   error: Error | null;
   refreshedAt?: Date;
+  refresh: () => Promise<QueryObserverResult<{ rows: SheetRow[]; refreshedAt: Date }, Error>>;
+  isRefreshing: boolean;
 }
 
 const normalizerMap: Record<SurveyKey, (row: SheetRow, index: number) => any> = {
@@ -23,8 +26,12 @@ const normalizerMap: Record<SurveyKey, (row: SheetRow, index: number) => any> = 
 export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData>(survey: SurveyKey): SurveyResult<T> {
   const config = sheetConfigs[survey];
   const REFETCH_INTERVAL = 60 * 1000; // 1 minute
+  const [initialFetchComplete, setInitialFetchComplete] = useState(false);
+  const [snapshot, setSnapshot] = useState<{ rows: SheetRow[]; refreshedAt: Date }>();
+  const [shouldUpdateSnapshot, setShouldUpdateSnapshot] = useState(true);
 
   const isEnabled = Boolean(config.sheetId && (config.sheetName || config.sheetGid));
+  const shouldPoll = isEnabled && !initialFetchComplete;
 
   const query = useQuery<{ rows: SheetRow[]; refreshedAt: Date }>({
     queryKey: ['google-sheet', survey, config.sheetId, config.sheetName, config.sheetGid],
@@ -40,13 +47,27 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
       return { rows, refreshedAt: new Date() };
     },
     enabled: isEnabled,
-    refetchInterval: isEnabled ? REFETCH_INTERVAL : false,
-    refetchOnWindowFocus: true, // Refresh when user returns to the tab
+    refetchInterval: shouldPoll ? REFETCH_INTERVAL : false,
+    refetchOnWindowFocus: shouldPoll, // Refresh when user returns to the tab (only before first snapshot)
+    refetchOnMount: shouldPoll ? 'always' : false,
     staleTime: 0, // Consider data stale immediately to ensure fresh fetches
     // Keep previous data while fetching new data to avoid flickering
     placeholderData: (previousData) => previousData,
     retry: 1,
   });
+
+  useEffect(() => {
+    if (query.isSuccess && shouldUpdateSnapshot) {
+      setSnapshot(query.data);
+      setInitialFetchComplete(true);
+      setShouldUpdateSnapshot(false);
+    }
+  }, [query.data, query.isSuccess, shouldUpdateSnapshot]);
+
+  const handleRefresh = useCallback(() => {
+    setShouldUpdateSnapshot(true);
+    return query.refetch();
+  }, [query]);
 
   const normalizer = normalizerMap[survey] as (row: SheetRow, index: number) => T;
 
@@ -78,7 +99,7 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
   // This ensures "Total Submissions" always counts ALL rows from Google Sheets CSV
   // regardless of any filtering or processing that happens afterwards
   // Always use the most recent query data, even during loading states
-  const rawUnfilteredRows = (query.data?.rows ?? []);
+  const rawUnfilteredRows = (snapshot?.rows ?? query.data?.rows ?? []);
 
   // 🔹 Clean live rows: drop empty rows and any accidental header rows
   const cleanedRows = rawUnfilteredRows.filter((row) => {
@@ -128,17 +149,19 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
 
   // Even if there are no filtered data rows, we still want to return the unfiltered rows
   // so that Total Submissions can be calculated correctly
-  if (query.isError || !query.data) {
-    return {
-      data: [],
-      raw: dataRows,
-      rawUnfiltered: rawUnfilteredRows,
-      isLive: false,
-      isLoading: query.isLoading,
-      error: query.error as Error | null,
-      refreshedAt: query.data?.refreshedAt,
-    };
-  }
+    if (query.isError || !snapshot) {
+      return {
+        data: [],
+        raw: dataRows,
+        rawUnfiltered: rawUnfilteredRows,
+        isLive: false,
+        isLoading: query.isLoading,
+        error: query.error as Error | null,
+        refreshedAt: snapshot?.refreshedAt ?? query.data?.refreshedAt,
+        refresh: handleRefresh,
+        isRefreshing: query.isRefetching,
+      };
+    }
 
   // Only normalize and return filtered data if we have filtered rows
   // But always return rawUnfilteredRows regardless
@@ -151,6 +174,8 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
     isLive: true,
     isLoading: query.isLoading,
     error: null,
-    refreshedAt: query.data.refreshedAt,
+    refreshedAt: snapshot.refreshedAt,
+    refresh: handleRefresh,
+    isRefreshing: query.isRefetching,
   };
 }
