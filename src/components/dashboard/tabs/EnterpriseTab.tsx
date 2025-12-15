@@ -119,7 +119,10 @@ function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) {
 
   const derivedKpis = useMemo(() => {
     // Filter out 'Pending' (blank) statuses for the total count as per user request
-    const validSubmissions = filteredSubmissions.filter((s) => s.status !== "Pending");
+    const submissionsWithStatus = filteredSubmissions.filter(
+      (submission) => !!submission.status?.toString().trim()
+    );
+    const validSubmissions = submissionsWithStatus.filter((s) => s.status !== "Pending");
 
     const approvedFromSubmissions = validSubmissions.filter(
       (submission) => submission.status === "Approved"
@@ -151,6 +154,13 @@ function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) {
     const noFilteredData =
       countryFilter !== "all" && !hasInterviewerStats && !hasSubmissionData && !hasFlagData;
 
+    const totalSubmissions = hasSubmissionData
+      ? submissionsWithStatus.length
+      : hasInterviewerStats
+        ? totalsFromStats.totalSubmissions
+        : noFilteredData
+          ? 0
+          : safeKpis.totalInterviews;
     const totalInterviews = hasSubmissionData
       ? validSubmissions.length
       : hasInterviewerStats
@@ -183,6 +193,7 @@ function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) {
     const avgFlagsPerInterview = totalInterviews ? totalFlags / totalInterviews : 0;
 
     return {
+      totalSubmissions,
       totalInterviews,
       approved,
       notApproved,
@@ -270,7 +281,13 @@ function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         <KPICard
-          title="Total Interviews"
+          title="Total Submissions"
+          value={derivedKpis.totalSubmissions}
+          icon={Factory}
+          variant="enterprise"
+        />
+        <KPICard
+          title="Valid Submissions"
           value={derivedKpis.totalInterviews}
           icon={Factory}
           subtitle={formatPercent(derivedKpis.approvalRate, 1) + " approval"}
