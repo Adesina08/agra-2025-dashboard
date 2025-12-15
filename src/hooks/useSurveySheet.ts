@@ -21,7 +21,7 @@ const normalizerMap: Record<SurveyKey, (row: SheetRow, index: number) => any> = 
 
 export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData>(survey: SurveyKey): SurveyResult<T> {
   const config = sheetConfigs[survey];
-  const REFETCH_INTERVAL = 5 * 60 * 1000; // 10 minutes
+  const REFETCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
   const isEnabled = Boolean(config.sheetId && (config.sheetName || config.sheetGid));
 
@@ -105,8 +105,9 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
       return !isBlank(f1Q);
     } else if (survey === 'farmer') {
       // Farmer: exclude where obs0 is blank
-      const obs0 = getColumnValue(row, 'obs0');
-      // Only include rows where obs0 has a non-blank value
+      // Try multiple possible column name variations
+      const obs0 = getColumnValue(row, 'obs0') || getColumnValue(row, 'obs_0') || getColumnValue(row, 'OBS0') || getColumnValue(row, 'OBS_0');
+      // Only include rows where obs0 (or variant) has a non-blank value
       return !isBlank(obs0);
     }
     return true; // If survey type doesn't match, include the row
