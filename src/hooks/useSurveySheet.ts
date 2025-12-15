@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { QueryObserverResult, useQuery } from '@tanstack/react-query';
 import { sheetConfigs, SurveyKey } from '@/data/sheetsConfig';
 import { fetchSheetRows, SheetRow } from '@/lib/googleSheets';
@@ -27,6 +27,8 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
   const config = sheetConfigs[survey];
   const REFETCH_INTERVAL = 60 * 1000; // 1 minute
   const [initialFetchComplete, setInitialFetchComplete] = useState(false);
+  const [snapshot, setSnapshot] = useState<{ rows: SheetRow[]; refreshedAt: Date }>();
+  const [shouldUpdateSnapshot, setShouldUpdateSnapshot] = useState(true);
 
   const isEnabled = Boolean(config.sheetId && (config.sheetName || config.sheetGid));
   const shouldPoll = isEnabled && !initialFetchComplete;
@@ -55,10 +57,17 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
   });
 
   useEffect(() => {
-    if (query.isSuccess && !initialFetchComplete) {
+    if (query.isSuccess && shouldUpdateSnapshot) {
+      setSnapshot(query.data);
       setInitialFetchComplete(true);
+      setShouldUpdateSnapshot(false);
     }
-  }, [initialFetchComplete, query.isSuccess]);
+  }, [query.data, query.isSuccess, shouldUpdateSnapshot]);
+
+  const handleRefresh = useCallback(() => {
+    setShouldUpdateSnapshot(true);
+    return query.refetch();
+  }, [query]);
 
   const normalizer = normalizerMap[survey] as (row: SheetRow, index: number) => T;
 
@@ -90,7 +99,7 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
   // This ensures "Total Submissions" always counts ALL rows from Google Sheets CSV
   // regardless of any filtering or processing that happens afterwards
   // Always use the most recent query data, even during loading states
-  const rawUnfilteredRows = (query.data?.rows ?? []);
+  const rawUnfilteredRows = (snapshot?.rows ?? query.data?.rows ?? []);
 
   // 🔹 Clean live rows: drop empty rows and any accidental header rows
   const cleanedRows = rawUnfilteredRows.filter((row) => {
@@ -140,19 +149,19 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
 
   // Even if there are no filtered data rows, we still want to return the unfiltered rows
   // so that Total Submissions can be calculated correctly
-  if (query.isError || !query.data) {
-    return {
-      data: [],
-      raw: dataRows,
-      rawUnfiltered: rawUnfilteredRows,
-      isLive: false,
-      isLoading: query.isLoading,
-      error: query.error as Error | null,
-      refreshedAt: query.data?.refreshedAt,
-      refresh: query.refetch,
-      isRefreshing: query.isRefetching,
-    };
-  }
+    if (query.isError || !snapshot) {
+      return {
+        data: [],
+        raw: dataRows,
+        rawUnfiltered: rawUnfilteredRows,
+        isLive: false,
+        isLoading: query.isLoading,
+        error: query.error as Error | null,
+        refreshedAt: snapshot?.refreshedAt ?? query.data?.refreshedAt,
+        refresh: handleRefresh,
+        isRefreshing: query.isRefetching,
+      };
+    }
 
   // Only normalize and return filtered data if we have filtered rows
   // But always return rawUnfilteredRows regardless
@@ -165,8 +174,8 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
     isLive: true,
     isLoading: query.isLoading,
     error: null,
-    refreshedAt: query.data.refreshedAt,
-    refresh: query.refetch,
+    refreshedAt: snapshot.refreshedAt,
+    refresh: handleRefresh,
     isRefreshing: query.isRefetching,
   };
 }
