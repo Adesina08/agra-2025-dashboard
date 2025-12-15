@@ -6,7 +6,8 @@ import { normalizeEnterpriseRow, normalizeFarmerRow, normalizeYouthRow } from '@
 
 interface SurveyResult<T> {
   data: T[];
-  raw: SheetRow[];
+  raw: SheetRow[]; // Filtered raw data (after survey-specific filtering)
+  rawUnfiltered: SheetRow[]; // Unfiltered raw data (before survey-specific filtering)
   isLive: boolean;
   isLoading: boolean;
   error: Error | null;
@@ -116,10 +117,15 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
   // Ensure we never count the first row (sheet headers) toward any dashboard metric
   const dataRows = filteredRows;
 
+  // Return raw unfiltered rows directly from query (before any cleaning/filtering)
+  // This ensures "Total Submissions" matches exactly what's in Google Sheets
+  const rawUnfilteredRows = query.data?.rows ?? [];
+
   if (query.isError || !query.data || !dataRows.length) {
     return {
       data: [],
       raw: dataRows,
+      rawUnfiltered: rawUnfilteredRows,
       isLive: false,
       isLoading: query.isLoading,
       error: query.error as Error | null,
@@ -132,6 +138,7 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
   return {
     data: normalized,
     raw: dataRows,
+    rawUnfiltered: rawUnfilteredRows,
     isLive: true,
     isLoading: query.isLoading,
     error: null,
