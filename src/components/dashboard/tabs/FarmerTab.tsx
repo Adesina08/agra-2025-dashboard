@@ -42,10 +42,11 @@ const isBlank = (value: unknown): boolean => {
 interface FarmerTabProps {
   submissions?: FarmerData[];
   rawData?: SheetRow[];
+  rawUnfilteredData?: SheetRow[];
   qcData: UseSegmentQcDataResult;
 }
 
-function FarmerTab({ submissions = [], rawData = [], qcData }: FarmerTabProps) {
+function FarmerTab({ submissions = [], rawData = [], rawUnfilteredData = [], qcData }: FarmerTabProps) {
   const { loading, error, submissionQuality, errorBreakdown, interviewerStats, kpis } = qcData;
   const [countryFilter, setCountryFilter] = useState<string>("all");
 
@@ -142,8 +143,19 @@ function FarmerTab({ submissions = [], rawData = [], qcData }: FarmerTabProps) {
     return map;
   }, [errorBreakdown, filteredFlagTotals]);
 
-  // Count all non-blank QC Approval Status rows from raw data (Total Interviews)
-  const totalInterviewsCount = useMemo(() => {
+  // Count all non-blank QC Approval Status rows from unfiltered raw data (Total Submissions)
+  const totalSubmissionsCount = useMemo(() => {
+    const safeRawUnfilteredData = rawUnfilteredData ?? [];
+    return safeRawUnfilteredData.filter((row) => {
+      const qcStatus = getColumnValue(row, 'QC Approval Status') || 
+                       getColumnValue(row, 'qc_approval_status') || 
+                       getColumnValue(row, 'QC Approval status');
+      return !isBlank(qcStatus);
+    }).length;
+  }, [rawUnfilteredData]);
+
+  // Count all non-blank QC Approval Status rows from filtered raw data (Valid Submissions)
+  const validSubmissionsCount = useMemo(() => {
     const safeRawData = rawData ?? [];
     return safeRawData.filter((row) => {
       const qcStatus = getColumnValue(row, 'QC Approval Status') || 
@@ -188,17 +200,26 @@ function FarmerTab({ submissions = [], rawData = [], qcData }: FarmerTabProps) {
     const noFilteredData =
       countryFilter !== "all" && !hasInterviewerStats && !hasSubmissionData && !hasFlagData;
 
-    // Total Interviews = count of all non-blank QC Approval Status rows
-    const totalInterviews = hasSubmissionData
-      ? totalInterviewsCount
+    // Total Submissions = count of all non-blank QC Approval Status rows from unfiltered data
+    const totalSubmissions = hasSubmissionData
+      ? totalSubmissionsCount
       : hasInterviewerStats
         ? totalsFromStats.totalSubmissions
         : noFilteredData
           ? 0
           : safeKpis.totalInterviews;
     
-    // Valid Submissions = current count excluding Pending (what was previously Total Interviews)
-    const validSubmissionsCount = hasSubmissionData
+    // Valid Submissions = count of all non-blank QC Approval Status rows from filtered data (what was previously Total Interviews)
+    const validSubmissionsFromFiltered = hasSubmissionData
+      ? validSubmissionsCount
+      : hasInterviewerStats
+        ? totalsFromStats.totalSubmissions
+        : noFilteredData
+          ? 0
+          : safeKpis.totalInterviews;
+    
+    // Processed Submissions = count excluding Pending status
+    const processedSubmissionsCount = hasSubmissionData
       ? validSubmissions.length
       : hasInterviewerStats
         ? totalsFromStats.totalSubmissions
@@ -220,7 +241,7 @@ function FarmerTab({ submissions = [], rawData = [], qcData }: FarmerTabProps) {
         : noFilteredData
           ? 0
           : safeKpis.notApproved;
-    const approvalRate = validSubmissionsCount ? approved / validSubmissionsCount : 0;
+    const approvalRate = processedSubmissionsCount ? approved / processedSubmissionsCount : 0;
     const totalFlags = hasFlagData
       ? totalFlagsFromFlags
       : hasInterviewerStats
@@ -228,18 +249,19 @@ function FarmerTab({ submissions = [], rawData = [], qcData }: FarmerTabProps) {
         : noFilteredData
           ? 0
           : safeKpis.totalFlags;
-    const avgFlagsPerInterview = validSubmissionsCount ? totalFlags / validSubmissionsCount : 0;
+    const avgFlagsPerInterview = processedSubmissionsCount ? totalFlags / processedSubmissionsCount : 0;
 
     return {
-      totalInterviews,
-      validSubmissions: validSubmissionsCount,
+      totalSubmissions,
+      validSubmissions: validSubmissionsFromFiltered,
+      processedSubmissions: processedSubmissionsCount,
       approved,
       notApproved,
       approvalRate,
       totalFlags,
       avgFlagsPerInterview,
     };
-  }, [countryFilter, filteredFlagTotals, filteredInterviewerStats, filteredSubmissions, rawData, safeKpis]);
+  }, [countryFilter, filteredFlagTotals, filteredInterviewerStats, filteredSubmissions, rawData, rawUnfilteredData, totalSubmissionsCount, validSubmissionsCount, safeKpis]);
 
   const submissionChartData = safeInterviewerStats.map((i) => ({
     name: i.enumeratorId,
@@ -319,17 +341,17 @@ function FarmerTab({ submissions = [], rawData = [], qcData }: FarmerTabProps) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <KPICard
-          title="Total Interviews"
-          value={derivedKpis.totalInterviews}
+          title="Total Submissions"
+          value={derivedKpis.totalSubmissions}
           icon={ClipboardCheck}
-          subtitle={formatPercent(derivedKpis.approvalRate, 1) + " approval"}
+          subtitle="All QC Status entries"
           variant="farmer"
         />
         <KPICard
           title="Valid Submissions"
           value={derivedKpis.validSubmissions}
           icon={FileCheck}
-          subtitle="Excluding pending"
+          subtitle={formatPercent(derivedKpis.approvalRate, 1) + " approval"}
           variant="farmer"
         />
         <KPICard
