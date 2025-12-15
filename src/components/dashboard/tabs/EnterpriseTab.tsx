@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { CheckCircle2, ClipboardCheck, Factory, FlagTriangleRight, TriangleAlert, XCircle } from "lucide-react";
+import { CheckCircle2, ClipboardCheck, Factory, FlagTriangleRight, TriangleAlert, XCircle, FileCheck } from "lucide-react";
 import { type UseSegmentQcDataResult } from "@/hooks/useSegmentQcData";
 import { EnterpriseData } from "@/data/mockData";
 import { KPICard } from "../KPICard";
@@ -9,18 +9,41 @@ import { ProductivityRankings } from "../ProductivityRankings";
 import { KPI_BY_CODE } from "@/data/kpiDefinitions";
 import { SubmissionMap } from "../SubmissionMap"; // NEW IMPORT
 import { CountryFilter } from "../CountryFilter";
+import { SheetRow } from "@/lib/googleSheets";
 
 function formatPercent(value: number | null | undefined, digits = 1) {
   if (value == null) return "—";
   return `${(value * 100).toFixed(digits)}%`;
 }
 
+// Helper function to get column value (case-insensitive, handles whitespace)
+const getColumnValue = (row: SheetRow, columnName: string): unknown => {
+  if (row[columnName] !== undefined && row[columnName] !== null && row[columnName] !== '') {
+    return row[columnName];
+  }
+  const lowerKey = columnName.toLowerCase().trim();
+  for (const [key, value] of Object.entries(row)) {
+    const trimmedKey = key.trim().toLowerCase();
+    if (trimmedKey === lowerKey) {
+      return value;
+    }
+  }
+  return undefined;
+};
+
+const isBlank = (value: unknown): boolean => {
+  if (value === null || value === undefined) return true;
+  const str = String(value).trim();
+  return str === '' || str.toLowerCase() === 'null' || str.toLowerCase() === 'undefined';
+};
+
 interface EnterpriseTabProps {
   submissions?: EnterpriseData[];
+  rawData?: SheetRow[];
   qcData: UseSegmentQcDataResult;
 }
 
-function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) {
+function EnterpriseTab({ qcData, submissions = [], rawData = [] }: EnterpriseTabProps) {
   const { loading, error, submissionQuality, errorBreakdown, interviewerStats, kpis } = qcData;
   const [countryFilter, setCountryFilter] = useState<string>("all");
 
@@ -117,8 +140,19 @@ function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) {
     return map;
   }, [errorBreakdown, filteredFlagTotals]);
 
+  // Count all non-blank QC Approval Status rows from raw data (Total Interviews)
+  const totalInterviewsCount = useMemo(() => {
+    const safeRawData = rawData ?? [];
+    return safeRawData.filter((row) => {
+      const qcStatus = getColumnValue(row, 'QC Approval Status') || 
+                       getColumnValue(row, 'qc_approval_status') || 
+                       getColumnValue(row, 'QC Approval status');
+      return !isBlank(qcStatus);
+    }).length;
+  }, [rawData]);
+
   const derivedKpis = useMemo(() => {
-    // Filter out 'Pending' (blank) statuses for the total count as per user request
+    // Filter out 'Pending' (blank) statuses for Valid Submissions
     const validSubmissions = filteredSubmissions.filter((s) => s.status !== "Pending");
 
     const approvedFromSubmissions = validSubmissions.filter(
@@ -151,13 +185,24 @@ function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) {
     const noFilteredData =
       countryFilter !== "all" && !hasInterviewerStats && !hasSubmissionData && !hasFlagData;
 
+    // Total Interviews = count of all non-blank QC Approval Status rows
     const totalInterviews = hasSubmissionData
+      ? totalInterviewsCount
+      : hasInterviewerStats
+        ? totalsFromStats.totalSubmissions
+        : noFilteredData
+          ? 0
+          : safeKpis.totalInterviews;
+    
+    // Valid Submissions = current count excluding Pending (what was previously Total Interviews)
+    const validSubmissionsCount = hasSubmissionData
       ? validSubmissions.length
       : hasInterviewerStats
         ? totalsFromStats.totalSubmissions
         : noFilteredData
           ? 0
           : safeKpis.totalInterviews;
+
     const approved = hasSubmissionData
       ? approvedFromSubmissions
       : hasInterviewerStats
@@ -172,7 +217,7 @@ function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) {
         : noFilteredData
           ? 0
           : safeKpis.notApproved;
-    const approvalRate = totalInterviews ? approved / totalInterviews : 0;
+    const approvalRate = validSubmissionsCount ? approved / validSubmissionsCount : 0;
     const totalFlags = hasFlagData
       ? totalFlagsFromFlags
       : hasInterviewerStats
@@ -180,17 +225,18 @@ function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) {
         : noFilteredData
           ? 0
           : safeKpis.totalFlags;
-    const avgFlagsPerInterview = totalInterviews ? totalFlags / totalInterviews : 0;
+    const avgFlagsPerInterview = validSubmissionsCount ? totalFlags / validSubmissionsCount : 0;
 
     return {
       totalInterviews,
+      validSubmissions: validSubmissionsCount,
       approved,
       notApproved,
       approvalRate,
       totalFlags,
       avgFlagsPerInterview,
     };
-  }, [countryFilter, filteredFlagTotals, filteredInterviewerStats, filteredSubmissions, safeKpis]);
+  }, [countryFilter, filteredFlagTotals, filteredInterviewerStats, filteredSubmissions, rawData, safeKpis, totalInterviewsCount]);
 
   const submissionChartData = safeInterviewerStats.map((i) => ({
     name: i.enumeratorId,
@@ -268,12 +314,19 @@ function EnterpriseTab({ qcData, submissions = [] }: EnterpriseTabProps) {
         variant="enterprise"
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <KPICard
           title="Total Interviews"
           value={derivedKpis.totalInterviews}
           icon={Factory}
           subtitle={formatPercent(derivedKpis.approvalRate, 1) + " approval"}
+          variant="enterprise"
+        />
+        <KPICard
+          title="Valid Submissions"
+          value={derivedKpis.validSubmissions}
+          icon={FileCheck}
+          subtitle="Excluding pending"
           variant="enterprise"
         />
         <KPICard
