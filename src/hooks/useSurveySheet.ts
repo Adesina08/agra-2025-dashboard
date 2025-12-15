@@ -22,7 +22,7 @@ const normalizerMap: Record<SurveyKey, (row: SheetRow, index: number) => any> = 
 
 export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData>(survey: SurveyKey): SurveyResult<T> {
   const config = sheetConfigs[survey];
-  const REFETCH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+  const REFETCH_INTERVAL = 30 * 1000; // 30 seconds for real-time updates
 
   const isEnabled = Boolean(config.sheetId && (config.sheetName || config.sheetGid));
 
@@ -41,7 +41,8 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
     },
     enabled: isEnabled,
     refetchInterval: isEnabled ? REFETCH_INTERVAL : false,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true, // Refresh when user returns to the tab
+    staleTime: 0, // Consider data stale immediately to ensure fresh fetches
     retry: 1,
   });
 
