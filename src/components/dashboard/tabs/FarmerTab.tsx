@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { CheckCircle2, ClipboardCheck, FlagTriangleRight, TriangleAlert, XCircle } from "lucide-react";
+import { CheckCircle2, ClipboardCheck, FlagTriangleRight, TriangleAlert, XCircle, FileCheck } from "lucide-react";
 import { type UseSegmentQcDataResult } from "@/hooks/useSegmentQcData";
 import { KPICard } from "../KPICard";
 import { SubmissionQualityChart } from "../SubmissionQualityChart";
@@ -11,18 +11,41 @@ import { KPI_BY_CODE } from "@/data/kpiDefinitions";
 import { CountryFilter } from "../CountryFilter";
 import { farmerQuotaConfig } from "@/data/quotaData";
 import { QuotaSection } from "../QuotaSection";
+import { SheetRow } from "@/lib/googleSheets";
 
 function formatPercent(value: number | null | undefined, digits = 1) {
   if (value == null) return "—";
   return `${(value * 100).toFixed(digits)}%`;
 }
 
+// Helper function to get column value (case-insensitive, handles whitespace)
+const getColumnValue = (row: SheetRow, columnName: string): unknown => {
+  if (row[columnName] !== undefined && row[columnName] !== null && row[columnName] !== '') {
+    return row[columnName];
+  }
+  const lowerKey = columnName.toLowerCase().trim();
+  for (const [key, value] of Object.entries(row)) {
+    const trimmedKey = key.trim().toLowerCase();
+    if (trimmedKey === lowerKey) {
+      return value;
+    }
+  }
+  return undefined;
+};
+
+const isBlank = (value: unknown): boolean => {
+  if (value === null || value === undefined) return true;
+  const str = String(value).trim();
+  return str === '' || str.toLowerCase() === 'null' || str.toLowerCase() === 'undefined';
+};
+
 interface FarmerTabProps {
   submissions?: FarmerData[];
+  rawData?: SheetRow[];
   qcData: UseSegmentQcDataResult;
 }
 
-function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
+function FarmerTab({ submissions = [], rawData = [], qcData }: FarmerTabProps) {
   const { loading, error, submissionQuality, errorBreakdown, interviewerStats, kpis } = qcData;
   const [countryFilter, setCountryFilter] = useState<string>("all");
 
@@ -119,8 +142,20 @@ function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
     return map;
   }, [errorBreakdown, filteredFlagTotals]);
 
+  // Count all non-blank QC Approval Status rows from raw data (Total Interviews)
+  const totalInterviewsCount = useMemo(() => {
+    const safeRawData = rawData ?? [];
+    return safeRawData.filter((row) => {
+      const qcStatus = getColumnValue(row, 'QC Approval Status') || 
+                       getColumnValue(row, 'qc_approval_status') || 
+                       getColumnValue(row, 'QC Approval status');
+      return !isBlank(qcStatus);
+    }).length;
+  }, [rawData]);
+
   const derivedKpis = useMemo(() => {
-    // Filter out 'Pending' (blank) statuses for the total count as per user request
+
+    // Filter out 'Pending' (blank) statuses for Valid Submissions
     const validSubmissions = filteredSubmissions.filter((s) => s.status !== "Pending");
 
     const approvedFromSubmissions = validSubmissions.filter(
@@ -153,13 +188,24 @@ function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
     const noFilteredData =
       countryFilter !== "all" && !hasInterviewerStats && !hasSubmissionData && !hasFlagData;
 
+    // Total Interviews = count of all non-blank QC Approval Status rows
     const totalInterviews = hasSubmissionData
+      ? totalInterviewsCount
+      : hasInterviewerStats
+        ? totalsFromStats.totalSubmissions
+        : noFilteredData
+          ? 0
+          : safeKpis.totalInterviews;
+    
+    // Valid Submissions = current count excluding Pending (what was previously Total Interviews)
+    const validSubmissionsCount = hasSubmissionData
       ? validSubmissions.length
       : hasInterviewerStats
         ? totalsFromStats.totalSubmissions
         : noFilteredData
           ? 0
           : safeKpis.totalInterviews;
+
     const approved = hasSubmissionData
       ? approvedFromSubmissions
       : hasInterviewerStats
@@ -174,7 +220,7 @@ function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
         : noFilteredData
           ? 0
           : safeKpis.notApproved;
-    const approvalRate = totalInterviews ? approved / totalInterviews : 0;
+    const approvalRate = validSubmissionsCount ? approved / validSubmissionsCount : 0;
     const totalFlags = hasFlagData
       ? totalFlagsFromFlags
       : hasInterviewerStats
@@ -182,17 +228,18 @@ function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
         : noFilteredData
           ? 0
           : safeKpis.totalFlags;
-    const avgFlagsPerInterview = totalInterviews ? totalFlags / totalInterviews : 0;
+    const avgFlagsPerInterview = validSubmissionsCount ? totalFlags / validSubmissionsCount : 0;
 
     return {
       totalInterviews,
+      validSubmissions: validSubmissionsCount,
       approved,
       notApproved,
       approvalRate,
       totalFlags,
       avgFlagsPerInterview,
     };
-  }, [countryFilter, filteredFlagTotals, filteredInterviewerStats, filteredSubmissions, safeKpis]);
+  }, [countryFilter, filteredFlagTotals, filteredInterviewerStats, filteredSubmissions, rawData, safeKpis]);
 
   const submissionChartData = safeInterviewerStats.map((i) => ({
     name: i.enumeratorId,
@@ -270,12 +317,19 @@ function FarmerTab({ submissions = [], qcData }: FarmerTabProps) {
         variant="farmer"
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <KPICard
           title="Total Interviews"
           value={derivedKpis.totalInterviews}
           icon={ClipboardCheck}
           subtitle={formatPercent(derivedKpis.approvalRate, 1) + " approval"}
+          variant="farmer"
+        />
+        <KPICard
+          title="Valid Submissions"
+          value={derivedKpis.validSubmissions}
+          icon={FileCheck}
+          subtitle="Excluding pending"
           variant="farmer"
         />
         <KPICard
