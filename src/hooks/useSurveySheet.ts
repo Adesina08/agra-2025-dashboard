@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+import { QueryObserverResult, useQuery } from '@tanstack/react-query';
 import { sheetConfigs, SurveyKey } from '@/data/sheetsConfig';
 import { fetchSheetRows, SheetRow } from '@/lib/googleSheets';
 import { YouthData, EnterpriseData, FarmerData } from '@/data/mockData';
@@ -12,6 +13,8 @@ interface SurveyResult<T> {
   isLoading: boolean;
   error: Error | null;
   refreshedAt?: Date;
+  refresh: () => Promise<QueryObserverResult<{ rows: SheetRow[]; refreshedAt: Date }, Error>>;
+  isRefreshing: boolean;
 }
 
 const normalizerMap: Record<SurveyKey, (row: SheetRow, index: number) => any> = {
@@ -23,8 +26,10 @@ const normalizerMap: Record<SurveyKey, (row: SheetRow, index: number) => any> = 
 export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData>(survey: SurveyKey): SurveyResult<T> {
   const config = sheetConfigs[survey];
   const REFETCH_INTERVAL = 60 * 1000; // 1 minute
+  const [initialFetchComplete, setInitialFetchComplete] = useState(false);
 
   const isEnabled = Boolean(config.sheetId && (config.sheetName || config.sheetGid));
+  const shouldPoll = isEnabled && !initialFetchComplete;
 
   const query = useQuery<{ rows: SheetRow[]; refreshedAt: Date }>({
     queryKey: ['google-sheet', survey, config.sheetId, config.sheetName, config.sheetGid],
@@ -40,13 +45,20 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
       return { rows, refreshedAt: new Date() };
     },
     enabled: isEnabled,
-    refetchInterval: isEnabled ? REFETCH_INTERVAL : false,
-    refetchOnWindowFocus: true, // Refresh when user returns to the tab
+    refetchInterval: shouldPoll ? REFETCH_INTERVAL : false,
+    refetchOnWindowFocus: shouldPoll, // Refresh when user returns to the tab (only before first snapshot)
+    refetchOnMount: shouldPoll ? 'always' : false,
     staleTime: 0, // Consider data stale immediately to ensure fresh fetches
     // Keep previous data while fetching new data to avoid flickering
     placeholderData: (previousData) => previousData,
     retry: 1,
   });
+
+  useEffect(() => {
+    if (query.isSuccess && !initialFetchComplete) {
+      setInitialFetchComplete(true);
+    }
+  }, [initialFetchComplete, query.isSuccess]);
 
   const normalizer = normalizerMap[survey] as (row: SheetRow, index: number) => T;
 
@@ -137,6 +149,8 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
       isLoading: query.isLoading,
       error: query.error as Error | null,
       refreshedAt: query.data?.refreshedAt,
+      refresh: query.refetch,
+      isRefreshing: query.isRefetching,
     };
   }
 
@@ -152,5 +166,7 @@ export function useSurveySheet<T extends FarmerData | EnterpriseData | YouthData
     isLoading: query.isLoading,
     error: null,
     refreshedAt: query.data.refreshedAt,
+    refresh: query.refetch,
+    isRefreshing: query.isRefetching,
   };
 }
