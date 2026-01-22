@@ -346,10 +346,10 @@ function EnterpriseTab({ qcData, submissions = [], rawData = [], rawUnfilteredDa
     });
   }, [errorBreakdown, filteredFlagTotals]);
 
-  if (loading && !hasData) return <div>Loading Enterprise QC…</div>;
+  if (loading && !hasData) return <div>Loading ET MODULE...</div>;
   if (error) return <div className="text-red-600">Error: {error}</div>;
   if (!hasData) {
-    return <div>No Enterprise QC data.</div>;
+    return <div>No ET MODULE data.</div>;
   }
 
   return (
