@@ -272,7 +272,7 @@ const Index = () => {
       </div>
 
       <footer className="border-t border-border/60 bg-card/80 backdrop-blur px-6 py-4 text-center text-sm text-muted-foreground">
-        © Inicio Tech 2025
+        © EDVO Tech 2025
       </footer>
     </div>
   );
