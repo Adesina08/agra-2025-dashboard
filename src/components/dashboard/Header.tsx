@@ -62,7 +62,7 @@ export function Header({ farmer, enterprise, youth }: HeaderProps) {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="text-xl font-semibold text-foreground">
-            AGRA 2025 Dashboard
+            EDVO QC ENGINE REPORT
           </h1>
           <p className="text-sm text-muted-foreground">
             Quality Control Monitoring
