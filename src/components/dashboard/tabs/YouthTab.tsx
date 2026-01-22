@@ -363,7 +363,7 @@ function YouthTab({ submissions = [], rawData = [], rawUnfilteredData = [], qcDa
     });
   }, [errorBreakdown, filteredFlagTotals]);
 
-  if (loading && !hasData) return <div>Loading Youth QC…</div>;
+  if (loading && !hasData) return <div>Loading YT MODULE...</div>;
   if (error) return <div className="text-red-600">Error: {error}</div>;
   if (!hasData) {
     return <div>No Youth QC data.</div>;
