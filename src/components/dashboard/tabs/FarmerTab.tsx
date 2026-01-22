@@ -353,7 +353,7 @@ function FarmerTab({ submissions = [], rawData = [], rawUnfilteredData = [], qcD
   if (loading && !hasData) return <div>Loading FM MODULE...</div>;
   if (error) return <div className="text-red-600">Error: {error}</div>;
   if (!hasData) {
-    return <div>No Farmer QC data.</div>;
+    return <div>No FM MODULE data.</div>;
   }
 
   return (
