@@ -16,9 +16,9 @@ import * as XLSX from 'xlsx';
 type TabType = 'farmer' | 'enterprise' | 'youth';
 
 const tabs = [
-  { id: 'youth' as const, label: 'Youth', icon: GraduationCap, color: 'youth' },
-  { id: 'farmer' as const, label: 'Farmer', icon: Sprout, color: 'farmer' },
-  { id: 'enterprise' as const, label: 'Enterprise', icon: Building2, color: 'enterprise' },
+  { id: 'youth' as const, label: 'YT MODULE', icon: GraduationCap, color: 'youth' },
+  { id: 'farmer' as const, label: 'FM MODULE', icon: Sprout, color: 'farmer' },
+  { id: 'enterprise' as const, label: 'ET MODULE', icon: Building2, color: 'enterprise' },
 ];
 
 const Index = () => {
