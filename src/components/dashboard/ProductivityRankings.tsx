@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Trophy, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { headerTone, Variant } from './variantStyles';
 
 interface InterviewerStats {
   name: string;
@@ -11,7 +12,7 @@ interface InterviewerStats {
 interface ProductivityRankingsProps {
   data: InterviewerStats[];
   title?: string;
-  variant?: 'farmer' | 'enterprise' | 'youth';
+  variant?: Variant;
 }
 
 export function ProductivityRankings({
@@ -51,20 +52,25 @@ export function ProductivityRankings({
 
   return (
     <div className="minimal-card">
-      <div className="flex items-center justify-between mb-6">
+      <div
+        className={cn(
+          'flex items-center justify-between gap-3 mb-6 rounded-xl px-4 py-3 border text-sm',
+          headerTone[variant]
+        )}
+      >
         <div>
-          <h3 className="text-sm font-medium text-foreground">{title}</h3>
-          <p className="text-xs text-muted-foreground mt-1">
+          <h3 className="text-sm font-semibold">{title}</h3>
+          <p className="text-xs opacity-80 mt-1">
             Track interviewer performance and highlight key performers
           </p>
         </div>
         <div className="flex gap-2">
           <button
             className={cn(
-              'px-3 py-1.5 text-xs font-medium rounded transition-colors',
+              'px-3 py-1.5 text-xs font-semibold rounded transition-colors',
               view === 'top'
-                ? 'bg-primary/20 text-primary'
-                : 'text-muted-foreground hover:bg-muted'
+                ? 'bg-background/80 text-foreground shadow-sm'
+                : 'text-foreground/80 hover:bg-background/60'
             )}
             onClick={() => setView('top')}
           >
@@ -72,10 +78,10 @@ export function ProductivityRankings({
           </button>
           <button
             className={cn(
-              'px-3 py-1.5 text-xs font-medium rounded transition-colors',
+              'px-3 py-1.5 text-xs font-semibold rounded transition-colors',
               view === 'last'
-                ? 'bg-primary/20 text-primary'
-                : 'text-muted-foreground hover:bg-muted'
+                ? 'bg-background/80 text-foreground shadow-sm'
+                : 'text-foreground/80 hover:bg-background/60'
             )}
             onClick={() => setView('last')}
           >

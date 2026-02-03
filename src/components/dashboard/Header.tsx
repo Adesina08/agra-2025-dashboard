@@ -6,6 +6,7 @@ import { FarmerData, EnterpriseData, YouthData } from '@/data/mockData';
 type SurveyState<T> = {
   data: T[];
   isLive: boolean;
+  isLoading: boolean;
   refreshedAt?: Date;
 };
 
@@ -99,9 +100,9 @@ export function Header({ farmer, enterprise, youth }: HeaderProps) {
         </div>
       </div>
 
-      {(!farmer.isLive || !enterprise.isLive || !youth.isLive) && (
+      {(farmer.isLoading || enterprise.isLoading || youth.isLoading) && (
         <div className="mt-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-amber-200 text-sm">
-          Live Google Sheet data is not fully available. Dashboard metrics will remain at zero until valid sheet data loads.
+          Loading Google Sheet data...
         </div>
       )}
     </header>

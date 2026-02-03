@@ -1,182 +1,439 @@
-import { useState, useMemo } from 'react';
-import { Building2, TrendingUp, CheckCircle, Clock, XCircle, DollarSign, ClipboardCheck, Lightbulb } from 'lucide-react';
-import { EnterpriseData, fieldLabels, generateInterviewerStats, generateSubmissionQuality, errorBreakdownData } from '@/data/mockData';
-import { KPICard } from '../KPICard';
-import { DonutChart } from '../DonutChart';
-import { DataTable } from '../DataTable';
-import { StatusBadge } from '../StatusBadge';
-import { ProgressPanels } from '../ProgressPanels';
-import { ProductivityRankings } from '../ProductivityRankings';
-import { SubmissionQualityChart } from '../SubmissionQualityChart';
-import { ErrorBreakdown } from '../ErrorBreakdown';
-import { EnterpriseInsights } from '../insights/EnterpriseInsights';
+import { useMemo, useState } from "react";
+import { CheckCircle2, ClipboardCheck, Factory, FlagTriangleRight, TriangleAlert, XCircle, FileCheck } from "lucide-react";
+import { type UseSegmentQcDataResult } from "@/hooks/useSegmentQcData";
+import { EnterpriseData } from "@/data/mockData";
+import { KPICard } from "../KPICard";
+import { SubmissionQualityChart } from "../SubmissionQualityChart";
+import { ErrorBreakdown } from "../ErrorBreakdown";
+import { ProductivityRankings } from "../ProductivityRankings";
+import { KPI_BY_CODE } from "@/data/kpiDefinitions";
+import { SubmissionMap } from "../SubmissionMap"; // NEW IMPORT
+import { CountryFilter } from "../CountryFilter";
+import { SheetRow } from "@/lib/googleSheets";
 
-type SubTab = 'qc' | 'insights';
-
-interface EnterpriseTabProps {
-  data: EnterpriseData[];
-  isLoading?: boolean;
+function formatPercent(value: number | null | undefined, digits = 1) {
+  if (value == null) return "—";
+  return `${(value * 100).toFixed(digits)}%`;
 }
 
-export function EnterpriseTab({ data, isLoading = false }: EnterpriseTabProps) {
-  const [activeSubTab, setActiveSubTab] = useState<SubTab>('qc');
+// Helper function to get column value (case-insensitive, handles whitespace)
+const getColumnValue = (row: SheetRow, columnName: string): unknown => {
+  if (row[columnName] !== undefined && row[columnName] !== null && row[columnName] !== '') {
+    return row[columnName];
+  }
+  const lowerKey = columnName.toLowerCase().trim();
+  for (const [key, value] of Object.entries(row)) {
+    const trimmedKey = key.trim().toLowerCase();
+    if (trimmedKey === lowerKey) {
+      return value;
+    }
+  }
+  return undefined;
+};
 
-  const stats = useMemo(() => {
-    const total = data.length;
-    const safeTotal = total || 1;
-    const approved = data.filter(e => e.status === 'Approved').length;
-    const pending = data.filter(e => e.status === 'Pending').length;
-    const rejected = data.filter(e => e.status === 'Rejected').length;
-    const male = data.filter(e => e.gender === 'Male').length;
-    const female = data.filter(e => e.gender === 'Female').length;
-    const totalRevenue = data.reduce((sum, e) => sum + e.annualRevenue, 0);
-    const avgEmployees = total ? data.reduce((sum, e) => sum + e.employees, 0) / total : 0;
+const isBlank = (value: unknown): boolean => {
+  if (value === null || value === undefined) return true;
+  const str = String(value).trim();
+  return str === '' || str.toLowerCase() === 'null' || str.toLowerCase() === 'undefined';
+};
 
-    return { total, safeTotal, approved, pending, rejected, male, female, totalRevenue, avgEmployees };
-  }, [data]);
+// Helper function to get country from raw row (matches Enterprise normalizer logic)
+const getCountryFromRawRow = (row: SheetRow): string => {
+  const country = getColumnValue(row, 'A1_cal') || 
+                  getColumnValue(row, 'country');
+  return country ? String(country).trim() : 'Unknown country';
+};
 
-  const targetInterviews = 2200;
+interface EnterpriseTabProps {
+  submissions?: EnterpriseData[];
+  rawData?: SheetRow[];
+  rawUnfilteredData?: SheetRow[];
+  qcData: UseSegmentQcDataResult;
+}
 
-  const genderData = [
-    { name: 'Male Owners', value: stats.male, color: '#f59e0b' },
-    { name: 'Female Owners', value: stats.female, color: '#ec4899' },
-  ];
+function EnterpriseTab({ qcData, submissions = [], rawData = [], rawUnfilteredData = [] }: EnterpriseTabProps) {
+  const { loading, error, submissionQuality, errorBreakdown, interviewerStats, kpis } = qcData;
+  const [countryFilter, setCountryFilter] = useState<string>("all");
 
-  const interviewerStats = useMemo(() => generateInterviewerStats(data), [data]);
-  const submissionQuality = useMemo(() => generateSubmissionQuality(data), [data]);
+  const hasData = !!(submissionQuality && errorBreakdown && interviewerStats && kpis);
+  const safeInterviewerStats = useMemo(() => interviewerStats ?? [], [interviewerStats]);
+  const safeKpis = useMemo(() => {
+    if (!kpis) {
+      return {
+        totalInterviews: 0,
+        approved: 0,
+        notApproved: 0,
+        approvalRate: 0,
+        totalFlags: 0,
+        avgFlagsPerInterview: 0,
+        percentDuplicatePhone: 0,
+        percentLOIIssues: 0,
+        percentHardViolations: 0,
+        ageOutsideYouthCount: 0,
+        ageOutsideYouthPercent: 0,
+      } as const;
+    }
 
-  const columns = [
-    { key: 'id' as const, label: 'ID', sortable: true },
-    { key: 'enterpriseName' as const, label: fieldLabels.enterprise.enterpriseName, sortable: true },
-    { key: 'businessType' as const, label: fieldLabels.enterprise.businessType, sortable: true },
-    { key: 'region' as const, label: fieldLabels.enterprise.region, sortable: true },
-    { key: 'gender' as const, label: fieldLabels.enterprise.gender, sortable: true },
-    { key: 'employees' as const, label: fieldLabels.enterprise.employees, sortable: true },
-    { 
-      key: 'annualRevenue' as const, 
-      label: fieldLabels.enterprise.annualRevenue, 
-      sortable: true,
-      render: (value: number) => `$${value.toLocaleString()}`
-    },
-    { 
-      key: 'status' as const, 
-      label: fieldLabels.enterprise.status, 
-      sortable: true,
-      render: (value: string) => <StatusBadge status={value as any} />
-    },
-    { key: 'submissionDate' as const, label: fieldLabels.enterprise.submissionDate, sortable: true },
-  ];
+    return {
+      totalInterviews: kpis.totalInterviews ?? 0,
+      approved: kpis.approved ?? 0,
+      notApproved: kpis.notApproved ?? 0,
+      approvalRate: kpis.approvalRate ?? 0,
+      totalFlags: kpis.totalFlags ?? 0,
+      avgFlagsPerInterview: kpis.avgFlagsPerInterview ?? 0,
+      percentDuplicatePhone: kpis.percentDuplicatePhone ?? 0,
+      percentLOIIssues: kpis.percentLOIIssues ?? 0,
+      percentHardViolations: kpis.percentHardViolations ?? 0,
+      ageOutsideYouthCount: kpis.ageOutsideYouthCount ?? 0,
+      ageOutsideYouthPercent: kpis.ageOutsideYouthPercent ?? 0,
+    } as const;
+  }, [kpis]);
 
-  const subTabs = [
-    { id: 'qc' as const, label: 'QC', icon: ClipboardCheck },
-    { id: 'insights' as const, label: 'Insights', icon: Lightbulb },
-  ];
+  const getSubmissionCountry = (submission: EnterpriseData) => {
+    return submission.country;
+  };
+
+  const availableCountries = useMemo(() => {
+    const safeSubmissions = submissions ?? [];
+    const unique = new Set(
+      safeSubmissions
+        .map((submission) => getSubmissionCountry(submission)?.trim())
+        .filter(
+          (country): country is string =>
+            !!country && !country.toLowerCase().startsWith("unknown")
+        )
+    );
+
+    return Array.from(unique).sort((a, b) => a.localeCompare(b));
+  }, [submissions]);
+
+  const filteredSubmissions = useMemo(() => {
+    const safeSubmissions = submissions ?? [];
+    if (countryFilter === "all") return safeSubmissions;
+    return safeSubmissions.filter((submission) => {
+      const country = getSubmissionCountry(submission);
+      return country?.toLowerCase() === countryFilter.toLowerCase();
+    });
+  }, [countryFilter, submissions]);
+
+  const filteredInterviewerStats = useMemo(() => {
+    if (countryFilter === "all") return safeInterviewerStats;
+    const enumeratorsInCountry = new Set(
+      filteredSubmissions.map((submission) => submission.enumerator).filter(Boolean)
+    );
+    if (!enumeratorsInCountry.size) return [];
+    return safeInterviewerStats.filter((stat) => enumeratorsInCountry.has(stat.enumeratorId));
+  }, [countryFilter, filteredSubmissions, safeInterviewerStats]);
+
+  const filteredFlagTotals = useMemo(() => {
+    const totals: Record<string, number> = {};
+    filteredInterviewerStats.forEach((stat) => {
+      Object.entries(stat.flagsByKpi ?? {}).forEach(([kpiCode, count]) => {
+        totals[kpiCode] = (totals[kpiCode] || 0) + count;
+      });
+    });
+    return totals;
+  }, [filteredInterviewerStats]);
+
+  const flagNameByCode = useMemo(() => {
+    const map: Record<string, string> = {};
+    (errorBreakdown ?? []).forEach((item) => {
+      if (item.kpiCode) {
+        map[item.kpiCode] = item.errorType || KPI_BY_CODE[item.kpiCode]?.flagName || item.kpiCode;
+      }
+    });
+    Object.keys(filteredFlagTotals).forEach((code) => {
+      map[code] = map[code] || KPI_BY_CODE[code]?.flagName || code;
+    });
+    return map;
+  }, [errorBreakdown, filteredFlagTotals]);
+
+  // Count all non-blank QC Approval Status rows from unfiltered raw data (Total Submissions)
+  // Respects country filter when a country is selected
+  const totalSubmissionsCount = useMemo(() => {
+    const safeRawUnfilteredData = rawUnfilteredData ?? [];
+    return safeRawUnfilteredData.filter((row) => {
+      // Filter by country if a country is selected
+      if (countryFilter !== 'all') {
+        const rowCountry = getCountryFromRawRow(row);
+        if (rowCountry?.toLowerCase() !== countryFilter.toLowerCase()) {
+          return false;
+        }
+      }
+      
+      const qcStatus = getColumnValue(row, 'QC Approval Status') || 
+                       getColumnValue(row, 'qc_approval_status') || 
+                       getColumnValue(row, 'QC Approval status');
+      return !isBlank(qcStatus);
+    }).length;
+  }, [rawUnfilteredData, countryFilter]);
+
+  // Count all non-blank QC Approval Status rows from filtered raw data (Valid Submissions)
+  // Respects country filter when a country is selected
+  const validSubmissionsCount = useMemo(() => {
+    const safeRawData = rawData ?? [];
+    return safeRawData.filter((row) => {
+      // Filter by country if a country is selected
+      if (countryFilter !== 'all') {
+        const rowCountry = getCountryFromRawRow(row);
+        if (rowCountry?.toLowerCase() !== countryFilter.toLowerCase()) {
+          return false;
+        }
+      }
+      
+      const qcStatus = getColumnValue(row, 'QC Approval Status') || 
+                       getColumnValue(row, 'qc_approval_status') || 
+                       getColumnValue(row, 'QC Approval status');
+      return !isBlank(qcStatus);
+    }).length;
+  }, [rawData, countryFilter]);
+
+  const derivedKpis = useMemo(() => {
+    // Filter out 'Pending' (blank) statuses for Valid Submissions
+    const validSubmissions = filteredSubmissions.filter((s) => s.status !== "Pending");
+
+    const approvedFromSubmissions = validSubmissions.filter(
+      (submission) => submission.status === "Approved"
+    ).length;
+    // Count both "Rejected" status and any status that is not "Approved" or "Pending"
+    const notApprovedFromSubmissions = validSubmissions.filter(
+      (submission) => submission.status === "Rejected" || (submission.status !== "Approved" && submission.status !== "Pending")
+    ).length;
+
+    const totalFlagsFromFlags = Object.values(filteredFlagTotals).reduce(
+      (sum, value) => sum + value,
+      0
+    );
+
+    const totalsFromStats = filteredInterviewerStats.reduce(
+      (acc, stat) => {
+        acc.totalSubmissions += stat.totalSubmissions;
+        acc.approved += stat.approvedInterviews;
+        acc.failed += stat.failedInterviews;
+        acc.totalFlags += stat.totalFlags;
+        return acc;
+      },
+      { totalSubmissions: 0, approved: 0, failed: 0, totalFlags: 0 }
+    );
+
+    const hasInterviewerStats = filteredInterviewerStats.length > 0;
+    const hasSubmissionData = filteredSubmissions.length > 0;
+    const hasFlagData = Object.keys(filteredFlagTotals).length > 0;
+    const noFilteredData =
+      countryFilter !== "all" && !hasInterviewerStats && !hasSubmissionData && !hasFlagData;
+
+    // Total Submissions = count of all non-blank QC Approval Status rows from unfiltered data
+    const totalSubmissions = hasSubmissionData
+      ? totalSubmissionsCount
+      : hasInterviewerStats
+        ? totalsFromStats.totalSubmissions
+        : noFilteredData
+          ? 0
+          : safeKpis.totalInterviews;
+    
+    // Valid Submissions = count of all non-blank QC Approval Status rows from filtered data (what was previously Total Interviews)
+    const validSubmissionsFromFiltered = hasSubmissionData
+      ? validSubmissionsCount
+      : hasInterviewerStats
+        ? totalsFromStats.totalSubmissions
+        : noFilteredData
+          ? 0
+          : safeKpis.totalInterviews;
+    
+    // Processed Submissions = count excluding Pending status
+    const processedSubmissionsCount = hasSubmissionData
+      ? validSubmissions.length
+      : hasInterviewerStats
+        ? totalsFromStats.totalSubmissions
+        : noFilteredData
+          ? 0
+          : safeKpis.totalInterviews;
+
+    const approved = hasSubmissionData
+      ? approvedFromSubmissions
+      : hasInterviewerStats
+        ? totalsFromStats.approved
+        : noFilteredData
+          ? 0
+          : safeKpis.approved;
+    const notApproved = hasSubmissionData
+      ? notApprovedFromSubmissions
+      : hasInterviewerStats
+        ? totalsFromStats.failed
+        : noFilteredData
+          ? 0
+          : safeKpis.notApproved;
+    const approvalRate = processedSubmissionsCount ? approved / processedSubmissionsCount : 0;
+    const totalFlags = hasFlagData
+      ? totalFlagsFromFlags
+      : hasInterviewerStats
+        ? totalsFromStats.totalFlags
+        : noFilteredData
+          ? 0
+          : safeKpis.totalFlags;
+    const avgFlagsPerInterview = processedSubmissionsCount ? totalFlags / processedSubmissionsCount : 0;
+
+    return {
+      totalSubmissions,
+      validSubmissions: validSubmissionsFromFiltered,
+      processedSubmissions: processedSubmissionsCount,
+      approved,
+      notApproved,
+      approvalRate,
+      totalFlags,
+      avgFlagsPerInterview,
+    };
+  }, [countryFilter, filteredFlagTotals, filteredInterviewerStats, filteredSubmissions, rawData, rawUnfilteredData, totalSubmissionsCount, validSubmissionsCount, safeKpis]);
+
+  const submissionChartData = safeInterviewerStats.map((i) => ({
+    name: i.enumeratorId,
+    approved: i.approvedInterviews,
+    notApproved: i.failedInterviews,
+    flagsByKpi: i.flagsByKpi,
+  }));
+
+  const productivityData = safeInterviewerStats.map((i) => ({
+    name: i.enumeratorId,
+    totalInterviews: i.totalSubmissions,
+    approved: i.approvedInterviews,
+  }));
+
+  const flagCountsByType = useMemo(
+    () =>
+      Object.entries(filteredFlagTotals).reduce(
+        (acc, [kpiCode, count]) => {
+          const type = KPI_BY_CODE[kpiCode]?.type?.toUpperCase();
+          if (type === "HARD") {
+            acc.hard += count;
+          } else {
+            acc.soft += count;
+          }
+          return acc;
+        },
+        { hard: 0, soft: 0 }
+      ),
+    [filteredFlagTotals]
+  );
+
+  const flagSubtitle =
+    flagCountsByType.hard + flagCountsByType.soft > 0
+      ? `${flagCountsByType.hard.toLocaleString()} hard / ${flagCountsByType.soft.toLocaleString()} soft`
+      : undefined;
+
+  const errorBreakdownData = useMemo(() => {
+    const entries = Object.entries(filteredFlagTotals);
+    if (entries.length) {
+      return entries.map(([kpiCode, count]) => {
+        const kpi = KPI_BY_CODE[kpiCode];
+        return {
+          errorType: `${kpiCode} • ${kpi?.flagName ?? "Flag"}`,
+          relatedVariables: kpi?.variables ?? "—",
+          count,
+        };
+      });
+    }
+
+    if (!errorBreakdown?.length) return [];
+
+    return errorBreakdown.map((item) => {
+      const kpiCode = item.kpiCode || "";
+      const kpi = KPI_BY_CODE[kpiCode];
+      return {
+        errorType: `${kpiCode ? `${kpiCode} • ` : ""}${item.errorType || kpiCode || "Flag"}`,
+        relatedVariables: kpi?.variables ?? "—",
+        count: item.count ?? 0,
+      };
+    });
+  }, [errorBreakdown, filteredFlagTotals]);
+
+  if (loading && !hasData) return <div>Loading Enterprise QC…</div>;
+  if (error) return <div className="text-red-600">Error: {error}</div>;
+  if (!hasData) {
+    return <div>No Enterprise QC data.</div>;
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Sub-tabs */}
-      <div className="flex gap-2 border-b border-border/50 pb-2">
-        {subTabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveSubTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg transition-all ${
-              activeSubTab === tab.id
-                ? 'bg-amber-500/10 text-amber-500 border-b-2 border-amber-500'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-            }`}
-          >
-            <tab.icon className="w-4 h-4" />
-            {tab.label}
-          </button>
-        ))}
+      <CountryFilter
+        countries={availableCountries}
+        selected={countryFilter}
+        onChange={setCountryFilter}
+        variant="enterprise"
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <KPICard
+          title="Total Submissions"
+          value={derivedKpis.totalSubmissions}
+          icon={Factory}
+          subtitle="All QC Status entries"
+          variant="enterprise"
+        />
+        <KPICard
+          title="Valid Submissions"
+          value={derivedKpis.validSubmissions}
+          icon={FileCheck}
+          subtitle={formatPercent(derivedKpis.approvalRate, 1) + " approval"}
+          variant="enterprise"
+        />
+        <KPICard
+          title="Approved"
+          value={derivedKpis.approved}
+          icon={CheckCircle2}
+          subtitle={`${derivedKpis.approvalRate > 0 ? formatPercent(derivedKpis.approvalRate) : "0%"}`}
+          variant="enterprise"
+        />
+        <KPICard
+          title="Not Approved"
+          value={derivedKpis.notApproved}
+          icon={XCircle}
+          variant="enterprise"
+        />
+        <KPICard
+          title="Total Flags"
+          value={derivedKpis.totalFlags}
+          icon={TriangleAlert}
+          subtitle={flagSubtitle}
+          variant="enterprise"
+        />
+        <KPICard
+          title="Avg Flags / Interview"
+          value={derivedKpis.avgFlagsPerInterview.toFixed(2)}
+          icon={FlagTriangleRight}
+          variant="enterprise"
+        />
       </div>
 
-      {activeSubTab === 'qc' ? (
-        <>
-          {/* KPI Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <KPICard
-              title="Total Enterprises"
-              value={stats.total}
-              icon={Building2}
-              variant="enterprise"
-              trend={{ value: 8.3, isPositive: true }}
-            />
-            <KPICard
-              title="Approved"
-              value={stats.approved}
-              subtitle={`${((stats.approved / stats.safeTotal) * 100).toFixed(1)}%`}
-              icon={CheckCircle}
-              variant="enterprise"
-            />
-            <KPICard
-              title="Pending"
-              value={stats.pending}
-              subtitle={`${((stats.pending / stats.safeTotal) * 100).toFixed(1)}%`}
-              icon={Clock}
-              variant="enterprise"
-            />
-            <KPICard
-              title="Rejected"
-              value={stats.rejected}
-              subtitle={`${((stats.rejected / stats.safeTotal) * 100).toFixed(1)}%`}
-              icon={XCircle}
-              variant="enterprise"
-            />
-            <KPICard
-              title="Total Revenue"
-              value={`$${(stats.totalRevenue / 1000000).toFixed(1)}M`}
-              icon={DollarSign}
-              variant="enterprise"
-            />
-            <KPICard
-              title="Avg Employees"
-              value={stats.avgEmployees.toFixed(0)}
-              icon={TrendingUp}
-              variant="enterprise"
-            />
-          </div>
+      {/* NEW: Real Map with Markers - Updates with country filter */}
+      <SubmissionMap
+        submissions={filteredSubmissions.map(s => ({
+          latitude: s.latitude ?? 0,
+          longitude: s.longitude ?? 0,
+          region: s.region,
+          district: s.district,
+          status: s.status,
+          id: s.id,
+          enumerator: s.enumerator,
+          submissionDate: s.submissionDate,
+          gender: s.gender,
+          ageGroup: s.ageGroup,
+        }))}
+        title="Live Enterprise Submission Map"
+        variant="enterprise"
+      />
 
-          <ProgressPanels
-            achieved={stats.total}
-            target={targetInterviews}
-            genderData={[
-              { label: 'Male', value: stats.male, color: '#3b82f6' },
-              { label: 'Female', value: stats.female, color: '#ec4899' },
-            ]}
-            accentColor="#16a34a"
-            remainderColor="#f97316"
-          />
+      <SubmissionQualityChart
+        data={submissionChartData}
+        variant="enterprise"
+        flagNames={flagNameByCode}
+      />
 
-          {/* Productivity Rankings */}
-          <ProductivityRankings data={interviewerStats} variant="enterprise" />
+      <ProductivityRankings data={productivityData} variant="enterprise" />
 
-          {/* Submission Quality & Error Breakdown */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SubmissionQualityChart data={submissionQuality} variant="enterprise" />
-            <ErrorBreakdown data={errorBreakdownData.enterprise} variant="enterprise" />
-          </div>
-
-          {/* Charts Row */}
-          <DonutChart
-            data={genderData}
-            title="Owner Gender Distribution"
-            variant="enterprise"
-          />
-
-          {/* Data Table */}
-          <DataTable
-            data={data}
-            columns={columns}
-            title="Enterprise Submissions"
-            variant="enterprise"
-            isLoading={isLoading}
-          />
-        </>
-      ) : (
-        <EnterpriseInsights />
-      )}
+      <ErrorBreakdown data={errorBreakdownData} variant="enterprise" />
     </div>
   );
 }
+
+export { EnterpriseTab };
+export default EnterpriseTab;

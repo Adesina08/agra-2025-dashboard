@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { AlertTriangle, ArrowDown, ArrowUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { headerTone, Variant } from './variantStyles';
 
 interface ErrorType {
   errorType: string;
@@ -11,13 +12,13 @@ interface ErrorType {
 interface ErrorBreakdownProps {
   data: ErrorType[];
   title?: string;
-  variant?: 'farmer' | 'enterprise' | 'youth';
+  variant?: Variant;
 }
 
-export function ErrorBreakdown({ 
-  data, 
+export function ErrorBreakdown({
+  data,
   title = "Error Breakdown",
-  variant = 'farmer' 
+  variant = 'farmer'
 }: ErrorBreakdownProps) {
   const [sortField, setSortField] = useState<'count' | 'errorType'>('count');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
@@ -33,6 +34,9 @@ export function ErrorBreakdown({
       return a.errorType.localeCompare(b.errorType) * multiplier;
     });
   }, [data, sortField, sortDirection]);
+
+  const visibleRows = Math.min(sortedData.length || 1, 12);
+  const tableViewportHeight = Math.max(visibleRows * 44, 360);
 
   const handleSort = (field: 'count' | 'errorType') => {
     if (sortField === field) {
@@ -51,87 +55,92 @@ export function ErrorBreakdown({
   };
 
   return (
-    <div className="minimal-card">
-      <div className="flex items-center gap-3 mb-4">
-        <AlertTriangle className={cn('w-4 h-4', {
-          'text-farmer': variant === 'farmer',
-          'text-enterprise': variant === 'enterprise',
-          'text-youth': variant === 'youth',
-        })} />
-        <div>
-          <h3 className="text-sm font-medium text-foreground">{title}</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Identify the most common data-quality flags
-          </p>
+    <div className="minimal-card h-full">
+      <div
+        className={cn(
+          'flex items-center justify-between gap-2 mb-4 rounded-xl px-4 py-3 border text-sm',
+          headerTone[variant]
+        )}
+      >
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4" />
+          <div className="flex flex-col">
+            <span className="font-semibold leading-tight">
+              {title ?? 'Error Breakdown'}
+            </span>
+            <span className="text-xs opacity-80">Identify the most common data-quality flags</span>
+          </div>
         </div>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border">
-              <th 
-                className="text-left py-3 px-3 text-xs text-muted-foreground font-medium uppercase cursor-pointer hover:text-foreground transition-colors"
-                onClick={() => handleSort('errorType')}
-              >
-                Error Type
-                <SortIcon field="errorType" />
-              </th>
-              <th className="text-left py-3 px-3 text-xs text-muted-foreground font-medium uppercase">
-                Related Variables
-              </th>
-              <th 
-                className="text-right py-3 px-3 text-xs text-muted-foreground font-medium uppercase cursor-pointer hover:text-foreground transition-colors"
-                onClick={() => handleSort('count')}
-              >
-                Count
-                <SortIcon field="count" />
-              </th>
-              <th className="text-right py-3 px-3 text-xs text-muted-foreground font-medium uppercase">
-                Percentage
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {sortedData.map((row, index) => {
-              const percentage = ((row.count / totalCount) * 100).toFixed(1);
-              return (
-                <tr 
-                  key={row.errorType} 
-                  className={cn(
-                    'border-b border-border/50 hover:bg-muted/20 transition-colors',
-                    index === 0 && 'bg-red-500/5'
-                  )}
+        <div className="overflow-y-auto" style={{ maxHeight: tableViewportHeight }}>
+          <table className="w-full text-sm min-w-max">
+            <thead>
+              <tr className="border-b border-border">
+                <th
+                  className="text-left py-3 px-3 text-xs text-muted-foreground font-medium uppercase cursor-pointer hover:text-foreground transition-colors"
+                  onClick={() => handleSort('errorType')}
                 >
-                  <td className="py-3 px-3 font-medium text-foreground uppercase text-xs tracking-wide">
-                    {row.errorType}
-                  </td>
-                  <td className="py-3 px-3 text-primary text-xs">
-                    {row.relatedVariables}
-                  </td>
-                  <td className="py-3 px-3 text-right text-red-400 font-medium">
-                    {row.count.toLocaleString()}
-                  </td>
-                  <td className="py-3 px-3 text-right text-muted-foreground">
-                    {percentage}%
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-          <tfoot>
-            <tr className="border-t border-border bg-muted/20">
-              <td className="py-3 px-3 font-medium text-foreground text-xs">Totals</td>
-              <td className="py-3 px-3"></td>
-              <td className="py-3 px-3 text-right text-primary font-semibold">
-                {totalCount.toLocaleString()}
-              </td>
-              <td className="py-3 px-3 text-right text-foreground font-medium">
-                100.0%
-              </td>
-            </tr>
-          </tfoot>
-        </table>
+                  Error Type
+                  <SortIcon field="errorType" />
+                </th>
+                <th className="text-left py-3 px-3 text-xs text-muted-foreground font-medium uppercase">
+                  Related Variables
+                </th>
+                <th
+                  className="text-right py-3 px-3 text-xs text-muted-foreground font-medium uppercase cursor-pointer hover:text-foreground transition-colors"
+                  onClick={() => handleSort('count')}
+                >
+                  Count
+                  <SortIcon field="count" />
+                </th>
+                <th className="text-right py-3 px-3 text-xs text-muted-foreground font-medium uppercase">
+                  Percentage
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedData.map((row, index) => {
+                const percentage = ((row.count / totalCount) * 100).toFixed(1);
+                return (
+                  <tr
+                    key={row.errorType}
+                    className={cn(
+                      'border-b border-border/50 hover:bg-muted/20 transition-colors',
+                      index === 0 && 'bg-red-500/5'
+                    )}
+                  >
+                    <td className="py-3 px-3 font-medium text-foreground uppercase text-xs tracking-wide">
+                      {row.errorType}
+                    </td>
+                    <td className="py-3 px-3 text-primary text-xs">
+                      {row.relatedVariables}
+                    </td>
+                    <td className="py-3 px-3 text-right text-red-400 font-medium">
+                      {row.count.toLocaleString()}
+                    </td>
+                    <td className="py-3 px-3 text-right text-muted-foreground">
+                      {percentage}%
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot>
+              <tr className="border-t border-border bg-muted/20">
+                <td className="py-3 px-3 font-medium text-foreground text-xs">Totals</td>
+                <td className="py-3 px-3"></td>
+                <td className="py-3 px-3 text-right text-primary font-semibold">
+                  {totalCount.toLocaleString()}
+                </td>
+                <td className="py-3 px-3 text-right text-foreground font-medium">
+                  100.0%
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
       </div>
     </div>
   );
